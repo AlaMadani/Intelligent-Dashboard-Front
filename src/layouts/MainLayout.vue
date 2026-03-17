@@ -24,6 +24,33 @@
         <div class="neo-toolbar-meta">
           <q-chip dense color="positive" text-color="white" icon="sensors">Live</q-chip>
           <q-chip dense color="secondary" text-color="white" icon="verified_user">Entra ID</q-chip>
+
+          <q-btn
+            flat
+            dense
+            icon="timeline"
+            label="Grafana"
+            aria-label="Open Grafana dashboard in a new tab"
+            class="neo-external-btn"
+            text-color="black"
+            @click="openGrafana"
+          >
+            <q-tooltip anchor="bottom middle">Grafana dashboards</q-tooltip>
+          </q-btn>
+
+          <q-btn
+            flat
+            dense
+            icon="search"
+            label="Kibana"
+            aria-label="Open Kibana overview in a new tab"
+            class="neo-external-btn"
+            text-color="black"
+            @click="openKibana"
+          >
+            <q-tooltip anchor="bottom middle">Kibana overview</q-tooltip>
+          </q-btn>
+
           <q-btn
             flat
             dense
@@ -95,5 +122,13 @@ const scrollToSection = async (id: string) => {
     const offsetTop = target.getBoundingClientRect().top + window.scrollY - headerOffset - 12;
     window.scrollTo({ top: Math.max(0, offsetTop), behavior: 'smooth' });
   }
+};
+
+const openGrafana = () => {
+  window.open('http://localhost:3000/dashboards', '_blank', 'noopener');
+};
+
+const openKibana = () => {
+  window.open('http://localhost:5601/app/kibana_overview#/', '_blank', 'noopener');
 };
 </script>
