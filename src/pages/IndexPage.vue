@@ -39,9 +39,14 @@
       :history="history"
       :history-loading="historyLoading"
       :history-error="historyError"
+      :sequence-events="sequenceEvents"
+      :sequence-details="sequenceDetails"
+      :sequence-loading="sequenceLoading"
+      :sequence-error="sequenceError"
       @update:user-key-input="(value) => (userKeyInput = value)"
       @load-history="fetchHistory"
       @generate-explanation="fetchExplanation"
+      @load-sequence="fetchSequence"
     />
 
     <AnalyticsSection :alerts="alerts" />
@@ -56,7 +61,7 @@ import AnalyticsSection from 'src/components/dashboard/AnalyticsSection.vue';
 import InvestigationSection from 'src/components/dashboard/InvestigationSection.vue';
 import KpiStrip from 'src/components/dashboard/KpiStrip.vue';
 import OverviewHero from 'src/components/dashboard/OverviewHero.vue';
-import type { AuditTrailEvent, SecurityAlert } from 'src/types/soc';
+import type { AuditTrailEvent, SecurityAlert, SequenceDetailsDto } from 'src/types/soc';
 import { isAboveThreshold, severityLabel } from 'src/utils/alerts';
 
 const alerts = ref<SecurityAlert[]>([]);
@@ -73,6 +78,11 @@ const userKeyInput = ref<number | null>(null);
 const history = ref<AuditTrailEvent[]>([]);
 const historyLoading = ref(false);
 const historyError = ref('');
+
+const sequenceEvents = ref<AuditTrailEvent[]>([]);
+const sequenceDetails = ref<SequenceDetailsDto | null>(null);
+const sequenceLoading = ref(false);
+const sequenceError = ref('');
 
 const liveNotice = ref('');
 const seenAlertIds = ref<Set<number>>(new Set());
@@ -115,9 +125,13 @@ const onAlertSelect = (row: SecurityAlert) => {
   selectedAlert.value = row;
   explanationText.value = row.aiExplanation || 'AI explanation not cached yet.';
   explanationError.value = '';
+  sequenceEvents.value = [];
+  sequenceDetails.value = null;
+  sequenceError.value = '';
   if (row.userKey != null) {
     userKeyInput.value = row.userKey;
   }
+  void fetchSequence();
 };
 
 const showLiveNotice = (count: number) => {
@@ -192,6 +206,26 @@ const fetchExplanation = async () => {
     explanationError.value = 'AI explanation failed. Verify the XAI service connection.';
   } finally {
     explanationLoading.value = false;
+  }
+};
+
+const fetchSequence = async () => {
+  if (!selectedAlert.value) return;
+  sequenceLoading.value = true;
+  sequenceError.value = '';
+  try {
+    const [eventsResponse, detailsResponse] = await Promise.all([
+      api.get<AuditTrailEvent[]>(`/alerts/${selectedAlert.value.id}/sequence`),
+      api.get<SequenceDetailsDto>(`/alerts/${selectedAlert.value.id}/sequence-details`),
+    ]);
+    sequenceEvents.value = eventsResponse.data ?? [];
+    sequenceDetails.value = detailsResponse.data ?? null;
+  } catch {
+    sequenceError.value = 'Unable to load sequence intelligence for this alert.';
+    sequenceEvents.value = [];
+    sequenceDetails.value = null;
+  } finally {
+    sequenceLoading.value = false;
   }
 };
 

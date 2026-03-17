@@ -21,3 +21,17 @@ export interface AuditTrailEvent {
   ipAddress: string;
   content: Record<string, unknown> | null;
 }
+
+export interface PredictionDto {
+  predictionJson: string;
+  predictionSummary: string;
+}
+
+export interface SequenceDetailsDto {
+  alertId: number;
+  userKey: number;
+  sequenceJson: string;
+  predictionJson: string;
+  predictionSummary: string;
+  createdAt: string;
+}
