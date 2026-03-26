@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+// KPI values rendered in the summary strip.
 defineProps<{
   totalAlerts: number;
   explainedCount: number;

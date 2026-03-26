@@ -2,14 +2,14 @@ import { boot } from 'quasar/wrappers';
 import axios from 'axios';
 
 export default boot(({ app }) => {
-  // Capture les erreurs globales de Vue 3 avec le type 'unknown'
+  // Global Vue error handler with Logstash forwarding.
   app.config.errorHandler = (err: unknown, instance, info) => {
     console.error('Erreur capturée par Quasar:', err);
 
-    // Vérification sécurisée du type de l'erreur pour extraire le message
+    // Normalize unknown errors into a readable message.
     const errorMessage = err instanceof Error ? err.message : String(err);
 
-    // Envoi de l'erreur vers Logstash (Port 5001)
+    // Fire-and-forget Logstash payload.
     axios
       .post('http://localhost:5001', {
         level: 'ERROR',

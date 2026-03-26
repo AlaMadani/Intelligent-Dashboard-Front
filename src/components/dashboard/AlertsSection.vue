@@ -74,23 +74,28 @@ const props = defineProps<{
   selectedAlertId: number | null;
 }>();
 
+// Bubble table interactions back to the page.
 const emit = defineEmits<{
   (event: 'update:search', value: string): void;
   (event: 'select', row: SecurityAlert): void;
 }>();
 
+// Two-way binding for the search input.
 const searchModel = computed({
   get: () => props.search,
   set: (value: string) => emit('update:search', value),
 });
 
+// Highlight the currently selected alert row.
 const alertRowClass = (row: SecurityAlert) =>
   props.selectedAlertId === row.id ? 'neo-row-active' : '';
 
+// Emit the clicked alert for investigation.
 const onRowClick = (_evt: Event, row: SecurityAlert) => {
   emit('select', row);
 };
 
+// Table schema for the alert grid.
 const alertColumns: QTableColumn<SecurityAlert>[] = [
   {
     name: 'severity',

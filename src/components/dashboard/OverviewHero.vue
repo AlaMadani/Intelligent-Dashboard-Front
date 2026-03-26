@@ -57,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+// Snapshot metrics for the hero panel.
 defineProps<{
   totalAlerts: number;
   highRiskCount: number;
@@ -64,6 +65,7 @@ defineProps<{
   avgScore: string;
 }>();
 
+// Navigation shortcuts to page sections.
 const emit = defineEmits<{
   (event: 'navigate', target: string): void;
 }>();

@@ -236,11 +236,13 @@ const emit = defineEmits<{
   (event: 'load-sequence'): void;
 }>();
 
+// Two-way binding for the user key input.
 const userKeyModel = computed({
   get: () => props.userKeyInput,
   set: (value: number | null) => emit('update:userKeyInput', value),
 });
 
+// Minimal HTML escaping for rendering markdown-derived content.
 const escapeHtml = (value: string) =>
   value
     .replace(/&/g, '&amp;')
@@ -249,6 +251,7 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+// Render inline markdown emphasis without block parsing.
 const inlineMarkdownToHtml = (value: string) => {
   const escaped = escapeHtml(value);
   return escaped
@@ -257,6 +260,7 @@ const inlineMarkdownToHtml = (value: string) => {
     .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 };
 
+// Convert plain text explanation into safe, styled HTML.
 const formatExplanationHtml = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return '<p class="neo-explanation-empty">No explanation available yet.</p>';
@@ -326,8 +330,10 @@ const formatExplanationHtml = (value: string) => {
   return html.join('\n');
 };
 
+// Cache formatted HTML for the explanation card.
 const formattedExplanationHtml = computed(() => formatExplanationHtml(props.explanationText));
 
+// Pretty-print JSON payloads without throwing for invalid input.
 const formatJson = (value: string) => {
   try {
     return JSON.stringify(JSON.parse(value), null, 2);

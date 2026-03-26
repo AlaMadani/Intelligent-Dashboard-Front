@@ -64,31 +64,37 @@ import OverviewHero from 'src/components/dashboard/OverviewHero.vue';
 import type { AuditTrailEvent, SecurityAlert, SequenceDetailsDto } from 'src/types/soc';
 import { isAboveThreshold, severityLabel } from 'src/utils/alerts';
 
+// Alert stream and table UI state.
 const alerts = ref<SecurityAlert[]>([]);
 const alertsLoading = ref(false);
 const alertsError = ref('');
 const search = ref('');
 
+// Selected alert context and AI explanation state.
 const selectedAlert = ref<SecurityAlert | null>(null);
 const explanationText = ref('');
 const explanationLoading = ref(false);
 const explanationError = ref('');
 
+// Investigation timeline state.
 const userKeyInput = ref<number | null>(null);
 const history = ref<AuditTrailEvent[]>([]);
 const historyLoading = ref(false);
 const historyError = ref('');
 
+// Sequence intelligence state.
 const sequenceEvents = ref<AuditTrailEvent[]>([]);
 const sequenceDetails = ref<SequenceDetailsDto | null>(null);
 const sequenceLoading = ref(false);
 const sequenceError = ref('');
 
+// Live notice and polling lifecycle handles.
 const liveNotice = ref('');
 const seenAlertIds = ref<Set<number>>(new Set());
 let liveNoticeTimer: ReturnType<typeof setTimeout> | undefined;
 let pollingTimer: ReturnType<typeof setInterval> | undefined;
 
+// KPI rollups for the header and summary cards.
 const totalAlerts = computed(() => alerts.value.length);
 const highRiskCount = computed(
   () => alerts.value.filter((alert) => severityLabel(alert) === 'High').length
@@ -112,6 +118,7 @@ const thresholdCoverage = computed(() => {
 });
 const historyCount = computed(() => history.value.length);
 
+// Local smooth-scroll for in-page navigation.
 const scrollToSection = (id: string) => {
   const target = document.getElementById(id);
   if (!target) return;
@@ -121,6 +128,7 @@ const scrollToSection = (id: string) => {
   window.scrollTo({ top: Math.max(0, offsetTop), behavior: 'smooth' });
 };
 
+// Update selection and kick off dependent data loads.
 const onAlertSelect = (row: SecurityAlert) => {
   selectedAlert.value = row;
   explanationText.value = row.aiExplanation || 'AI explanation not cached yet.';
@@ -134,6 +142,7 @@ const onAlertSelect = (row: SecurityAlert) => {
   void fetchSequence();
 };
 
+// Toast-like notice for newly arrived alerts.
 const showLiveNotice = (count: number) => {
   const suffix = count === 1 ? 'New alert received.' : `${count} new alerts received.`;
   liveNotice.value = `${suffix} Showing the latest first.`;
@@ -145,6 +154,7 @@ const showLiveNotice = (count: number) => {
   }, 6000);
 };
 
+// Sort newest alerts first with stable tie-breaks.
 const sortAlerts = (items: SecurityAlert[]) => {
   return [...items].sort((a, b) => {
     const aTime = a.detectedAt ? Date.parse(a.detectedAt) : 0;
@@ -154,6 +164,7 @@ const sortAlerts = (items: SecurityAlert[]) => {
   });
 };
 
+// Fetch the main alert stream and detect new arrivals.
 const fetchAlerts = async () => {
   alertsLoading.value = true;
   alertsError.value = '';
@@ -176,6 +187,7 @@ const fetchAlerts = async () => {
   }
 };
 
+// Load the audit trail for the selected user.
 const fetchHistory = async () => {
   if (userKeyInput.value == null) {
     historyError.value = 'Provide a user key to load the audit trail.';
@@ -195,6 +207,7 @@ const fetchHistory = async () => {
   }
 };
 
+// Request the AI explanation for the selected alert.
 const fetchExplanation = async () => {
   if (!selectedAlert.value) return;
   explanationLoading.value = true;
@@ -209,6 +222,7 @@ const fetchExplanation = async () => {
   }
 };
 
+// Pull sequence events and prediction metadata in parallel.
 const fetchSequence = async () => {
   if (!selectedAlert.value) return;
   sequenceLoading.value = true;
@@ -229,6 +243,7 @@ const fetchSequence = async () => {
   }
 };
 
+// Start polling on mount and clean up timers on unmount.
 onMounted(() => {
   void fetchAlerts();
   pollingTimer = setInterval(() => {

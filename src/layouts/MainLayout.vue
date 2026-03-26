@@ -106,10 +106,12 @@ const leftDrawerOpen = ref(false);
 const router = useRouter();
 const route = useRoute();
 
+// Toggle the navigation drawer on small screens.
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
 
+// Navigate to a section, accounting for the sticky header offset.
 const scrollToSection = async (id: string) => {
   if (route.path !== '/') {
     await router.push('/');
@@ -124,6 +126,7 @@ const scrollToSection = async (id: string) => {
   }
 };
 
+// External tooling shortcuts.
 const openGrafana = () => {
   window.open('http://localhost:3000/dashboards', '_blank', 'noopener');
 };

@@ -70,8 +70,10 @@ const props = defineProps<{
   alerts: SecurityAlert[];
 }>();
 
+// Aggregate counts for analytics cards.
 const totalAlerts = computed(() => props.alerts.length);
 
+// Severity distribution for quick triage health checks.
 const severityMix = computed(() => {
   const buckets: Record<Severity, number> = { High: 0, Medium: 0, Low: 0 };
   for (const alert of props.alerts) {
@@ -84,6 +86,7 @@ const severityMix = computed(() => {
   });
 });
 
+// Highest-frequency alert types.
 const topAlertTypes = computed(() => {
   const counts = new Map<string, number>();
   for (const alert of props.alerts) {
@@ -96,6 +99,7 @@ const topAlertTypes = computed(() => {
     .map(([label, count]) => ({ label, count }));
 });
 
+// Users with the highest average anomaly score.
 const riskyUsers = computed(() => {
   const scores = new Map<number, { total: number; count: number }>();
   for (const alert of props.alerts) {
@@ -115,6 +119,7 @@ const riskyUsers = computed(() => {
     .slice(0, 4);
 });
 
+// IPs appearing most frequently in alerts.
 const ipHotspots = computed(() => {
   const counts = new Map<string, number>();
   for (const alert of props.alerts) {
