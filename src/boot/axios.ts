@@ -8,8 +8,8 @@ declare module 'vue' {
   }
 }
 
-// Shared API client for the SOC backend.
-const api = axios.create({ baseURL: 'http://localhost:8081/api/soc' });
+// Shared API client for the api-service backend.
+const api = axios.create({ baseURL: 'http://localhost:8081' });
 
 export default defineBoot(({ app }) => {
   // Expose axios clients for Options API usage (this.$axios / this.$api).

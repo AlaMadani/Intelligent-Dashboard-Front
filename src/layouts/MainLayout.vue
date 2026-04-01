@@ -16,7 +16,7 @@
           <div class="neo-title">
             <span class="neo-brand-noveo">Noveo</span>
             <span class="neo-brand-care">Care</span>
-            <span class="neo-brand-soc">SOC</span>
+            <span class="neo-brand-soc">Insights</span>
           </div>
           <div class="neo-subtitle">Event-Driven Intelligence Console</div>
         </q-toolbar-title>
@@ -70,13 +70,21 @@
           <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
           <q-item-section>Overview</q-item-section>
         </q-item>
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('alerts')">
-          <q-item-section avatar><q-icon name="report" /></q-item-section>
-          <q-item-section>Alerts</q-item-section>
+        <q-item clickable class="neo-nav-item" @click="scrollToSection('anomalies')">
+          <q-item-section avatar><q-icon name="warning" /></q-item-section>
+          <q-item-section>Anomalies</q-item-section>
         </q-item>
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('investigation')">
+        <q-item clickable class="neo-nav-item" @click="scrollToSection('workbench')">
+          <q-item-section avatar><q-icon name="hub" /></q-item-section>
+          <q-item-section>Workbench</q-item-section>
+        </q-item>
+        <q-item clickable class="neo-nav-item" @click="scrollToSection('sessions')">
+          <q-item-section avatar><q-icon name="analytics" /></q-item-section>
+          <q-item-section>Sessions</q-item-section>
+        </q-item>
+        <q-item clickable class="neo-nav-item" @click="scrollToSection('insights')">
           <q-item-section avatar><q-icon name="manage_search" /></q-item-section>
-          <q-item-section>Investigation</q-item-section>
+          <q-item-section>User insights</q-item-section>
         </q-item>
         <q-item clickable class="neo-nav-item" @click="scrollToSection('analytics')">
           <q-item-section avatar><q-icon name="insights" /></q-item-section>
@@ -87,7 +95,7 @@
       <div class="neo-drawer-footer">
         <div class="neo-drawer-label">Next up</div>
         <div class="neo-drawer-note">
-          Behavior analytics and system telemetry will land here as the platform expands.
+          Live stats and trend forecasts update automatically from the data-processor pipeline.
         </div>
       </div>
     </q-drawer>

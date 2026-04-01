@@ -1,24 +1,24 @@
 <template>
   <section class="neo-section neo-kpis">
     <div class="neo-kpi-card">
-      <div class="neo-kpi-label">Alert velocity</div>
-      <div class="neo-kpi-value">{{ totalAlerts }} alerts</div>
-      <div class="neo-kpi-meta">Rolling window from SQL + Redis</div>
+      <div class="neo-kpi-label">Active sessions</div>
+      <div class="neo-kpi-value">{{ activeSessions }}</div>
+      <div class="neo-kpi-meta">Current Redis session buffers</div>
     </div>
     <div class="neo-kpi-card">
-      <div class="neo-kpi-label">AI readiness</div>
-      <div class="neo-kpi-value">{{ explainedCount }} explained</div>
-      <div class="neo-kpi-meta">Gemini summaries cached for speed</div>
+      <div class="neo-kpi-label">Events per minute</div>
+      <div class="neo-kpi-value">{{ eventsPerMinute }}</div>
+      <div class="neo-kpi-meta">Rolling 60s window</div>
     </div>
     <div class="neo-kpi-card">
-      <div class="neo-kpi-label">Model guardrails</div>
-      <div class="neo-kpi-value">{{ thresholdCoverage }}%</div>
-      <div class="neo-kpi-meta">Alerts above configured threshold</div>
+      <div class="neo-kpi-label">Anomaly alert rate</div>
+      <div class="neo-kpi-value">{{ anomalyRate }}</div>
+      <div class="neo-kpi-meta">Last hour snapshot</div>
     </div>
     <div class="neo-kpi-card">
-      <div class="neo-kpi-label">Investigations</div>
-      <div class="neo-kpi-value">{{ historyCount }} events</div>
-      <div class="neo-kpi-meta">Last pulled audit timeline</div>
+      <div class="neo-kpi-label">KO rate</div>
+      <div class="neo-kpi-value">{{ koRate }}</div>
+      <div class="neo-kpi-meta">Last 15m window</div>
     </div>
   </section>
 </template>
@@ -26,9 +26,9 @@
 <script setup lang="ts">
 // KPI values rendered in the summary strip.
 defineProps<{
-  totalAlerts: number;
-  explainedCount: number;
-  thresholdCoverage: number;
-  historyCount: number;
+  activeSessions: string;
+  eventsPerMinute: string;
+  anomalyRate: string;
+  koRate: string;
 }>();
 </script>

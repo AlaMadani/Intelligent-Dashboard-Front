@@ -2,26 +2,26 @@
   <section id="overview" class="neo-section neo-hero">
     <div class="neo-hero-content">
       <div class="neo-hero-copy">
-        <div class="neo-kicker">Security Operations Center</div>
-        <h1 class="neo-hero-title">Signal, context, and response in one cockpit.</h1>
+        <div class="neo-kicker">Behavior Intelligence</div>
+        <h1 class="neo-hero-title">Operational clarity for insured behavior and risk.</h1>
         <p class="neo-hero-subtitle">
-          Unified anomaly monitoring, live audit trails, and explainable AI for rapid decisions.
-          Built to evolve into full behavioral analytics across your monitored systems.
+          Session analytics, anomaly detection, and live telemetry from the data-processor pipeline.
+          Track user risk, spot spikes, and keep response teams aligned.
         </p>
         <div class="neo-hero-actions">
           <q-btn
             color="primary"
             unelevated
-            label="Review live alerts"
-            icon="bolt"
-            @click="emit('navigate', 'alerts')"
+            label="Review anomalies"
+            icon="warning"
+            @click="emit('navigate', 'anomalies')"
           />
           <q-btn
             outline
             color="primary"
-            label="Open investigations"
-            icon="manage_search"
-            @click="emit('navigate', 'investigation')"
+            label="Response workbench"
+            icon="hub"
+            @click="emit('navigate', 'workbench')"
           />
         </div>
       </div>
@@ -32,24 +32,26 @@
         </div>
         <div class="neo-panel-body">
           <div class="neo-panel-metric">
-            <div class="neo-panel-value">{{ totalAlerts }}</div>
-            <div class="neo-panel-label">Total alerts</div>
+            <div class="neo-panel-value">{{ totalSessions }}</div>
+            <div class="neo-panel-label">Total sessions</div>
           </div>
           <div class="neo-panel-metric">
-            <div class="neo-panel-value">{{ highRiskCount }}</div>
-            <div class="neo-panel-label">High risk</div>
+            <div class="neo-panel-value">{{ anomalousSessions }}</div>
+            <div class="neo-panel-label">Anomalous sessions</div>
           </div>
           <div class="neo-panel-metric">
-            <div class="neo-panel-value">{{ uniqueUsers }}</div>
-            <div class="neo-panel-label">Impacted users</div>
+            <div class="neo-panel-value">{{ totalAnomalies }}</div>
+            <div class="neo-panel-label">Anomaly events</div>
           </div>
           <div class="neo-panel-metric">
-            <div class="neo-panel-value">{{ avgScore }}</div>
-            <div class="neo-panel-label">Avg anomaly</div>
+            <div class="neo-panel-value">{{ avgSessionDuration }}</div>
+            <div class="neo-panel-label">Avg session</div>
           </div>
         </div>
         <div class="neo-panel-footer">
-          <div class="neo-panel-note">Redis investigation window stays live for fast triage.</div>
+          <div class="neo-panel-note">
+            Live stats refresh from Redis every minute and anomaly alerts stream from Kafka.
+          </div>
         </div>
       </div>
     </div>
@@ -59,10 +61,10 @@
 <script setup lang="ts">
 // Snapshot metrics for the hero panel.
 defineProps<{
-  totalAlerts: number;
-  highRiskCount: number;
-  uniqueUsers: number;
-  avgScore: string;
+  totalSessions: number;
+  anomalousSessions: number;
+  totalAnomalies: number;
+  avgSessionDuration: string;
 }>();
 
 // Navigation shortcuts to page sections.
