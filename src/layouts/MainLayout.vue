@@ -2,29 +2,36 @@
   <q-layout view="lHh Lpr lFf">
     <q-header class="neo-header" elevated>
       <q-toolbar class="neo-toolbar">
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          class="neo-menu-btn"
-          @click="toggleLeftDrawer"
-        />
+        <div class="neo-toolbar-start">
+          <q-btn
+            flat
+            dense
+            round
+            icon="menu"
+            aria-label="Toggle navigation"
+            class="neo-menu-btn"
+            @click="toggleLeftDrawer"
+          />
 
-        <q-toolbar-title>
-          <div class="neo-title">
-            <span class="neo-brand-noveo">Noveo</span>
-            <span class="neo-brand-care">Care</span>
-            <span class="neo-brand-soc">Insights</span>
+          <q-toolbar-title>
+            <div class="neo-title">
+              <span class="neo-brand-noveo">Noveo</span>
+              <span class="neo-brand-care">Care</span>
+              <span class="neo-brand-soc">Insights</span>
+            </div>
+            <div class="neo-subtitle">Behavior intelligence cockpit for live session operations</div>
+          </q-toolbar-title>
+        </div>
+
+        <div class="neo-toolbar-status">
+          <div class="neo-top-pill">
+            <span class="neo-top-pill-dot"></span>
+            Live telemetry
           </div>
-          <div class="neo-subtitle">Event-Driven Intelligence Console</div>
-        </q-toolbar-title>
+          <div class="neo-top-pill neo-top-pill--soft">Redis + Kafka + AI context</div>
+        </div>
 
         <div class="neo-toolbar-meta">
-          <q-chip dense color="positive" text-color="white" icon="sensors">Live</q-chip>
-          <q-chip dense color="secondary" text-color="white" icon="verified_user">Entra ID</q-chip>
-
           <q-btn
             flat
             dense
@@ -54,6 +61,7 @@
           <q-btn
             flat
             dense
+            round
             icon="account_circle"
             aria-label="Profile"
             class="neo-avatar-btn"
@@ -62,40 +70,62 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="neo-drawer">
-      <q-list class="neo-nav">
-        <q-item-label header class="neo-nav-header">Command</q-item-label>
+    <q-drawer v-model="leftDrawerOpen" show-if-above bordered :width="300" class="neo-drawer">
+      <div class="neo-drawer-shell">
+        <div class="neo-drawer-brand">
+          <div class="neo-drawer-kicker">Command deck</div>
+          <div class="neo-drawer-title">Navigate the live surfaces</div>
+          <div class="neo-drawer-copy">
+            Keep the stream, anomaly triage, session traces, and user intelligence aligned in one
+            operational flow.
+          </div>
+        </div>
 
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('overview')">
-          <q-item-section avatar><q-icon name="dashboard" /></q-item-section>
-          <q-item-section>Overview</q-item-section>
-        </q-item>
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('anomalies')">
-          <q-item-section avatar><q-icon name="warning" /></q-item-section>
-          <q-item-section>Anomalies</q-item-section>
-        </q-item>
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('workbench')">
-          <q-item-section avatar><q-icon name="hub" /></q-item-section>
-          <q-item-section>Workbench</q-item-section>
-        </q-item>
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('sessions')">
-          <q-item-section avatar><q-icon name="analytics" /></q-item-section>
-          <q-item-section>Sessions</q-item-section>
-        </q-item>
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('insights')">
-          <q-item-section avatar><q-icon name="manage_search" /></q-item-section>
-          <q-item-section>User insights</q-item-section>
-        </q-item>
-        <q-item clickable class="neo-nav-item" @click="scrollToSection('analytics')">
-          <q-item-section avatar><q-icon name="insights" /></q-item-section>
-          <q-item-section>Analytics</q-item-section>
-        </q-item>
-      </q-list>
+        <q-list class="neo-nav">
+          <q-item-label header class="neo-nav-header">Control surfaces</q-item-label>
 
-      <div class="neo-drawer-footer">
-        <div class="neo-drawer-label">Next up</div>
-        <div class="neo-drawer-note">
-          Live stats and trend forecasts update automatically from the data-processor pipeline.
+          <q-item
+            v-for="item in navigation"
+            :key="item.id"
+            clickable
+            class="neo-nav-item"
+            :active="isActive(item.id)"
+            active-class="neo-nav-item--active"
+            @click="navigateTo(item.id)"
+          >
+            <q-item-section avatar>
+              <div class="neo-nav-icon">
+                <q-icon :name="item.icon" />
+              </div>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ item.label }}</q-item-label>
+              <q-item-label caption>{{ item.caption }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+
+        <div class="neo-drawer-footer">
+          <div class="neo-drawer-label">Operational note</div>
+          <div class="neo-drawer-note">
+            The sidebar stays open when you move between pages so the command context remains
+            visible while you investigate.
+          </div>
+
+          <div class="neo-drawer-metrics">
+            <div class="neo-drawer-metric">
+              <span>Refresh</span>
+              <strong>60s</strong>
+            </div>
+            <div class="neo-drawer-metric">
+              <span>Mode</span>
+              <strong>Live</strong>
+            </div>
+            <div class="neo-drawer-metric">
+              <span>Focus</span>
+              <strong>Risk ops</strong>
+            </div>
+          </div>
         </div>
       </div>
     </q-drawer>
@@ -107,34 +137,82 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-const leftDrawerOpen = ref(false);
+interface NavigationItem {
+  id: string;
+  label: string;
+  caption: string;
+  icon: string;
+}
+
+const leftDrawerOpen = ref(typeof window === 'undefined' ? true : window.innerWidth >= 1100);
 const router = useRouter();
 const route = useRoute();
 
-// Toggle the navigation drawer on small screens.
+const navigation: NavigationItem[] = [
+  {
+    id: 'overview',
+    label: 'Overview',
+    caption: 'Executive signal board',
+    icon: 'dashboard',
+  },
+  {
+    id: 'anomalies',
+    label: 'Anomalies',
+    caption: 'Investigate flagged events',
+    icon: 'warning',
+  },
+  {
+    id: 'workbench',
+    label: 'Workbench',
+    caption: 'Review live stream context',
+    icon: 'hub',
+  },
+  {
+    id: 'sessions',
+    label: 'Sessions',
+    caption: 'Inspect behavior traces',
+    icon: 'analytics',
+  },
+  {
+    id: 'insights',
+    label: 'User insights',
+    caption: 'Load insured risk context',
+    icon: 'manage_search',
+  },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    caption: 'Trend and geo graphics',
+    icon: 'insights',
+  },
+];
+
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
 
-// Navigate to a section, accounting for the sticky header offset.
-const scrollToSection = async (id: string) => {
-  if (route.path !== '/') {
-    await router.push('/');
+function pathFor(id: string) {
+  return id === 'overview' ? '/' : `/${id}`;
+}
+
+function isActive(id: string) {
+  const targetPath = pathFor(id);
+  if (id === 'overview') {
+    return route.path === '/' || route.path === '/overview';
   }
-  await nextTick();
-  const target = document.getElementById(id);
-  if (target) {
-    const header = document.querySelector<HTMLElement>('.neo-header');
-    const headerOffset = header?.offsetHeight ?? 0;
-    const offsetTop = target.getBoundingClientRect().top + window.scrollY - headerOffset - 12;
-    window.scrollTo({ top: Math.max(0, offsetTop), behavior: 'smooth' });
+  return route.path === targetPath;
+}
+
+const navigateTo = async (id: string) => {
+  const path = pathFor(id);
+  if (route.path !== path) {
+    await router.push(path);
   }
 };
 
-// External tooling shortcuts.
 const openGrafana = () => {
   window.open('http://localhost:3000/dashboards', '_blank', 'noopener');
 };

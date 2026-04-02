@@ -4,7 +4,15 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+    children: [
+      { path: '', component: () => import('pages/OverviewPage.vue') },
+      { path: 'overview', component: () => import('pages/OverviewPage.vue') },
+      { path: 'anomalies', component: () => import('pages/AnomaliesPage.vue') },
+      { path: 'workbench', component: () => import('pages/WorkbenchPage.vue') },
+      { path: 'sessions', component: () => import('pages/SessionsPage.vue') },
+      { path: 'insights', component: () => import('pages/InsightsPage.vue') },
+      { path: 'analytics', component: () => import('pages/AnalyticsPage.vue') },
+    ],
   },
 
   // Catch-all for unknown routes.

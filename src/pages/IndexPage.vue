@@ -41,6 +41,7 @@
       :stream-connected="streamConnected"
       :stream-error="streamError"
       :session-analysis="selectedSession"
+      :session-analysis-loading="false"
       :risk-profile="riskProfile"
       :next-actions="nextActions"
       :active-anomaly="activeAnomaly"

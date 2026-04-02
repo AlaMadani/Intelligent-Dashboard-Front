@@ -4,7 +4,8 @@
       <div>
         <div class="neo-section-title">Response workbench</div>
         <div class="neo-section-subtitle">
-          Stream live alerts from Kafka, inspect anomaly context, and request AI explanations on demand.
+          Stream live alerts from Kafka, inspect anomaly context, and request AI explanations on
+          demand.
         </div>
       </div>
     </div>
@@ -14,7 +15,7 @@
         <div class="neo-panel-header">
           <div>
             <div class="neo-panel-title">Live anomaly wire</div>
-            <div class="neo-panel-subtitle">Kafka alerts relayed by the API-service</div>
+            <div class="neo-panel-subtitle">Kafka alerts relayed by the API service</div>
           </div>
           <div class="neo-live-pill" :class="{ 'is-loading': !streamConnected }">
             <span class="neo-live-dot"></span>
@@ -41,12 +42,8 @@
               </q-badge>
               <span class="neo-stream-time">{{ formatDate(alert.detectedAt) }}</span>
             </div>
-            <div class="neo-stream-title">
-              {{ alert.anomalyType || 'UNKNOWN' }}
-            </div>
-            <div class="neo-stream-meta">
-              {{ alert.insuredId }} · {{ alert.sessionId }}
-            </div>
+            <div class="neo-stream-title">{{ alert.anomalyType || 'UNKNOWN' }}</div>
+            <div class="neo-stream-meta">{{ alert.insuredId }} / {{ alert.sessionId }}</div>
           </button>
         </div>
       </div>
@@ -55,7 +52,9 @@
         <div class="neo-panel-header">
           <div>
             <div class="neo-panel-title">Selected anomaly context</div>
-            <div class="neo-panel-subtitle">Session, risk, next-action, and raw payload signals</div>
+            <div class="neo-panel-subtitle">
+              Session, risk, next action, and raw payload signals.
+            </div>
           </div>
         </div>
 
@@ -74,17 +73,17 @@
             </div>
             <div>
               <div class="neo-explanation-label">Type</div>
-              <div class="neo-explanation-value">{{ selectedEvent.anomalyType || 'UNKNOWN' }}</div>
+              <div class="neo-explanation-value">{{ readableText(selectedEvent.anomalyType) }}</div>
             </div>
             <div>
               <div class="neo-explanation-label">Score</div>
-              <div class="neo-explanation-value">
-                {{ formatScore(selectedEvent.anomalyScore) }}
-              </div>
+              <div class="neo-explanation-value">{{ readableScore(selectedEvent.anomalyScore) }}</div>
             </div>
             <div>
               <div class="neo-explanation-label">Type confidence</div>
-              <div class="neo-explanation-value">{{ formatPercent(selectedEvent.typeConfidence, 1) }}</div>
+              <div class="neo-explanation-value">
+                {{ readablePercent(selectedEvent.typeConfidence) }}
+              </div>
             </div>
             <div>
               <div class="neo-explanation-label">Event</div>
@@ -95,79 +94,87 @@
           <div class="neo-context-grid">
             <div class="neo-context-card">
               <div class="neo-context-title">Session</div>
+              <div v-if="sessionAnalysisLoading" class="neo-context-note">
+                Loading matching session trace for this anomaly.
+              </div>
+              <div v-else-if="!sessionAnalysis" class="neo-context-note">
+                No matching session trace was returned by the API. Event-level fallback values are
+                shown where possible.
+              </div>
+
               <div class="neo-context-line">
                 <span>Status</span>
-                <strong>{{ sessionAnalysis?.isAnomaly ? 'Anomalous' : 'Observed' }}</strong>
+                <strong>{{ sessionStatus }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Started</span>
-                <strong>{{ formatDate(sessionAnalysis?.startTime) }}</strong>
+                <strong>{{ sessionStarted }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Ended</span>
-                <strong>{{ formatDate(sessionAnalysis?.endTime) }}</strong>
+                <strong>{{ sessionEnded }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Duration</span>
-                <strong>{{ formatDurationSeconds(sessionAnalysis?.sessionDurationSeconds) }}</strong>
+                <strong>{{ sessionDuration }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>KO rate</span>
-                <strong>{{ formatPercent(sessionAnalysis?.koRate, 1) }}</strong>
+                <strong>{{ sessionKoRate }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Rule type</span>
-                <strong>{{ sessionAnalysis?.ruleType || selectedEvent.ruleType || 'n/a' }}</strong>
+                <strong>{{ sessionRuleType }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Actions</span>
-                <strong>{{ sessionAnalysis?.sessionLength ?? sessionAnalysis?.uniqueActionCount ?? 'n/a' }}</strong>
+                <strong>{{ sessionActionCount }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Unique actions</span>
-                <strong>{{ sessionAnalysis?.uniqueActionCount ?? 'n/a' }}</strong>
+                <strong>{{ sessionUniqueActions }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Mean Δ</span>
-                <strong>{{ formatDurationSeconds(sessionAnalysis?.meanDeltaSeconds) }}</strong>
+                <span>Mean delta</span>
+                <strong>{{ sessionMeanDelta }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Action diversity</span>
-                <strong>{{ formatScore(sessionAnalysis?.actionDiversity) }}</strong>
+                <strong>{{ sessionActionDiversity }}</strong>
               </div>
             </div>
 
             <div class="neo-context-card">
               <div class="neo-context-title">Risk profile</div>
+              <div v-if="!riskProfile" class="neo-context-note">
+                The risk profile endpoint returned no profile for this insured.
+              </div>
               <div class="neo-context-line">
                 <span>Risk tier</span>
-                <strong>{{ riskProfile?.riskTier || 'n/a' }}</strong>
+                <strong>{{ riskTier }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>30d anomaly rate</span>
-                <strong>{{ formatPercent(riskProfile?.anomalyRate30d, 1) }}</strong>
+                <strong>{{ riskAnomalyRate }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Clean streak</span>
-                <strong>{{ riskProfile?.consecutiveCleanSessions ?? 0 }}</strong>
+                <strong>{{ riskCleanStreak }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Last anomaly</span>
-                <strong>{{ riskProfile?.lastAnomalyType || 'n/a' }}</strong>
+                <strong>{{ riskLastAnomaly }}</strong>
               </div>
             </div>
 
             <div class="neo-context-card">
               <div class="neo-context-title">Predicted next actions</div>
-              <div
-                v-if="!(nextActions?.top3Actions?.length || sessionAnalysis?.top3NextActions?.length)"
-                class="neo-context-empty"
-              >
-                No model output available.
+              <div v-if="!displayedNextActions.length" class="neo-context-empty">
+                No prediction payload was returned for this insured or session.
               </div>
               <div v-else class="neo-chip-row">
                 <q-chip
-                  v-for="action in (nextActions?.top3Actions ?? sessionAnalysis?.top3NextActions)"
+                  v-for="action in displayedNextActions"
                   :key="action"
                   dense
                   color="secondary"
@@ -180,21 +187,25 @@
 
             <div class="neo-context-card">
               <div class="neo-context-title">Active anomaly</div>
+              <div v-if="!activeAnomalyContext" class="neo-context-note">
+                No separate active anomaly payload was returned. The selected anomaly is shown as the
+                fallback.
+              </div>
               <div class="neo-context-line">
                 <span>Tier</span>
-                <strong>{{ activeAnomaly?.anomalyTier || 'none' }}</strong>
+                <strong>{{ activeTier }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Type</span>
-                <strong>{{ activeAnomaly?.anomalyType || 'n/a' }}</strong>
+                <strong>{{ activeType }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Detected</span>
-                <strong>{{ formatDate(activeAnomaly?.detectedAt) }}</strong>
+                <strong>{{ activeDetected }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Event time</span>
-                <strong>{{ formatDate(selectedEvent.eventTime) }}</strong>
+                <strong>{{ activeEventTime }}</strong>
               </div>
             </div>
           </div>
@@ -209,6 +220,7 @@
           >
             <pre class="neo-json-block">{{ formatJson(selectedEvent.eventJson) }}</pre>
           </q-expansion-item>
+
           <q-expansion-item
             v-if="sessionAnalysis?.actionCounts && Object.keys(sessionAnalysis.actionCounts).length"
             dense
@@ -227,7 +239,7 @@
           <div>
             <div class="neo-panel-title">AI explanation</div>
             <div class="neo-panel-subtitle">
-              Prompted with anomaly, session, risk, next-action, and live-stats context
+              Prompted with anomaly, session, risk, next action, and live stats context.
             </div>
           </div>
           <q-btn
@@ -275,10 +287,7 @@
             </div>
           </div>
 
-          <div
-            class="neo-explanation-body"
-            v-html="formattedExplanationHtml"
-          ></div>
+          <div class="neo-explanation-body" v-html="formattedExplanationHtml"></div>
         </div>
       </div>
     </div>
@@ -309,6 +318,7 @@ const props = defineProps<{
   streamConnected: boolean;
   streamError: string;
   sessionAnalysis: SessionAnalysisDto | null;
+  sessionAnalysisLoading: boolean;
   riskProfile: UserRiskProfileDto | null;
   nextActions: NextActionPredictionDto | null;
   activeAnomaly: AnomalyAlertDto | null;
@@ -333,6 +343,99 @@ const tierColor = (tier: string | null | undefined) => {
   if (tier === 'TIER1') return 'primary';
   return 'grey';
 };
+
+const readableText = (value: string | null | undefined, fallback = 'Not returned') =>
+  value && value.trim().length > 0 ? value : fallback;
+
+const readableDate = (value: string | null | undefined, fallback = 'Not returned') =>
+  value ? formatDate(value) : fallback;
+
+const readablePercent = (value: number | null | undefined, fallback = 'Not returned') =>
+  value == null || Number.isNaN(value) ? fallback : formatPercent(value, 1);
+
+const readableScore = (value: number | null | undefined, fallback = 'Not returned') =>
+  value == null || Number.isNaN(value) ? fallback : formatScore(value);
+
+const readableDuration = (value: number | null | undefined, fallback = 'Not returned') =>
+  value == null || Number.isNaN(value) ? fallback : formatDurationSeconds(value);
+
+const readableNumber = (value: number | null | undefined, fallback = 'Not returned') =>
+  value == null || Number.isNaN(value) ? fallback : value.toLocaleString('en-GB');
+
+const sessionStatus = computed(() => {
+  if (props.sessionAnalysis?.isAnomaly != null) {
+    return props.sessionAnalysis.isAnomaly ? 'Anomalous' : 'Observed';
+  }
+  return props.selectedEvent ? 'Anomalous' : 'Not returned';
+});
+
+const sessionStarted = computed(() =>
+  readableDate(
+    props.sessionAnalysis?.startTime ?? props.selectedEvent?.eventTime ?? props.selectedEvent?.detectedAt
+  )
+);
+
+const sessionEnded = computed(() =>
+  readableDate(
+    props.sessionAnalysis?.endTime ?? props.selectedEvent?.detectedAt ?? props.selectedEvent?.eventTime
+  )
+);
+
+const sessionDuration = computed(() =>
+  readableDuration(props.sessionAnalysis?.sessionDurationSeconds)
+);
+
+const sessionKoRate = computed(() => readablePercent(props.sessionAnalysis?.koRate));
+
+const sessionRuleType = computed(() =>
+  readableText(props.sessionAnalysis?.ruleType ?? props.selectedEvent?.ruleType)
+);
+
+const sessionActionCount = computed(() =>
+  readableNumber(props.sessionAnalysis?.sessionLength ?? props.sessionAnalysis?.uniqueActionCount)
+);
+
+const sessionUniqueActions = computed(() =>
+  readableNumber(props.sessionAnalysis?.uniqueActionCount)
+);
+
+const sessionMeanDelta = computed(() =>
+  readableDuration(props.sessionAnalysis?.meanDeltaSeconds)
+);
+
+const sessionActionDiversity = computed(() =>
+  readableScore(props.sessionAnalysis?.actionDiversity)
+);
+
+const riskTier = computed(() =>
+  readableText(
+    props.riskProfile?.riskTier ??
+      (props.selectedEvent?.anomalyTier ? `Investigate ${props.selectedEvent.anomalyTier}` : null)
+  )
+);
+
+const riskAnomalyRate = computed(() => readablePercent(props.riskProfile?.anomalyRate30d));
+
+const riskCleanStreak = computed(() =>
+  readableNumber(props.riskProfile?.consecutiveCleanSessions)
+);
+
+const riskLastAnomaly = computed(() =>
+  readableText(props.riskProfile?.lastAnomalyType ?? props.selectedEvent?.anomalyType)
+);
+
+const displayedNextActions = computed(() => {
+  const nextActionPayload = props.nextActions?.top3Actions ?? [];
+  if (nextActionPayload.length) return nextActionPayload;
+  return props.sessionAnalysis?.top3NextActions ?? [];
+});
+
+const activeAnomalyContext = computed(() => props.activeAnomaly ?? props.selectedEvent);
+
+const activeTier = computed(() => readableText(activeAnomalyContext.value?.anomalyTier, 'None'));
+const activeType = computed(() => readableText(activeAnomalyContext.value?.anomalyType));
+const activeDetected = computed(() => readableDate(activeAnomalyContext.value?.detectedAt));
+const activeEventTime = computed(() => readableDate(activeAnomalyContext.value?.eventTime));
 
 const escapeHtml = (value: string) =>
   value
@@ -497,6 +600,13 @@ const formatJson = (value: string) => {
   margin-bottom: 10px;
 }
 
+.neo-context-note {
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--neo-ink-muted);
+}
+
 .neo-context-line {
   display: flex;
   justify-content: space-between;
@@ -507,6 +617,10 @@ const formatJson = (value: string) => {
 
 .neo-context-line span {
   color: var(--neo-ink-muted);
+}
+
+.neo-context-line strong {
+  text-align: right;
 }
 
 .neo-context-empty {
