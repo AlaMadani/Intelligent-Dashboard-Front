@@ -1,8 +1,10 @@
 // https://github.com/michael-ciniawsky/postcss-load-config
 
+// PostCSS configuration: add vendor prefixes for the browser matrix targeted by Quasar.
 import autoprefixer from 'autoprefixer';
 // import rtlcss from 'postcss-rtlcss'
 
+// The plugin list stays intentionally small because the project only needs autoprefixing today.
 export default {
   plugins: [
     // https://github.com/postcss/autoprefixer

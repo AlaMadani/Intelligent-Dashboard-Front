@@ -1,4 +1,5 @@
 <template>
+  <!-- Anomaly table: search, sort, and select confirmed anomaly events. -->
   <section id="anomalies" class="neo-section neo-alerts">
     <div class="neo-section-header">
       <div>
@@ -8,7 +9,13 @@
         </div>
       </div>
       <div class="neo-section-actions">
-        <q-input dense outlined v-model="searchModel" placeholder="Search anomalies" class="neo-search">
+        <q-input
+          dense
+          outlined
+          v-model="searchModel"
+          placeholder="Search anomalies"
+          class="neo-search"
+        >
           <template #append>
             <q-icon name="search" />
           </template>
@@ -20,6 +27,7 @@
       </div>
     </div>
 
+    <!-- The table doubles as the triage list for the workbench selection state. -->
     <q-table
       flat
       class="neo-table"
@@ -61,6 +69,7 @@
       </template>
     </q-table>
 
+    <!-- Surface API-loading issues below the table without hiding the existing data. -->
     <q-banner v-if="error" class="neo-banner" dense>
       {{ error }}
     </q-banner>
@@ -68,6 +77,7 @@
 </template>
 
 <script setup lang="ts">
+// This component keeps the anomaly grid presentational while delegating state upward.
 import { computed } from 'vue';
 import type { QTableColumn } from 'quasar';
 import type { AnomalyEventDto } from 'src/types/analytics';
@@ -86,11 +96,13 @@ const emit = defineEmits<{
   (event: 'select', row: AnomalyEventDto): void;
 }>();
 
+// Mirror the search prop through a computed setter so the table updates parent state.
 const searchModel = computed({
   get: () => props.search,
   set: (value: string) => emit('update:search', value),
 });
 
+// Local helpers format tiers and active-row styling for the anomaly grid.
 const tierColor = (tier: string) => {
   if (tier === 'TIER3') return 'negative';
   if (tier === 'TIER2') return 'warning';
@@ -110,10 +122,17 @@ const onRowClick = (_event: Event, row: AnomalyEventDto) => {
   emit('select', row);
 };
 
+// Column metadata defines the anomaly table structure and sorting behavior.
 const columns: QTableColumn<AnomalyEventDto>[] = [
   { name: 'anomalyTier', label: 'Tier', field: 'anomalyTier', align: 'left', sortable: true },
   { name: 'anomalyType', label: 'Type', field: 'anomalyType', align: 'left', sortable: true },
-  { name: 'typeConfidence', label: 'Type confidence', field: 'typeConfidence', align: 'left', sortable: true },
+  {
+    name: 'typeConfidence',
+    label: 'Type confidence',
+    field: 'typeConfidence',
+    align: 'left',
+    sortable: true,
+  },
   { name: 'insuredId', label: 'Insured', field: 'insuredId', align: 'left', sortable: true },
   { name: 'sessionId', label: 'Session', field: 'sessionId', align: 'left' },
   { name: 'eventId', label: 'Event', field: 'eventId', align: 'left' },

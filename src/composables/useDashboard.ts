@@ -1,3 +1,4 @@
+// Shared dashboard composable: centralize data fetching, live streams, and cross-page selection state.
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue';
 import {
   getActiveAnomaly,
@@ -23,7 +24,9 @@ import type {
 import type { PaginationMeta } from 'src/types/api';
 import { formatDurationSeconds, formatPercent } from 'src/utils/format';
 
+// Factory creates the singleton dashboard store shared across the routed dashboard pages.
 const createDashboardStore = () => {
+  // Core analytics datasets and pagination metadata backing the overview, tables, and workbench.
   const sessions = ref<SessionAnalysisDto[]>([]);
   const anomalies = ref<AnomalyEventDto[]>([]);
   const streamAlerts = ref<AnomalyEventDto[]>([]);
@@ -31,6 +34,7 @@ const createDashboardStore = () => {
   const anomalyMeta = ref<PaginationMeta | null>(null);
   const anomalousSessionsTotal = ref(0);
 
+  // Loading and error flags for analytics and stats requests.
   const analyticsLoading = ref(false);
   const analyticsError = ref('');
 
@@ -41,6 +45,7 @@ const createDashboardStore = () => {
   const anomalySearch = ref('');
   const sessionSearch = ref('');
 
+  // User-focused context for insured lookup, risk enrichment, and active anomaly details.
   const insuredIdInput = ref('');
   const riskProfile = ref<UserRiskProfileDto | null>(null);
   const nextActions = ref<NextActionPredictionDto | null>(null);
@@ -55,6 +60,7 @@ const createDashboardStore = () => {
   const explanationLoading = ref(false);
   const explanationError = ref('');
 
+  // Live stream connection state and ephemeral UI feedback.
   const latestStreamAlert = ref<AnomalyEventDto | null>(null);
   const streamConnected = ref(false);
   const streamError = ref('');
@@ -66,19 +72,16 @@ const createDashboardStore = () => {
   const eventsSinceLoad = ref(0);
   const lastUpdated = ref<Date | null>(null);
 
-  const totalSessions = computed(
-    () => sessionMeta.value?.totalElements ?? sessions.value.length
-  );
-  const totalAnomalies = computed(
-    () => anomalyMeta.value?.totalElements ?? anomalies.value.length
-  );
+  // Summary metrics derived from the loaded sessions, anomalies, and live stats payloads.
+  const totalSessions = computed(() => sessionMeta.value?.totalElements ?? sessions.value.length);
+  const totalAnomalies = computed(() => anomalyMeta.value?.totalElements ?? anomalies.value.length);
   const anomalousSessions = computed(() => anomalousSessionsTotal.value);
 
   const avgSessionDuration = computed(() => {
     if (!sessions.value.length) return 'n/a';
     const total = sessions.value.reduce(
       (acc, session) => acc + (session.sessionDurationSeconds ?? 0),
-      0
+      0,
     );
     return formatDurationSeconds(total / sessions.value.length);
   });
@@ -90,16 +93,15 @@ const createDashboardStore = () => {
   });
 
   const activeSessions = computed(() => numberOrNa(liveStatsPayload.value?.active_sessions));
-  const eventsPerMinute = computed(() =>
-    numberOrNa(liveStatsPayload.value?.events_per_minute)
-  );
+  const eventsPerMinute = computed(() => numberOrNa(liveStatsPayload.value?.events_per_minute));
   const anomalyRate = computed(() =>
-    formatPercent(toNumber(liveStatsPayload.value?.anomaly_alert_rate_last_hour), 1)
+    formatPercent(toNumber(liveStatsPayload.value?.anomaly_alert_rate_last_hour), 1),
   );
   const koRate = computed(() =>
-    formatPercent(toNumber(liveStatsPayload.value?.ko_rate_last_15m), 1)
+    formatPercent(toNumber(liveStatsPayload.value?.ko_rate_last_15m), 1),
   );
 
+  // Selection helpers resolve the active anomaly and its matching session detail.
   const selectedAnomaly = computed(() => {
     const key = selectedAnomalyKey.value;
     if (!key) return null;
@@ -117,22 +119,23 @@ const createDashboardStore = () => {
       selectedSessionDetail.value ??
       sessions.value.find(
         (session) =>
-          session.insuredId === anomaly.insuredId && session.sessionId === anomaly.sessionId
-      ) ?? null
+          session.insuredId === anomaly.insuredId && session.sessionId === anomaly.sessionId,
+      ) ??
+      null
     );
   });
 
+  // Initial analytics loaders fetch tables and aggregate counts from the REST API.
   const loadAnalytics = async () => {
     analyticsLoading.value = true;
     analyticsError.value = '';
 
     try {
-      const [sessionsResponse, anomaliesResponse, anomalousSessionsResponse] =
-        await Promise.all([
-          listSessions({ page: 0, size: 40 }),
-          listAnomalyEvents({ page: 0, size: 40 }),
-          listSessions({ page: 0, size: 1, isAnomaly: true }),
-        ]);
+      const [sessionsResponse, anomaliesResponse, anomalousSessionsResponse] = await Promise.all([
+        listSessions({ page: 0, size: 40 }),
+        listAnomalyEvents({ page: 0, size: 40 }),
+        listSessions({ page: 0, size: 1, isAnomaly: true }),
+      ]);
 
       sessions.value = sessionsResponse.data ?? [];
       sessionMeta.value = sessionsResponse.meta ?? null;
@@ -153,14 +156,13 @@ const createDashboardStore = () => {
     }
   };
 
+  // Stats loader hydrates the live overview counters and trend forecast panel.
   const loadStats = async () => {
     statsError.value = '';
 
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10);
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
       const [liveResponse, trendResponse] = await Promise.all([
         getLiveStats(today),
@@ -174,6 +176,7 @@ const createDashboardStore = () => {
     }
   };
 
+  // User lookup loader enriches the currently selected or searched insured.
   const loadUserInsights = async () => {
     const insuredId = insuredIdInput.value.trim();
     if (!insuredId) {
@@ -186,9 +189,15 @@ const createDashboardStore = () => {
 
     try {
       const [risk, next, active] = await Promise.all([
-        getRiskProfile(insuredId).then((response) => response.data).catch(() => null),
-        getNextActions(insuredId).then((response) => response.data).catch(() => null),
-        getActiveAnomaly(insuredId).then((response) => response.data).catch(() => null),
+        getRiskProfile(insuredId)
+          .then((response) => response.data)
+          .catch(() => null),
+        getNextActions(insuredId)
+          .then((response) => response.data)
+          .catch(() => null),
+        getActiveAnomaly(insuredId)
+          .then((response) => response.data)
+          .catch(() => null),
       ]);
 
       riskProfile.value = risk;
@@ -203,11 +212,11 @@ const createDashboardStore = () => {
     }
   };
 
+  // When an anomaly is selected, fetch the matching session if it is not already cached locally.
   const loadSelectedSession = async (event: AnomalyEventDto) => {
     const existingSession =
       sessions.value.find(
-        (session) =>
-          session.insuredId === event.insuredId && session.sessionId === event.sessionId
+        (session) => session.insuredId === event.insuredId && session.sessionId === event.sessionId,
       ) ?? null;
 
     if (existingSession) {
@@ -246,6 +255,7 @@ const createDashboardStore = () => {
     }
   };
 
+  // Selection orchestration keeps the anomaly, insured lookup, and session context aligned.
   const selectAnomaly = async (event: AnomalyEventDto) => {
     const nextKey = anomalyKey(event);
     if (selectedAnomalyKey.value !== nextKey) {
@@ -259,6 +269,7 @@ const createDashboardStore = () => {
     await Promise.all([loadUserInsights(), loadSelectedSession(event)]);
   };
 
+  // AI explanation requests are only allowed for anomalies that already exist in persistent storage.
   const generateExplanation = async () => {
     const selected = selectedAnomaly.value;
     if (!selected || selected.id == null) {
@@ -283,6 +294,7 @@ const createDashboardStore = () => {
     }
   };
 
+  // Streaming helpers attach browser EventSource listeners for anomalies and live stats.
   const connectAnomalyStream = () => {
     closeAnomalyStream();
 
@@ -314,8 +326,7 @@ const createDashboardStore = () => {
 
     anomalyStream.onerror = () => {
       streamConnected.value = false;
-      streamError.value =
-        'Live anomaly stream interrupted. The browser will retry automatically.';
+      streamError.value = 'Live anomaly stream interrupted. The browser will retry automatically.';
     };
   };
 
@@ -356,6 +367,7 @@ const createDashboardStore = () => {
     liveStatsStream = null;
   };
 
+  // Streamed alerts are merged into memory and surfaced to the UI as a temporary toast.
   const handleStreamAlert = (event: AnomalyEventDto) => {
     streamAlerts.value = upsertNewest(streamAlerts.value, event, 8);
     anomalies.value = upsertNewest(anomalies.value, event, 40);
@@ -384,6 +396,7 @@ const createDashboardStore = () => {
     }, 8000);
   };
 
+  // Public lifecycle controls start background work once and tear it down safely when unused.
   const start = () => {
     if (started) return;
     started = true;
@@ -409,6 +422,7 @@ const createDashboardStore = () => {
     latestStreamAlert.value = null;
   };
 
+  // Expose reactive state and actions consumed by the routed dashboard pages.
   return {
     sessions,
     anomalies,
@@ -456,6 +470,7 @@ const createDashboardStore = () => {
   };
 };
 
+// Singleton bookkeeping keeps one shared store instance alive across multiple route consumers.
 type DashboardStore = ReturnType<typeof createDashboardStore>;
 type DashboardPublicApi = Omit<DashboardStore, 'start' | 'stop'>;
 
@@ -470,6 +485,7 @@ const getDashboardStore = () => {
   return dashboardStore;
 };
 
+// Helper utilities keep anomaly and session collections deduplicated and consistently formatted.
 const anomalyKey = (event: AnomalyEventDto) =>
   event.id != null
     ? `id:${event.id}`
@@ -489,11 +505,7 @@ const upsertNewest = (items: AnomalyEventDto[], event: AnomalyEventDto, limit: n
   return [event, ...next].slice(0, limit);
 };
 
-const upsertSession = (
-  items: SessionAnalysisDto[],
-  session: SessionAnalysisDto,
-  limit: number
-) => {
+const upsertSession = (items: SessionAnalysisDto[], session: SessionAnalysisDto, limit: number) => {
   const next = items.filter((item) => item.id !== session.id);
   return [session, ...next].slice(0, limit);
 };
@@ -512,9 +524,11 @@ const numberOrNa = (value: unknown) => {
   return parsed == null ? 'n/a' : parsed.toLocaleString('en-GB');
 };
 
+// Route consumers subscribe to the shared store and automatically manage start/stop lifecycles.
 export const useDashboard = (): DashboardPublicApi => {
   const store = getDashboardStore();
 
+  // Start streams when the first consumer mounts and stop only after the last one unmounts.
   onMounted(() => {
     activeConsumers += 1;
 

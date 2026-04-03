@@ -1,12 +1,15 @@
 // Theme tokens overriding Quasar defaults.
 
+// Brand palette used across the custom dashboard shell.
 $primary: #0f3d3e;
 $secondary: #d97706;
 $accent: #1f6f78;
 
+// Dark surfaces are reserved for hero and navigation-shell treatments.
 $dark: #132026;
 $dark-page: #0f1519;
 
+// Semantic colors align Quasar states with the dashboard visual identity.
 $positive: #1d9240;
 $negative: #c43c2a;
 $info: #3b82f6;

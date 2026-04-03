@@ -1,4 +1,5 @@
 <template>
+  <!-- User intelligence page: lookup insured context, predictions, and active anomaly status. -->
   <section id="insights" class="neo-section neo-investigation">
     <div class="neo-section-header">
       <div>
@@ -9,6 +10,7 @@
       </div>
     </div>
 
+    <!-- Three panels split the insured lookup, predicted actions, and active anomaly snapshot. -->
     <div class="neo-investigation-grid">
       <div class="neo-panel">
         <div class="neo-panel-header">
@@ -79,11 +81,15 @@
             </div>
             <div>
               <div class="neo-explanation-label">Most frequent action (30d)</div>
-              <div class="neo-explanation-value">{{ riskProfile.mostFrequentAction30d || 'n/a' }}</div>
+              <div class="neo-explanation-value">
+                {{ riskProfile.mostFrequentAction30d || 'n/a' }}
+              </div>
             </div>
             <div>
               <div class="neo-explanation-label">Avg session (30d)</div>
-              <div class="neo-explanation-value">{{ formatDurationSeconds(riskProfile.avgSessionDuration30d) }}</div>
+              <div class="neo-explanation-value">
+                {{ formatDurationSeconds(riskProfile.avgSessionDuration30d) }}
+              </div>
             </div>
           </div>
 
@@ -105,11 +111,7 @@
           No next-action predictions available.
         </div>
         <div v-else class="neo-analytics-list">
-          <div
-            v-for="action in nextActions.top3Actions"
-            :key="action"
-            class="neo-analytics-row"
-          >
+          <div v-for="action in nextActions.top3Actions" :key="action" class="neo-analytics-row">
             <span>{{ action }}</span>
           </div>
         </div>
@@ -123,9 +125,7 @@
           </div>
         </div>
 
-        <div v-if="!activeAnomaly" class="neo-placeholder">
-          No active anomaly for this insured.
-        </div>
+        <div v-if="!activeAnomaly" class="neo-placeholder">No active anomaly for this insured.</div>
         <div v-else class="neo-explanation">
           <div class="neo-explanation-meta">
             <div>
@@ -156,8 +156,13 @@
 </template>
 
 <script setup lang="ts">
+// Parent-managed state feeds the insured lookup while this component remains presentation-focused.
 import { computed } from 'vue';
-import type { AnomalyAlertDto, NextActionPredictionDto, UserRiskProfileDto } from 'src/types/analytics';
+import type {
+  AnomalyAlertDto,
+  NextActionPredictionDto,
+  UserRiskProfileDto,
+} from 'src/types/analytics';
 import { formatDate, formatPercent, formatScore, formatDurationSeconds } from 'src/utils/format';
 
 const props = defineProps<{
@@ -174,6 +179,7 @@ const emit = defineEmits<{
   (event: 'load'): void;
 }>();
 
+// Computed setter keeps the insured ID input synchronized with the shared store.
 const insuredModel = computed({
   get: () => props.insuredId,
   set: (value: string) => emit('update:insuredId', value),

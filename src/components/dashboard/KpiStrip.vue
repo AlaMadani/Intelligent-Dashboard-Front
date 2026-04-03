@@ -1,12 +1,19 @@
 <template>
+  <!-- KPI strip: show skeleton placeholders first, then animate live counters when data arrives. -->
   <section class="neo-section neo-kpis">
     <div v-if="!eventsSinceLoad || eventsSinceLoad === 0" class="row q-col-gutter-lg full-width">
       <div v-for="i in 4" :key="i" class="col-12 col-md-3">
         <SkeletonCard />
       </div>
     </div>
+    <!-- Once live stats arrive, render the KPI cards with a brief change animation. -->
     <template v-else>
-      <article v-for="card in cards" :key="card.label" class="neo-kpi-card" :class="{'neo-kpi-changed': animationTrigger}">
+      <article
+        v-for="card in cards"
+        :key="card.label"
+        class="neo-kpi-card"
+        :class="{ 'neo-kpi-changed': animationTrigger }"
+      >
         <div class="neo-kpi-head">
           <div class="neo-kpi-icon">
             <q-icon :name="card.icon" />
@@ -22,6 +29,7 @@
 </template>
 
 <script setup lang="ts">
+// KPI cards are derived from a small set of live counters passed in by the overview page.
 import { computed, ref, watch } from 'vue';
 import SkeletonCard from './SkeletonCard.vue';
 
@@ -36,13 +44,18 @@ const props = defineProps<{
 
 const animationTrigger = ref(false);
 
-watch(() => props.eventsSinceLoad, () => {
-  animationTrigger.value = true;
-  setTimeout(() => {
-    animationTrigger.value = false;
-  }, 500);
-});
+// Briefly animate KPI changes whenever new live events have been processed.
+watch(
+  () => props.eventsSinceLoad,
+  () => {
+    animationTrigger.value = true;
+    setTimeout(() => {
+      animationTrigger.value = false;
+    }, 500);
+  },
+);
 
+// Card descriptors keep the template small while pairing each metric with copy and iconography.
 const cards = computed(() => [
   {
     label: 'Active sessions',
@@ -72,6 +85,7 @@ const cards = computed(() => [
 </script>
 
 <style scoped>
+/* KPI card header, accent, and value-change animation styling. */
 .neo-kpi-head {
   display: flex;
   align-items: center;
@@ -100,9 +114,17 @@ const cards = computed(() => [
   color: #2dd4bf;
 }
 
+/* The pulse animation draws attention to freshly updated counters. */
 @keyframes pop-value {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); color: inherit; }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    color: inherit;
+  }
 }
 </style>

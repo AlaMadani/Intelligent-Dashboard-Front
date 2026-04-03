@@ -1,4 +1,5 @@
 <template>
+  <!-- Analytics surface: compare anomaly mix, live actions, forecasts, and recent activity. -->
   <section id="analytics" class="neo-section">
     <div class="neo-section-header">
       <div>
@@ -9,10 +10,12 @@
       </div>
     </div>
 
+    <!-- Shared error banner covers analytics and live-stats request failures. -->
     <q-banner v-if="error" class="neo-banner" dense>
       {{ error }}
     </q-banner>
 
+    <!-- Dashboard grid combines distribution charts, forecasts, and recent activity feeds. -->
     <div class="neo-analytics-dashboard">
       <article class="neo-analytics-panel neo-analytics-panel--wide">
         <div class="neo-analytics-head">
@@ -130,7 +133,9 @@
         </div>
 
         <div v-if="loading" class="neo-analytics-empty">Loading sessions...</div>
-        <div v-else-if="!sessionPreview.length" class="neo-analytics-empty">No sessions returned.</div>
+        <div v-else-if="!sessionPreview.length" class="neo-analytics-empty">
+          No sessions returned.
+        </div>
         <div v-else class="neo-analytics-feed">
           <div v-for="session in sessionPreview" :key="session.id" class="neo-analytics-feed-row">
             <div>
@@ -167,7 +172,9 @@
               <div class="neo-analytics-feed-title">
                 {{ event.anomalyType || 'UNKNOWN' }}
               </div>
-              <div class="neo-analytics-feed-meta">{{ event.insuredId }} / {{ event.sessionId }}</div>
+              <div class="neo-analytics-feed-meta">
+                {{ event.insuredId }} / {{ event.sessionId }}
+              </div>
             </div>
             <div class="neo-analytics-feed-side">
               <strong>{{ formatDate(event.eventTime) }}</strong>
@@ -181,6 +188,7 @@
 </template>
 
 <script setup lang="ts">
+// Props deliver dashboard datasets; computed blocks reshape them for charts and previews.
 import { computed } from 'vue';
 import type { AnomalyEventDto, SessionAnalysisDto, StatsResponseDto } from 'src/types/analytics';
 import BarListChart from './BarListChart.vue';
@@ -199,6 +207,7 @@ const props = defineProps<{
   error: string;
 }>();
 
+// Lightweight previews keep the larger datasets focused in the UI.
 const sessionPreview = computed(() => props.sessions.slice(0, 5));
 const anomalyPreview = computed(() => props.anomalies.slice(0, 5));
 
@@ -207,6 +216,7 @@ const anomalyKey = (event: AnomalyEventDto) =>
     ? `id:${event.id}`
     : `${event.insuredId}:${event.sessionId}:${event.eventId}:${event.detectedAt ?? ''}`;
 
+// Aggregate anomalies into chart-ready distributions and rankings.
 const tierMix = computed(() => {
   const buckets = new Map<string, number>();
   for (const event of props.anomalies) {
@@ -255,9 +265,10 @@ const topAnomalyTypeBars = computed(() =>
   topAnomalyTypes.value.map((item) => ({
     label: item.label,
     value: item.count,
-  }))
+  })),
 );
 
+// Normalize live and trend payloads returned by the stats endpoints.
 const liveStatsPayload = computed(() => {
   const payload = props.liveStats?.payload;
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
@@ -277,7 +288,7 @@ const topActionBars = computed(() =>
   topActions.value.map((item) => ({
     label: item.label,
     value: item.count,
-  }))
+  })),
 );
 
 const topCountries = computed(() => {
@@ -321,45 +332,48 @@ const trendSpikeBars = computed(() => {
     .slice(0, 5);
 });
 
+// Build chart series and summary cards from the recent session and anomaly windows.
 const sessionDurationSeries = computed(() =>
   props.sessions
     .slice(0, 10)
     .reverse()
-    .map((session) => session.sessionDurationSeconds ?? 0)
+    .map((session) => session.sessionDurationSeconds ?? 0),
 );
 
 const sessionTimelineLabels = computed(() =>
   props.sessions
     .slice(0, 10)
     .reverse()
-    .map((session, index) => formatTimelineLabel(session.startTime, `S${index + 1}`))
+    .map((session, index) => formatTimelineLabel(session.startTime, `S${index + 1}`)),
 );
 
 const anomalyScoreSeries = computed(() =>
   props.anomalies
     .slice(0, 10)
     .reverse()
-    .map((event) => event.anomalyScore ?? 0)
+    .map((event) => event.anomalyScore ?? 0),
 );
 
 const anomalyTimelineLabels = computed(() =>
   props.anomalies
     .slice(0, 10)
     .reverse()
-    .map((event, index) => formatTimelineLabel(event.eventTime ?? event.detectedAt, `A${index + 1}`))
+    .map((event, index) =>
+      formatTimelineLabel(event.eventTime ?? event.detectedAt, `A${index + 1}`),
+    ),
 );
 
 const latestDuration = computed(() =>
   props.sessions.length
     ? formatDurationSeconds(props.sessions[0]?.sessionDurationSeconds ?? null)
-    : 'n/a'
+    : 'n/a',
 );
 
 const averageDuration = computed(() => {
   if (!props.sessions.length) return 'n/a';
   const total = props.sessions.reduce(
     (sum, session) => sum + (session.sessionDurationSeconds ?? 0),
-    0
+    0,
   );
   return formatDurationSeconds(total / props.sessions.length);
 });
@@ -371,9 +385,10 @@ const averageActionVolume = computed(() => {
 });
 
 const latestAnomalyScore = computed(() =>
-  props.anomalies.length ? formatScore(props.anomalies[0]?.anomalyScore ?? null) : 'n/a'
+  props.anomalies.length ? formatScore(props.anomalies[0]?.anomalyScore ?? null) : 'n/a',
 );
 
+// Format helpers keep durations and numeric payload values readable in charts.
 const formatChartDuration = (value: number) =>
   value >= 3600
     ? `${Math.round(value / 3600)}h`
@@ -392,6 +407,7 @@ const toNumber = (value: unknown) => {
 </script>
 
 <style scoped>
+/* Analytics section layout, panel styling, and feed presentation. */
 .neo-analytics-dashboard {
   display: grid;
   gap: 18px;
@@ -520,6 +536,7 @@ const toNumber = (value: unknown) => {
   border-radius: 18px;
 }
 
+/* Collapse the multi-column dashboard into a single-column stack on smaller screens. */
 @media (max-width: 1280px) {
   .neo-analytics-panel,
   .neo-analytics-panel--wide,

@@ -1,3 +1,4 @@
+// ESLint configuration: compose Quasar, Vue, TypeScript, and Prettier-friendly rules.
 import js from '@eslint/js';
 import globals from 'globals';
 import pluginVue from 'eslint-plugin-vue';
@@ -18,6 +19,7 @@ export default defineConfigWithVueTs(
     // ignores: []
   },
 
+  // Base recommended rulesets establish the default linting behavior for the project.
   pluginQuasar.configs.recommended(),
   js.configs.recommended,
 
@@ -35,6 +37,7 @@ export default defineConfigWithVueTs(
    */
   pluginVue.configs['flat/essential'],
 
+  // Project-specific rules tighten TypeScript usage inside Vue SFCs and source files.
   {
     files: ['**/*.ts', '**/*.vue'],
     rules: {
@@ -44,6 +47,7 @@ export default defineConfigWithVueTs(
   // https://github.com/vuejs/eslint-config-typescript
   vueTsConfigs.recommendedTypeChecked,
 
+  // Global language options describe the runtime environments available to the app.
   {
     languageOptions: {
       ecmaVersion: 'latest',
@@ -70,6 +74,7 @@ export default defineConfigWithVueTs(
     },
   },
 
+  // Service worker globals are only enabled for the PWA worker entry.
   {
     files: ['src-pwa/custom-service-worker.ts'],
     languageOptions: {
@@ -79,5 +84,6 @@ export default defineConfigWithVueTs(
     },
   },
 
+  // Keep formatting concerns delegated to Prettier-compatible config at the end of the chain.
   prettierSkipFormatting,
 );

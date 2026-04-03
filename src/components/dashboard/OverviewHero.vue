@@ -1,13 +1,13 @@
 <template>
+  <!-- Hero section introduces the dashboard and surfaces headline status metrics. -->
   <section id="overview" class="neo-section neo-hero">
     <div class="neo-hero-content">
       <div class="neo-hero-copy">
         <div class="neo-kicker">Behavior intelligence</div>
         <h1 class="neo-hero-title">Operational clarity for insured behavior and risk.</h1>
         <p class="neo-hero-subtitle">
-          Session analytics, anomaly detection, and live telemetry from the data processor
-          pipeline. Track user risk, spot spikes, and keep response teams aligned from one
-          command surface.
+          Session analytics, anomaly detection, and live telemetry from the data processor pipeline.
+          Track user risk, spot spikes, and keep response teams aligned from one command surface.
         </p>
 
         <div class="neo-hero-actions">
@@ -43,13 +43,17 @@
         </div>
       </div>
 
+      <!-- Side panel summarizes the current live posture and overall operational counters. -->
       <div class="neo-hero-panel">
         <div class="neo-panel-header">
           <div>
             <div class="neo-panel-title">Live posture</div>
             <div class="neo-panel-footnote">Events updated {{ lastUpdatedFormatted }} ago</div>
           </div>
-          <LivePulse :status="streamConnected ? 'connected' : 'disconnected'" :events-rate="eventsRate" />
+          <LivePulse
+            :status="streamConnected ? 'connected' : 'disconnected'"
+            :events-rate="eventsRate"
+          />
         </div>
 
         <div class="neo-panel-body">
@@ -96,6 +100,7 @@
 </template>
 
 <script setup lang="ts">
+// Hero props and emits keep the component focused on messaging and high-level status display.
 const props = defineProps<{
   totalSessions: number;
   anomalousSessions: number;
@@ -113,6 +118,7 @@ const emit = defineEmits<{
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import LivePulse from './LivePulse.vue';
 
+// A local timer keeps the "updated Xs ago" label fresh without making extra API calls.
 const now = ref(new Date());
 let interval: number;
 
@@ -126,16 +132,16 @@ onUnmounted(() => {
   window.clearInterval(interval);
 });
 
+// Convert the last stream timestamp into a continuously refreshed relative age label.
 const lastUpdatedFormatted = computed(() => {
   if (!props.lastUpdated) return '0s';
   const diff = Math.max(0, Math.floor((now.value.getTime() - props.lastUpdated.getTime()) / 1000));
   return `${diff}s`;
 });
-
-
 </script>
 
 <style scoped>
+/* Hero-specific badges, status cards, and responsive layout details. */
 .neo-hero-copy {
   position: relative;
   z-index: 1;

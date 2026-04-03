@@ -1,4 +1,5 @@
 <template>
+  <!-- Connection indicator: summarize the live stream state and current event throughput. -->
   <div class="neo-live-pulse-container row items-center no-wrap">
     <div class="neo-pulse-dot" :class="statusClass"></div>
     <div class="neo-pulse-text q-ml-sm text-caption">
@@ -8,14 +9,13 @@
       <span v-else-if="status === 'reconnecting'" class="text-amber-4 text-weight-medium">
         RECONNECTING...
       </span>
-      <span v-else class="text-red-4 text-weight-medium">
-        DISCONNECTED
-      </span>
+      <span v-else class="text-red-4 text-weight-medium"> DISCONNECTED </span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// Compute the color treatment from the connection state passed in by the parent.
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -23,6 +23,7 @@ const props = defineProps<{
   eventsRate: number | string;
 }>();
 
+// CSS classes let the dot switch between connected, reconnecting, and disconnected states.
 const statusClass = computed(() => {
   return {
     'pulse-green': props.status === 'connected',
@@ -33,6 +34,7 @@ const statusClass = computed(() => {
 </script>
 
 <style scoped lang="scss">
+/* Capsule styling and status animations for the live-connection indicator. */
 .neo-live-pulse-container {
   background: rgba(15, 23, 42, 0.4);
   padding: 4px 12px;
@@ -65,14 +67,24 @@ const statusClass = computed(() => {
 }
 
 @keyframes pulse-animation-green {
-  0% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.7); }
-  70% { box-shadow: 0 0 0 6px rgba(45, 212, 191, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(45, 212, 191, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(45, 212, 191, 0);
+  }
 }
 
 @keyframes pulse-animation-amber {
-  from { opacity: 1; }
-  to { opacity: 0.3; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.3;
+  }
 }
 
 .neo-pulse-text {

@@ -1,5 +1,7 @@
+// Analytics DTOs mirror the backend contracts consumed by the dashboard.
 import type { JsonValue } from 'src/types/api';
 
+// Session and anomaly-event payloads drive the tables, workbench, and overview cards.
 export interface SessionAnalysisDto {
   id: number;
   insuredId: string;
@@ -38,6 +40,7 @@ export interface AnomalyEventDto {
   detectedAt: string | null;
 }
 
+// User-insight payloads enrich the insured lookup and response workbench.
 export interface UserRiskProfileDto {
   id: number;
   insuredId: string;
@@ -62,6 +65,7 @@ export interface NextActionPredictionDto {
   top3Actions: string[];
 }
 
+// Stats and forecast payloads feed the live overview and analytics visualizations.
 export interface StatsResponseDto {
   date: string;
   source: 'redis' | 'missing' | 'sql';
@@ -81,6 +85,7 @@ export interface ActionStatsDailyDto {
   createdAt: string;
 }
 
+// Alert and explanation payloads support the active anomaly snapshot and AI narrative.
 export interface AnomalyAlertDto {
   insuredId: string;
   sessionId: string;

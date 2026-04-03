@@ -1,4 +1,5 @@
 <template>
+  <!-- Workbench layout: live queue, selected context, and AI-generated explanation output. -->
   <section id="workbench" class="neo-section neo-investigation">
     <div class="neo-section-header">
       <div>
@@ -11,6 +12,7 @@
     </div>
 
     <div class="neo-investigation-grid">
+      <!-- Live wire shows the newest streamed alerts and keeps selection in sync. -->
       <div class="neo-panel">
         <div class="neo-panel-header">
           <div>
@@ -48,6 +50,7 @@
         </div>
       </div>
 
+      <!-- Context panel assembles session, risk, prediction, and raw payload details. -->
       <div class="neo-panel neo-panel-contrast">
         <div class="neo-panel-header">
           <div>
@@ -77,7 +80,9 @@
             </div>
             <div>
               <div class="neo-explanation-label">Score</div>
-              <div class="neo-explanation-value">{{ readableScore(selectedEvent.anomalyScore) }}</div>
+              <div class="neo-explanation-value">
+                {{ readableScore(selectedEvent.anomalyScore) }}
+              </div>
             </div>
             <div>
               <div class="neo-explanation-label">Type confidence</div>
@@ -87,7 +92,9 @@
             </div>
             <div>
               <div class="neo-explanation-label">Event</div>
-              <div class="neo-explanation-value">{{ selectedEvent.eventId || selectedEvent.id }}</div>
+              <div class="neo-explanation-value">
+                {{ selectedEvent.eventId || selectedEvent.id }}
+              </div>
             </div>
           </div>
 
@@ -188,8 +195,8 @@
             <div class="neo-context-card">
               <div class="neo-context-title">Active anomaly</div>
               <div v-if="!activeAnomalyContext" class="neo-context-note">
-                No separate active anomaly payload was returned. The selected anomaly is shown as the
-                fallback.
+                No separate active anomaly payload was returned. The selected anomaly is shown as
+                the fallback.
               </div>
               <div class="neo-context-line">
                 <span>Tier</span>
@@ -229,11 +236,14 @@
             label="Session action counts"
             class="neo-sequence-expander"
           >
-            <pre class="neo-json-block">{{ JSON.stringify(sessionAnalysis.actionCounts, null, 2) }}</pre>
+            <pre class="neo-json-block">{{
+              JSON.stringify(sessionAnalysis.actionCounts, null, 2)
+            }}</pre>
           </q-expansion-item>
         </div>
       </div>
 
+      <!-- Explanation panel requests and renders the AI narrative for the selected anomaly. -->
       <div class="neo-panel neo-panel-sequence">
         <div class="neo-panel-header">
           <div>
@@ -295,6 +305,7 @@
 </template>
 
 <script setup lang="ts">
+// Parent state provides the selected anomaly plus every supporting context payload.
 import { computed } from 'vue';
 import type {
   AnomalyAlertDto,
@@ -304,13 +315,9 @@ import type {
   SessionAnalysisDto,
   UserRiskProfileDto,
 } from 'src/types/analytics';
-import {
-  formatDate,
-  formatDurationSeconds,
-  formatPercent,
-  formatScore,
-} from 'src/utils/format';
+import { formatDate, formatDurationSeconds, formatPercent, formatScore } from 'src/utils/format';
 
+// Input contracts carry the live stream selection and all fetched enrichment data.
 const props = defineProps<{
   selectedEvent: AnomalyEventDto | null;
   selectedEventKey: string;
@@ -332,6 +339,7 @@ const emit = defineEmits<{
   (event: 'generate-explanation'): void;
 }>();
 
+// Helper formatters turn optional backend fields into readable UI values.
 const anomalyKey = (event: AnomalyEventDto) =>
   event.id != null
     ? `id:${event.id}`
@@ -362,6 +370,7 @@ const readableDuration = (value: number | null | undefined, fallback = 'Not retu
 const readableNumber = (value: number | null | undefined, fallback = 'Not returned') =>
   value == null || Number.isNaN(value) ? fallback : value.toLocaleString('en-GB');
 
+// Derived fields merge session data with anomaly fallbacks so the context card stays informative.
 const sessionStatus = computed(() => {
   if (props.sessionAnalysis?.isAnomaly != null) {
     return props.sessionAnalysis.isAnomaly ? 'Anomalous' : 'Observed';
@@ -371,57 +380,57 @@ const sessionStatus = computed(() => {
 
 const sessionStarted = computed(() =>
   readableDate(
-    props.sessionAnalysis?.startTime ?? props.selectedEvent?.eventTime ?? props.selectedEvent?.detectedAt
-  )
+    props.sessionAnalysis?.startTime ??
+      props.selectedEvent?.eventTime ??
+      props.selectedEvent?.detectedAt,
+  ),
 );
 
 const sessionEnded = computed(() =>
   readableDate(
-    props.sessionAnalysis?.endTime ?? props.selectedEvent?.detectedAt ?? props.selectedEvent?.eventTime
-  )
+    props.sessionAnalysis?.endTime ??
+      props.selectedEvent?.detectedAt ??
+      props.selectedEvent?.eventTime,
+  ),
 );
 
 const sessionDuration = computed(() =>
-  readableDuration(props.sessionAnalysis?.sessionDurationSeconds)
+  readableDuration(props.sessionAnalysis?.sessionDurationSeconds),
 );
 
 const sessionKoRate = computed(() => readablePercent(props.sessionAnalysis?.koRate));
 
 const sessionRuleType = computed(() =>
-  readableText(props.sessionAnalysis?.ruleType ?? props.selectedEvent?.ruleType)
+  readableText(props.sessionAnalysis?.ruleType ?? props.selectedEvent?.ruleType),
 );
 
 const sessionActionCount = computed(() =>
-  readableNumber(props.sessionAnalysis?.sessionLength ?? props.sessionAnalysis?.uniqueActionCount)
+  readableNumber(props.sessionAnalysis?.sessionLength ?? props.sessionAnalysis?.uniqueActionCount),
 );
 
 const sessionUniqueActions = computed(() =>
-  readableNumber(props.sessionAnalysis?.uniqueActionCount)
+  readableNumber(props.sessionAnalysis?.uniqueActionCount),
 );
 
-const sessionMeanDelta = computed(() =>
-  readableDuration(props.sessionAnalysis?.meanDeltaSeconds)
-);
+const sessionMeanDelta = computed(() => readableDuration(props.sessionAnalysis?.meanDeltaSeconds));
 
 const sessionActionDiversity = computed(() =>
-  readableScore(props.sessionAnalysis?.actionDiversity)
+  readableScore(props.sessionAnalysis?.actionDiversity),
 );
 
 const riskTier = computed(() =>
   readableText(
     props.riskProfile?.riskTier ??
-      (props.selectedEvent?.anomalyTier ? `Investigate ${props.selectedEvent.anomalyTier}` : null)
-  )
+      (props.selectedEvent?.anomalyTier ? `Investigate ${props.selectedEvent.anomalyTier}` : null),
+  ),
 );
 
 const riskAnomalyRate = computed(() => readablePercent(props.riskProfile?.anomalyRate30d));
 
-const riskCleanStreak = computed(() =>
-  readableNumber(props.riskProfile?.consecutiveCleanSessions)
-);
+const riskCleanStreak = computed(() => readableNumber(props.riskProfile?.consecutiveCleanSessions));
 
 const riskLastAnomaly = computed(() =>
-  readableText(props.riskProfile?.lastAnomalyType ?? props.selectedEvent?.anomalyType)
+  readableText(props.riskProfile?.lastAnomalyType ?? props.selectedEvent?.anomalyType),
 );
 
 const displayedNextActions = computed(() => {
@@ -437,6 +446,7 @@ const activeType = computed(() => readableText(activeAnomalyContext.value?.anoma
 const activeDetected = computed(() => readableDate(activeAnomalyContext.value?.detectedAt));
 const activeEventTime = computed(() => readableDate(activeAnomalyContext.value?.eventTime));
 
+// Explanation text is sanitized and converted from lightweight markdown into safe HTML.
 const escapeHtml = (value: string) =>
   value
     .replace(/&/g, '&amp;')
@@ -523,9 +533,10 @@ const formatExplanationHtml = (value: string) => {
 };
 
 const formattedExplanationHtml = computed(() =>
-  formatExplanationHtml(props.explanation?.explanation ?? '')
+  formatExplanationHtml(props.explanation?.explanation ?? ''),
 );
 
+// Pretty-print JSON payloads for the expandable debug blocks.
 const formatJson = (value: string) => {
   try {
     return JSON.stringify(JSON.parse(value), null, 2);
@@ -536,6 +547,7 @@ const formatJson = (value: string) => {
 </script>
 
 <style scoped>
+/* Stream list, context cards, and explanation layout for the investigation workbench. */
 .neo-stream-list {
   display: flex;
   flex-direction: column;
@@ -550,7 +562,10 @@ const formatJson = (value: string) => {
   padding: 14px 16px;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .neo-stream-item:hover {
@@ -649,6 +664,7 @@ const formatJson = (value: string) => {
   white-space: pre;
 }
 
+/* Rich-text rules keep generated explanation content readable inside the panel. */
 .neo-explanation-body h4 {
   margin: 0 0 8px;
   font-size: 15px;

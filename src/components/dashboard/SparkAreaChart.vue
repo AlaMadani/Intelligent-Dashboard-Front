@@ -1,4 +1,5 @@
 <template>
+  <!-- Reusable SVG spark-area chart for short trend series across the dashboard. -->
   <div class="neo-trend-chart" :class="`tone-${tone}`">
     <svg viewBox="0 0 420 240" preserveAspectRatio="none" aria-hidden="true">
       <defs>
@@ -87,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+// Convert compact numeric series into SVG points, axes, and paths for a lightweight trend chart.
 import { computed } from 'vue';
 
 interface Point {
@@ -113,9 +115,10 @@ const props = withDefaults(
   }>(),
   {
     tone: 'primary',
-  }
+  },
 );
 
+// Static chart geometry keeps the SVG calculations consistent across all callers.
 const padding = {
   top: 14,
   right: 12,
@@ -128,6 +131,7 @@ const chartHeight = 196;
 
 const fillId = `neo-trend-fill-${Math.random().toString(36).slice(2, 10)}`;
 
+// Tone palettes align chart colors with the dashboard design language.
 const palettes = {
   primary: {
     stroke: '#2f8f83',
@@ -153,11 +157,12 @@ const palettes = {
 
 const palette = computed(() => palettes[props.tone]);
 
+// Normalize incoming values into a typed series with display labels.
 const series = computed(() =>
   props.values.map((rawValue, index) => ({
     value: Number.isFinite(rawValue) ? Number(rawValue) : 0,
     label: props.labels?.[index] ?? `${index + 1}`,
-  }))
+  })),
 );
 
 const valueRange = computed(() => {
@@ -178,6 +183,7 @@ const valueRange = computed(() => {
   return { min, max };
 });
 
+// Convert normalized values into SVG coordinates and drawing metadata.
 const points = computed<Point[]>(() => {
   if (!series.value.length) return [];
 
@@ -210,6 +216,7 @@ const areaPath = computed(() => {
   return `${linePath.value} L ${last.x} ${chartHeight} L ${first.x} ${chartHeight} Z`;
 });
 
+// Generate axis ticks and labels based on the current value range.
 const yTicks = computed<Tick[]>(() => {
   const tickCount = 4;
   const range = valueRange.value.max - valueRange.value.min || 1;
@@ -240,6 +247,7 @@ const xTicks = computed(() => {
   });
 });
 
+// Allow callers to override axis formatting while keeping a sensible default.
 const formatValue = (value: number) => {
   if (props.valueFormatter) return props.valueFormatter(value);
   return value.toLocaleString('en-GB', { maximumFractionDigits: 1 });
@@ -247,6 +255,7 @@ const formatValue = (value: number) => {
 </script>
 
 <style scoped>
+/* Shared SVG chart sizing and axis label styling. */
 .neo-trend-chart {
   position: relative;
   min-height: 240px;

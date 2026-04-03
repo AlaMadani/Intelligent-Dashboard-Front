@@ -1,9 +1,11 @@
+// Dashboard utility helpers reshape raw telemetry into UI-friendly structures.
 export interface NormalizedCountryTelemetry {
   label: string;
   count: number;
   display?: string;
 }
 
+// Coerce mixed backend payload values into numbers whenever possible.
 const toNumber = (value: unknown) => {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
@@ -13,9 +15,10 @@ const toNumber = (value: unknown) => {
   return null;
 };
 
+// Ranked country arrays are converted into pseudo-counts so they can still be visualized.
 const normalizeRankedCountries = (
   values: unknown[],
-  limit: number
+  limit: number,
 ): NormalizedCountryTelemetry[] => {
   const labels = values
     .map((value) => (typeof value === 'string' ? value.trim() : ''))
@@ -30,9 +33,10 @@ const normalizeRankedCountries = (
   }));
 };
 
+// Accept multiple backend country payload shapes and normalize them into one chart contract.
 export const normalizeCountryTelemetry = (
   raw: unknown,
-  limit = 6
+  limit = 6,
 ): NormalizedCountryTelemetry[] => {
   if (!raw) return [];
 
@@ -66,13 +70,13 @@ export const normalizeCountryTelemetry = (
   const entries = Object.entries(raw as Record<string, unknown>);
   if (!entries.length) return [];
 
-  const looksLikeIndexedList = entries.every(([key, value]) => /^\d+$/.test(key) && typeof value === 'string');
+  const looksLikeIndexedList = entries.every(
+    ([key, value]) => /^\d+$/.test(key) && typeof value === 'string',
+  );
   if (looksLikeIndexedList) {
     return normalizeRankedCountries(
-      entries
-        .sort((a, b) => Number(a[0]) - Number(b[0]))
-        .map(([, value]) => value),
-      limit
+      entries.sort((a, b) => Number(a[0]) - Number(b[0])).map(([, value]) => value),
+      limit,
     );
   }
 
@@ -90,6 +94,7 @@ export const normalizeCountryTelemetry = (
     }));
 };
 
+// Timeline labels collapse timestamps into a compact hour/minute representation.
 export const formatTimelineLabel = (value: string | null | undefined, fallback: string) => {
   if (!value) return fallback;
   const date = new Date(value);

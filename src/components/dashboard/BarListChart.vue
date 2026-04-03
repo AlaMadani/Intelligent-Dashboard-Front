@@ -1,4 +1,5 @@
 <template>
+  <!-- Compact ranked-bar chart used for top actions, anomaly types, and spike previews. -->
   <div class="neo-bar-list">
     <div v-if="rows.length" class="neo-bar-list-rows">
       <div v-for="row in rows" :key="row.label" class="neo-bar-row">
@@ -17,8 +18,10 @@
 </template>
 
 <script setup lang="ts">
+// Normalize incoming values into proportional bar rows for a lightweight display-only chart.
 import { computed } from 'vue';
 
+// Each item describes a labeled metric rendered as a horizontal bar.
 interface ChartRow {
   label: string;
   value: number;
@@ -32,9 +35,10 @@ const props = withDefaults(
   }>(),
   {
     emptyMessage: 'No chart data available.',
-  }
+  },
 );
 
+// Scale each value relative to the current maximum so the list reads like a mini chart.
 const rows = computed(() => {
   const max = Math.max(...props.items.map((item) => item.value), 0);
   return props.items.map((item) => ({
@@ -46,6 +50,7 @@ const rows = computed(() => {
 </script>
 
 <style scoped>
+/* Shared ranked-bar chart styling. */
 .neo-bar-list {
   display: flex;
   flex-direction: column;

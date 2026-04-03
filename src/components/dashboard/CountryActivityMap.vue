@@ -1,4 +1,5 @@
 <template>
+  <!-- Stylized geography card: plot active countries on the map and mirror them in a ranked list. -->
   <div class="neo-geo-shell">
     <div class="neo-geo-map">
       <svg viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -37,17 +38,13 @@
               :r="country.radius * 2.6"
               fill="url(#neo-geo-glow)"
             />
-            <circle
-              class="neo-geo-marker"
-              :cx="country.x"
-              :cy="country.y"
-              :r="country.radius"
-            />
+            <circle class="neo-geo-marker" :cx="country.x" :cy="country.y" :r="country.radius" />
           </g>
         </g>
       </svg>
     </div>
 
+    <!-- The side list keeps the telemetry readable even when a country cannot be mapped. -->
     <div class="neo-geo-list">
       <div v-if="normalizedCountries.length" class="neo-geo-list-title">
         Active countries
@@ -76,6 +73,7 @@
 </template>
 
 <script setup lang="ts">
+// Transform country telemetry into SVG marker coordinates and a readable companion list.
 import { computed } from 'vue';
 
 interface CountryCount {
@@ -95,6 +93,7 @@ const props = defineProps<{
   countries: CountryCount[];
 }>();
 
+// Coordinate lookup tables translate telemetry labels into positions on the simplified world map.
 const coordinatesByCode: Record<string, CountryCoordinate> = {
   US: { label: 'United States', region: 'North America', x: 212, y: 198 },
   CA: { label: 'Canada', region: 'North America', x: 200, y: 144 },
@@ -194,8 +193,10 @@ const aliasesToCode: Record<string, string> = {
   USAA: 'US',
 };
 
+// Normalization helpers keep inconsistent backend country labels mappable.
 const normalizeCountryKey = (value: string) => value.toUpperCase().replace(/[^A-Z]/g, '');
 
+// Merge telemetry counts with map coordinates and marker sizing for rendering.
 const normalizedCountries = computed(() => {
   const max = Math.max(...props.countries.map((country) => country.count), 0) || 1;
 
@@ -219,9 +220,10 @@ const normalizedCountries = computed(() => {
 });
 
 const mappedCountries = computed(() =>
-  normalizedCountries.value.filter((country) => country.isMapped)
+  normalizedCountries.value.filter((country) => country.isMapped),
 );
 
+// Decorative meridian paths give the simplified SVG map extra spatial context.
 const meridians = [
   'M 120 104 C 310 154 462 138 628 116 C 746 100 840 112 920 136',
   'M 116 202 C 316 248 518 240 710 206 C 820 186 886 188 930 200',
@@ -234,6 +236,7 @@ const meridians = [
 </script>
 
 <style scoped>
+/* Map shell, SVG styling, and ranked-country list presentation. */
 .neo-geo-shell {
   display: grid;
   gap: 16px;

@@ -1,5 +1,7 @@
 <template>
+  <!-- Overview route: combine hero, live KPI strip, and executive summary panels. -->
   <q-page class="neo-page">
+    <!-- Hero banner exposes top-level navigation and live posture metrics. -->
     <OverviewHero
       :total-sessions="totalSessions"
       :anomalous-sessions="anomalousSessions"
@@ -11,6 +13,7 @@
       @navigate="(id) => router.push(id === 'overview' ? '/' : `/${id}`)"
     />
 
+    <!-- Sticky toast surfaces the most recent anomaly received from the live stream. -->
     <div v-if="latestStreamAlert" class="neo-live-toast">
       <div class="neo-live-toast-title">Live anomaly alert received</div>
       <div class="neo-live-toast-body">
@@ -20,6 +23,7 @@
       </div>
     </div>
 
+    <!-- KPI strip highlights the live operational counters. -->
     <KpiStrip
       :active-sessions="activeSessions"
       :events-per-minute="eventsPerMinute"
@@ -30,12 +34,15 @@
       :last-updated="lastUpdated"
     />
 
+    <!-- Overview grid mixes trend charts, maps, and anomaly breakdown cards. -->
     <section class="neo-section neo-overview-grid">
       <article class="neo-overview-panel neo-overview-panel--wide">
         <div class="neo-overview-head">
           <div>
             <h3>Behavior momentum</h3>
-            <p>Recent session duration and action volume derived from the latest monitored traces.</p>
+            <p>
+              Recent session duration and action volume derived from the latest monitored traces.
+            </p>
           </div>
           <div class="neo-overview-pill">{{ sessions.length }} recent sessions loaded</div>
         </div>
@@ -137,6 +144,7 @@
 </template>
 
 <script setup lang="ts">
+// This page derives high-level overview metrics from the shared dashboard store.
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import BarListChart from 'src/components/dashboard/BarListChart.vue';
@@ -149,6 +157,7 @@ import { useDashboard } from 'src/composables/useDashboard';
 import { formatTimelineLabel, normalizeCountryTelemetry } from 'src/utils/dashboard';
 import { formatDate, formatScore } from 'src/utils/format';
 
+// Router navigation lets the hero shortcuts jump between dashboard sections.
 const router = useRouter();
 const {
   totalSessions,
@@ -168,6 +177,7 @@ const {
   eventsSinceLoad,
 } = useDashboard();
 
+// Normalize raw stats payloads into chart- and card-friendly structures.
 const liveStatsPayload = computed(() => {
   const payload = liveStats.value?.payload;
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
@@ -206,14 +216,14 @@ const topActionBars = computed(() =>
   topActions.value.map((item) => ({
     label: item.label,
     value: item.count,
-  }))
+  })),
 );
 
 const topAnomalyTypeBars = computed(() =>
   topAnomalyTypes.value.map((item) => ({
     label: item.label,
     value: item.count,
-  }))
+  })),
 );
 
 const tierMixSegments = computed(() => {
@@ -243,23 +253,24 @@ const sessionDurationTrend = computed(() =>
   sessions.value
     .slice(0, 10)
     .reverse()
-    .map((session) => session.sessionDurationSeconds ?? 0)
+    .map((session) => session.sessionDurationSeconds ?? 0),
 );
 
 const sessionTimelineLabels = computed(() =>
   sessions.value
     .slice(0, 10)
     .reverse()
-    .map((session, index) => formatTimelineLabel(session.startTime, `S${index + 1}`))
+    .map((session, index) => formatTimelineLabel(session.startTime, `S${index + 1}`)),
 );
 
 const sessionActionTrend = computed(() =>
   sessions.value
     .slice(0, 10)
     .reverse()
-    .map((session) => session.sessionLength ?? 0)
+    .map((session) => session.sessionLength ?? 0),
 );
 
+// Presentation helpers keep chart labels and summary numbers readable.
 const formatChartDuration = (value: number) =>
   value >= 3600
     ? `${Math.round(value / 3600)}h`
@@ -275,19 +286,17 @@ const averageActionVolume = computed(() => {
 
 const averageUniqueActions = computed(() => {
   if (!sessions.value.length) return 'n/a';
-  const total = sessions.value.reduce(
-    (sum, session) => sum + (session.uniqueActionCount ?? 0),
-    0
-  );
+  const total = sessions.value.reduce((sum, session) => sum + (session.uniqueActionCount ?? 0), 0);
   return (total / sessions.value.length).toFixed(1);
 });
 
 const latestAnomalyScore = computed(() =>
-  anomalies.value.length ? formatScore(anomalies.value[0]?.anomalyScore ?? null) : 'n/a'
+  anomalies.value.length ? formatScore(anomalies.value[0]?.anomalyScore ?? null) : 'n/a',
 );
 </script>
 
 <style scoped>
+/* Overview page layout and card styling. */
 .neo-overview-grid {
   display: grid;
   gap: 18px;
@@ -422,6 +431,7 @@ const latestAnomalyScore = computed(() =>
   text-align: right;
 }
 
+/* Responsive stacking keeps the overview grid readable on narrower screens. */
 @media (max-width: 1200px) {
   .neo-overview-panel,
   .neo-overview-panel--wide,

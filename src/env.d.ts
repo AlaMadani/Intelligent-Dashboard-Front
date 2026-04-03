@@ -1,3 +1,4 @@
+// Environment typing keeps Quasar router mode variables strongly typed in the app code.
 declare namespace NodeJS {
   interface ProcessEnv {
     NODE_ENV: string;

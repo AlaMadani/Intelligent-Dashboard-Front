@@ -1,4 +1,5 @@
 <template>
+  <!-- Route wrapper: project the selected anomaly context into the response workbench. -->
   <q-page class="neo-page">
     <AnomalyWorkbenchSection
       :selected-event="selectedAnomaly"
@@ -21,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+// Forward workbench-specific selection, stream, and explanation state from the shared store.
 import AnomalyWorkbenchSection from 'src/components/dashboard/AnomalyWorkbenchSection.vue';
 import { useDashboard } from 'src/composables/useDashboard';
 

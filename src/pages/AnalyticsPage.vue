@@ -1,4 +1,5 @@
 <template>
+  <!-- Route wrapper: bind shared dashboard analytics state to the analytics section. -->
   <q-page class="neo-page">
     <AnalyticsSection
       :sessions="sessions"
@@ -12,16 +13,10 @@
 </template>
 
 <script setup lang="ts">
+// Pull only the shared dashboard state required by the analytics route.
 import AnalyticsSection from 'src/components/dashboard/AnalyticsSection.vue';
 import { useDashboard } from 'src/composables/useDashboard';
 
-const {
-  sessions,
-  anomalies,
-  liveStats,
-  trendStats,
-  analyticsLoading,
-  analyticsError,
-  statsError,
-} = useDashboard();
+const { sessions, anomalies, liveStats, trendStats, analyticsLoading, analyticsError, statsError } =
+  useDashboard();
 </script>

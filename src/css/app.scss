@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+/* Global dashboard theme: shared tokens, shell layout, panel styles, and responsive rules. */
+
+/* Design tokens used throughout the custom dashboard surfaces. */
 :root {
   --neo-ink: #10202b;
   --neo-ink-soft: #28404c;
@@ -21,6 +24,7 @@
   --neo-border: 1px solid rgba(16, 32, 43, 0.08);
 }
 
+/* Base document sizing and animated background canvas. */
 html,
 body,
 #q-app {
@@ -41,9 +45,15 @@ body {
 }
 
 @keyframes gradientBG {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0% 0%; }
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 body::before {
@@ -58,6 +68,7 @@ body::before {
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.24), transparent 70%);
 }
 
+/* Shared page width and section spacing for all routed views. */
 .neo-page-container {
   background: transparent;
 }
@@ -72,6 +83,7 @@ body::before {
   margin-bottom: 38px;
 }
 
+/* Header and toolbar shell. */
 .neo-header {
   background: rgba(255, 251, 243, 0.76);
   backdrop-filter: blur(14px);
@@ -167,6 +179,7 @@ body::before {
   color: var(--neo-ink) !important;
 }
 
+/* Navigation drawer and command-deck treatments. */
 .neo-drawer {
   background:
     radial-gradient(circle at top left, rgba(227, 165, 72, 0.18), transparent 28%),
@@ -227,7 +240,10 @@ body::before {
   margin: 6px 6px;
   border-radius: 18px;
   color: rgba(244, 239, 231, 0.82);
-  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
 }
 
 .neo-nav-item:hover {
@@ -310,6 +326,7 @@ body::before {
   font-size: 14px;
 }
 
+/* Live-status badges and toast feedback shared across sections. */
 .neo-live-pill {
   display: inline-flex;
   align-items: center;
@@ -359,6 +376,7 @@ body::before {
   color: #6a4722;
 }
 
+/* Shared section headings, action rows, inputs, tables, and banners. */
 .neo-section-header {
   display: flex;
   align-items: flex-end;
@@ -443,6 +461,7 @@ body::before {
   border-radius: 14px;
 }
 
+/* Investigation and workbench panels, placeholders, and explanation surfaces. */
 .neo-investigation-grid {
   display: grid;
   gap: 22px;
@@ -546,6 +565,7 @@ body::before {
   line-height: 1.6;
 }
 
+/* Hero, posture panel, and summary treatments used on the overview route. */
 .neo-hero {
   position: relative;
   overflow: hidden;
@@ -600,8 +620,7 @@ body::before {
   position: relative;
   padding: 22px;
   border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255, 248, 235, 0.96), rgba(252, 244, 231, 0.9));
+  background: linear-gradient(180deg, rgba(255, 248, 235, 0.96), rgba(252, 244, 231, 0.9));
   color: var(--neo-ink);
   border: 1px solid rgba(255, 255, 255, 0.42);
   box-shadow: 0 18px 32px rgba(5, 15, 22, 0.24);
@@ -639,6 +658,7 @@ body::before {
   color: var(--neo-ink-muted);
 }
 
+/* KPI strip cards shown beneath the overview hero. */
 .neo-kpis {
   display: grid;
   gap: 18px;
@@ -676,6 +696,7 @@ body::before {
   color: var(--neo-ink-soft);
 }
 
+/* Generic analytics card grid styling for reusable summary sections. */
 .neo-analytics-grid {
   display: grid;
   gap: 18px;
@@ -701,6 +722,7 @@ body::before {
   color: var(--neo-ink-muted);
 }
 
+/* Responsive layout adjustments for tablet and mobile breakpoints. */
 @media (max-width: 1220px) {
   .neo-toolbar {
     flex-wrap: wrap;
@@ -747,6 +769,7 @@ body::before {
   }
 }
 
+/* Shared live-indicator pulse animation. */
 @keyframes neo-pulse {
   0% {
     transform: scale(1);

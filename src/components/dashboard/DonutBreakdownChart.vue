@@ -1,4 +1,5 @@
 <template>
+  <!-- Donut summary: render proportional segments with a matching legend and center label. -->
   <div class="neo-donut-shell">
     <div class="neo-donut" :style="{ background: donutGradient }">
       <div class="neo-donut-core">
@@ -19,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+// Convert labeled values into a CSS-driven donut chart with legend metadata.
 import { computed } from 'vue';
 
 interface Segment {
@@ -37,19 +39,22 @@ const props = withDefaults(
   {
     centerLabel: 'Signal mix',
     centerValue: '0',
-  }
+  },
 );
 
+// Provide default colors when callers omit segment styling.
 const fallbackColors = ['#2f8f83', '#e3a548', '#cf5d4a', '#617ca8', '#78b385'];
 
+// Normalize legend text and segment colors before generating the donut.
 const normalizedSegments = computed(() =>
   props.segments.map((segment, index) => ({
     ...segment,
     color: segment.color ?? fallbackColors[index % fallbackColors.length],
     display: segment.display ?? segment.value.toLocaleString('en-GB'),
-  }))
+  })),
 );
 
+// Build the CSS conic-gradient string that paints the donut slices.
 const donutGradient = computed(() => {
   if (!normalizedSegments.value.length) {
     return 'conic-gradient(rgba(19, 32, 38, 0.12) 0deg 360deg)';
@@ -70,6 +75,7 @@ const donutGradient = computed(() => {
 </script>
 
 <style scoped>
+/* Donut chart layout and legend styling. */
 .neo-donut-shell {
   display: grid;
   gap: 18px;

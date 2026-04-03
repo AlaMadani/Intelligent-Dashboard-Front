@@ -3,6 +3,7 @@
 
 import { defineConfig } from '#q-app/wrappers';
 
+// Quasar configuration: wire the dashboard boot files, build settings, and platform targets.
 export default defineConfig((/* ctx */) => {
   return {
     // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
@@ -11,6 +12,7 @@ export default defineConfig((/* ctx */) => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
+    // Boot files initialize the shared HTTP client and global error logging pipeline.
     boot: ['axios', 'logger'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
@@ -31,6 +33,7 @@ export default defineConfig((/* ctx */) => {
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
+    // Build settings cover browser targets, TypeScript behavior, router mode, and checks.
     build: {
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
@@ -78,6 +81,7 @@ export default defineConfig((/* ctx */) => {
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
+    // Development server defaults for local dashboard work.
     devServer: {
       // https: true,
       port: 9008,
@@ -85,6 +89,7 @@ export default defineConfig((/* ctx */) => {
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
+    // Quasar runtime features enabled for the browser dashboard.
     framework: {
       config: {},
 
@@ -120,6 +125,7 @@ export default defineConfig((/* ctx */) => {
     // },
 
     // https://v2.quasar.dev/quasar-cli-vite/developing-ssr/configuring-ssr
+    // Platform-specific targets remain close to the template defaults for future expansion.
     ssr: {
       prodPort: 3000, // The default port that the production server should use
       // (gets superseded if process.env.PORT is specified at runtime)
@@ -157,6 +163,7 @@ export default defineConfig((/* ctx */) => {
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-cordova-apps/configuring-cordova
+    // Native and desktop targets are scaffolded but not yet customized for this project.
     cordova: {
       // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
     },
@@ -200,6 +207,7 @@ export default defineConfig((/* ctx */) => {
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-browser-extensions/configuring-bex
+    // Browser-extension output stays disabled, but the section is kept for future growth.
     bex: {
       // extendBexScriptsConf (esbuildConf) {},
       // extendBexManifestJson (json) {},

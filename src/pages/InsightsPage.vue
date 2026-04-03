@@ -1,4 +1,5 @@
 <template>
+  <!-- Route wrapper: pass insured lookup state into the user intelligence section. -->
   <q-page class="neo-page">
     <UserInsightsSection
       :insured-id="insuredIdInput"
@@ -14,6 +15,7 @@
 </template>
 
 <script setup lang="ts">
+// Consume only the user-insight slice of the shared dashboard store for this route.
 import UserInsightsSection from 'src/components/dashboard/UserInsightsSection.vue';
 import { useDashboard } from 'src/composables/useDashboard';
 

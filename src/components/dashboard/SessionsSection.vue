@@ -1,4 +1,5 @@
 <template>
+  <!-- Session table: browse the analyzed behavior traces returned by the backend. -->
   <section id="sessions" class="neo-section neo-alerts">
     <div class="neo-section-header">
       <div>
@@ -8,7 +9,13 @@
         </div>
       </div>
       <div class="neo-section-actions">
-        <q-input dense outlined v-model="searchModel" placeholder="Search sessions" class="neo-search">
+        <q-input
+          dense
+          outlined
+          v-model="searchModel"
+          placeholder="Search sessions"
+          class="neo-search"
+        >
           <template #append>
             <q-icon name="search" />
           </template>
@@ -16,6 +23,7 @@
       </div>
     </div>
 
+    <!-- The table focuses on behavioral metrics that help compare normal and anomalous sessions. -->
     <q-table
       flat
       class="neo-table"
@@ -44,9 +52,7 @@
           >
             Normal
           </q-badge>
-          <q-badge v-else color="grey" text-color="white" class="neo-badge">
-            Unknown
-          </q-badge>
+          <q-badge v-else color="grey" text-color="white" class="neo-badge"> Unknown </q-badge>
         </q-td>
       </template>
       <template #body-cell-startTime="props">
@@ -81,6 +87,7 @@
       </template>
     </q-table>
 
+    <!-- Keep backend errors visible without removing the current table contents. -->
     <q-banner v-if="error" class="neo-banner" dense>
       {{ error }}
     </q-banner>
@@ -88,6 +95,7 @@
 </template>
 
 <script setup lang="ts">
+// This component presents session analysis data and emits only search updates.
 import { computed } from 'vue';
 import type { QTableColumn } from 'quasar';
 import type { SessionAnalysisDto } from 'src/types/analytics';
@@ -104,21 +112,34 @@ const emit = defineEmits<{
   (event: 'update:search', value: string): void;
 }>();
 
+// Bridge the local search field to the parent-managed query string.
 const searchModel = computed({
   get: () => props.search,
   set: (value: string) => emit('update:search', value),
 });
 
+// Column metadata defines which session metrics are displayed and sortable.
 const columns: QTableColumn<SessionAnalysisDto>[] = [
   { name: 'isAnomaly', label: 'Status', field: 'isAnomaly', align: 'left', sortable: true },
   { name: 'insuredId', label: 'Insured', field: 'insuredId', align: 'left', sortable: true },
   { name: 'sessionId', label: 'Session', field: 'sessionId', align: 'left' },
   { name: 'startTime', label: 'Start', field: 'startTime', align: 'left', sortable: true },
-  { name: 'sessionDurationSeconds', label: 'Duration', field: 'sessionDurationSeconds', align: 'left' },
+  {
+    name: 'sessionDurationSeconds',
+    label: 'Duration',
+    field: 'sessionDurationSeconds',
+    align: 'left',
+  },
   { name: 'koRate', label: 'KO rate', field: 'koRate', align: 'left' },
   { name: 'uniqueActionCount', label: 'Unique', field: 'uniqueActionCount', align: 'left' },
   { name: 'meanDeltaSeconds', label: 'Mean Δ', field: 'meanDeltaSeconds', align: 'left' },
-  { name: 'sessionLength', label: 'Actions', field: 'sessionLength', align: 'left', sortable: true },
+  {
+    name: 'sessionLength',
+    label: 'Actions',
+    field: 'sessionLength',
+    align: 'left',
+    sortable: true,
+  },
   { name: 'aeScore', label: 'AE Score', field: 'aeScore', align: 'left', sortable: true },
   { name: 'typeConfidence', label: 'Type confidence', field: 'typeConfidence', align: 'left' },
   { name: 'anomalyType', label: 'Type', field: 'anomalyType', align: 'left' },

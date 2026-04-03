@@ -1,5 +1,7 @@
 <template>
+  <!-- Global shell: top toolbar, persistent drawer, and routed page content. -->
   <q-layout view="lHh Lpr lFf">
+    <!-- Header actions expose navigation, branding, and monitoring shortcuts. -->
     <q-header class="neo-header" elevated>
       <q-toolbar class="neo-toolbar">
         <div class="neo-toolbar-start">
@@ -19,7 +21,9 @@
               <span class="neo-brand-care">Care</span>
               <span class="neo-brand-soc">Insights</span>
             </div>
-            <div class="neo-subtitle">Behavior intelligence cockpit for live session operations</div>
+            <div class="neo-subtitle">
+              Behavior intelligence cockpit for live session operations
+            </div>
           </q-toolbar-title>
         </div>
 
@@ -70,6 +74,7 @@
       </q-toolbar>
     </q-header>
 
+    <!-- Drawer keeps section links and operating context visible while switching pages. -->
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered :width="300" class="neo-drawer">
       <div class="neo-drawer-shell">
         <div class="neo-drawer-brand">
@@ -130,6 +135,7 @@
       </div>
     </q-drawer>
 
+    <!-- Routed page components render inside the shared layout container. -->
     <q-page-container class="neo-page-container">
       <router-view />
     </q-page-container>
@@ -137,6 +143,7 @@
 </template>
 
 <script setup lang="ts">
+// Main layout state handles navigation, drawer visibility, and external monitoring links.
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -151,6 +158,7 @@ const leftDrawerOpen = ref(typeof window === 'undefined' ? true : window.innerWi
 const router = useRouter();
 const route = useRoute();
 
+// Sidebar destinations map each dashboard surface to its route, label, and icon.
 const navigation: NavigationItem[] = [
   {
     id: 'overview',
@@ -190,6 +198,7 @@ const navigation: NavigationItem[] = [
   },
 ];
 
+// Layout interactions and route helpers keep the shell synchronized with navigation.
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
@@ -213,6 +222,7 @@ const navigateTo = async (id: string) => {
   }
 };
 
+// Monitoring shortcuts open the external observability tools in new tabs.
 const openGrafana = () => {
   window.open('http://localhost:3000/dashboards', '_blank', 'noopener');
 };

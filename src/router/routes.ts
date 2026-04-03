@@ -1,3 +1,4 @@
+// Route table: mount each dashboard surface under the shared main layout shell.
 import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
@@ -15,6 +16,7 @@ const routes: RouteRecordRaw[] = [
     ],
   },
 
+  // Unknown URLs fall back to the dedicated 404 page.
   // Catch-all for unknown routes.
   {
     path: '/:catchAll(.*)*',
