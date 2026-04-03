@@ -3,6 +3,7 @@ import {
   getActiveAnomaly,
   getAnomalyExplanation,
   getAnomalyStreamUrl,
+  getLiveStatsStreamUrl,
   getLiveStats,
   getNextActions,
   getRiskProfile,
@@ -59,9 +60,11 @@ const createDashboardStore = () => {
   const streamError = ref('');
 
   let anomalyStream: EventSource | null = null;
-  let statsIntervalId: number | null = null;
+  let liveStatsStream: EventSource | null = null;
   let liveToastTimeoutId: number | null = null;
   let started = false;
+  const eventsSinceLoad = ref(0);
+  const lastUpdated = ref<Date | null>(null);
 
   const totalSessions = computed(
     () => sessionMeta.value?.totalElements ?? sessions.value.length
@@ -321,6 +324,38 @@ const createDashboardStore = () => {
     anomalyStream = null;
   };
 
+  const connectLiveStatsStream = () => {
+    closeLiveStatsStream();
+
+    try {
+      liveStatsStream = new EventSource(getLiveStatsStreamUrl());
+    } catch {
+      statsError.value = 'Unable to connect to live stats stream.';
+      return;
+    }
+
+    liveStatsStream.addEventListener('stats', (event) => {
+      try {
+        const stats = JSON.parse(event.data);
+        liveStats.value = stats;
+        lastUpdated.value = new Date();
+        eventsSinceLoad.value += 1;
+      } catch {
+        statsError.value = 'Failed to parse live stats.';
+      }
+    });
+
+    liveStatsStream.onerror = () => {
+      // It will auto-reconnect
+      console.warn('Live stats stream interrupted.');
+    };
+  };
+
+  const closeLiveStatsStream = () => {
+    liveStatsStream?.close();
+    liveStatsStream = null;
+  };
+
   const handleStreamAlert = (event: AnomalyEventDto) => {
     streamAlerts.value = upsertNewest(streamAlerts.value, event, 8);
     anomalies.value = upsertNewest(anomalies.value, event, 40);
@@ -356,9 +391,7 @@ const createDashboardStore = () => {
     void loadAnalytics();
     void loadStats();
     connectAnomalyStream();
-    statsIntervalId = window.setInterval(() => {
-      void loadStats();
-    }, 60_000);
+    connectLiveStatsStream();
   };
 
   const stop = () => {
@@ -366,11 +399,7 @@ const createDashboardStore = () => {
     started = false;
 
     closeAnomalyStream();
-
-    if (statsIntervalId != null) {
-      window.clearInterval(statsIntervalId);
-      statsIntervalId = null;
-    }
+    closeLiveStatsStream();
 
     if (liveToastTimeoutId != null) {
       window.clearTimeout(liveToastTimeoutId);
@@ -415,6 +444,8 @@ const createDashboardStore = () => {
     eventsPerMinute,
     anomalyRate,
     koRate,
+    lastUpdated,
+    eventsSinceLoad,
     loadAnalytics,
     loadStats,
     loadUserInsights,

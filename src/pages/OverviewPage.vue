@@ -5,6 +5,9 @@
       :anomalous-sessions="anomalousSessions"
       :total-anomalies="totalAnomalies"
       :avg-session-duration="avgSessionDuration"
+      :stream-connected="streamConnected"
+      :last-updated="lastUpdated"
+      :events-rate="eventsPerMinute"
       @navigate="(id) => router.push(id === 'overview' ? '/' : `/${id}`)"
     />
 
@@ -22,6 +25,9 @@
       :events-per-minute="eventsPerMinute"
       :anomaly-rate="anomalyRate"
       :ko-rate="koRate"
+      :stream-connected="streamConnected"
+      :events-since-load="eventsSinceLoad"
+      :last-updated="lastUpdated"
     />
 
     <section class="neo-section neo-overview-grid">
@@ -157,6 +163,9 @@ const {
   sessions,
   liveStats,
   anomalies,
+  streamConnected,
+  lastUpdated,
+  eventsSinceLoad,
 } = useDashboard();
 
 const liveStatsPayload = computed(() => {

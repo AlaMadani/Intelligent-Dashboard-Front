@@ -1,28 +1,47 @@
 <template>
   <section class="neo-section neo-kpis">
-    <article v-for="card in cards" :key="card.label" class="neo-kpi-card">
-      <div class="neo-kpi-head">
-        <div class="neo-kpi-icon">
-          <q-icon :name="card.icon" />
-        </div>
-        <div class="neo-kpi-label">{{ card.label }}</div>
+    <div v-if="!eventsSinceLoad || eventsSinceLoad === 0" class="row q-col-gutter-lg full-width">
+      <div v-for="i in 4" :key="i" class="col-12 col-md-3">
+        <SkeletonCard />
       </div>
-      <div class="neo-kpi-value">{{ card.value }}</div>
-      <div class="neo-kpi-meta">{{ card.meta }}</div>
-      <div class="neo-kpi-accent"></div>
-    </article>
+    </div>
+    <template v-else>
+      <article v-for="card in cards" :key="card.label" class="neo-kpi-card" :class="{'neo-kpi-changed': animationTrigger}">
+        <div class="neo-kpi-head">
+          <div class="neo-kpi-icon">
+            <q-icon :name="card.icon" />
+          </div>
+          <div class="neo-kpi-label">{{ card.label }}</div>
+        </div>
+        <div class="neo-kpi-value">{{ card.value }}</div>
+        <div class="neo-kpi-meta">{{ card.meta }}</div>
+        <div class="neo-kpi-accent"></div>
+      </article>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import SkeletonCard from './SkeletonCard.vue';
 
 const props = defineProps<{
   activeSessions: string;
   eventsPerMinute: string;
   anomalyRate: string;
   koRate: string;
+  eventsSinceLoad?: number;
+  lastUpdated?: Date | null;
 }>();
+
+const animationTrigger = ref(false);
+
+watch(() => props.eventsSinceLoad, () => {
+  animationTrigger.value = true;
+  setTimeout(() => {
+    animationTrigger.value = false;
+  }, 500);
+});
 
 const cards = computed(() => [
   {
@@ -74,5 +93,16 @@ const cards = computed(() => [
   height: 5px;
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(47, 143, 131, 0.95), rgba(227, 165, 72, 0.85));
+}
+
+.neo-kpi-changed .neo-kpi-value {
+  animation: pop-value 0.5s ease-out;
+  color: #2dd4bf;
+}
+
+@keyframes pop-value {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); color: inherit; }
 }
 </style>

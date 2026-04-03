@@ -36,6 +36,14 @@ body {
     radial-gradient(circle at 82% 14%, rgba(47, 143, 131, 0.18), transparent 24%),
     radial-gradient(circle at 80% 78%, rgba(91, 140, 201, 0.12), transparent 26%),
     linear-gradient(180deg, #f8f1e6 0%, #eef3f5 52%, #edf2f4 100%);
+  background-size: 200% 200%;
+  animation: gradientBG 20s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
 }
 
 body::before {

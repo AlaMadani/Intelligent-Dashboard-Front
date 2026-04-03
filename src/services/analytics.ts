@@ -133,3 +133,11 @@ export const getAnomalyStreamUrl = () => {
       : window.location.origin;
   return new URL('/api/analytics/stream/anomalies', baseUrl).toString();
 };
+
+export const getLiveStatsStreamUrl = () => {
+  const baseUrl =
+    typeof api.defaults.baseURL === 'string' && api.defaults.baseURL
+      ? api.defaults.baseURL
+      : window.location.origin;
+  return new URL('/api/analytics/stream/live', baseUrl).toString();
+};

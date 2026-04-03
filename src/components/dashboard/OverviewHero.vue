@@ -47,9 +47,9 @@
         <div class="neo-panel-header">
           <div>
             <div class="neo-panel-title">Live posture</div>
-            <div class="neo-panel-footnote">Current behavior surveillance state</div>
+            <div class="neo-panel-footnote">Events updated {{ lastUpdatedFormatted }} ago</div>
           </div>
-          <q-chip dense color="positive" text-color="white" icon="sensors">Streaming</q-chip>
+          <LivePulse :status="streamConnected ? 'connected' : 'disconnected'" :events-rate="eventsRate" />
         </div>
 
         <div class="neo-panel-body">
@@ -96,16 +96,43 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   totalSessions: number;
   anomalousSessions: number;
   totalAnomalies: number;
   avgSessionDuration: string;
+  streamConnected?: boolean;
+  lastUpdated?: Date | null;
+  eventsRate: number | string;
 }>();
 
 const emit = defineEmits<{
   (event: 'navigate', target: string): void;
 }>();
+
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import LivePulse from './LivePulse.vue';
+
+const now = ref(new Date());
+let interval: number;
+
+onMounted(() => {
+  interval = window.setInterval(() => {
+    now.value = new Date();
+  }, 1000);
+});
+
+onUnmounted(() => {
+  window.clearInterval(interval);
+});
+
+const lastUpdatedFormatted = computed(() => {
+  if (!props.lastUpdated) return '0s';
+  const diff = Math.max(0, Math.floor((now.value.getTime() - props.lastUpdated.getTime()) / 1000));
+  return `${diff}s`;
+});
+
+
 </script>
 
 <style scoped>
