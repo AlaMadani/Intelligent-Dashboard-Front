@@ -15,10 +15,10 @@
 
     <!-- Sticky toast surfaces the most recent anomaly received from the live stream. -->
     <div v-if="latestStreamAlert" class="neo-live-toast">
-      <div class="neo-live-toast-title">Live anomaly alert received</div>
+      <div class="neo-live-toast-title">{{ t('overviewPage.liveAlertTitle') }}</div>
       <div class="neo-live-toast-body">
         {{ latestStreamAlert.insuredId }} / {{ latestStreamAlert.anomalyTier }} /
-        {{ latestStreamAlert.anomalyType || 'UNKNOWN' }} /
+        {{ latestStreamAlert.anomalyType || t('common.unknown') }} /
         {{ formatDate(latestStreamAlert.detectedAt) }}
       </div>
     </div>
@@ -39,17 +39,19 @@
       <article class="neo-overview-panel neo-overview-panel--wide">
         <div class="neo-overview-head">
           <div>
-            <h3>Behavior momentum</h3>
-            <p>
-              Recent session duration and action volume derived from the latest monitored traces.
-            </p>
+            <h3>{{ t('overviewPage.behaviorMomentumTitle') }}</h3>
+            <p>{{ t('overviewPage.behaviorMomentumSubtitle') }}</p>
           </div>
-          <div class="neo-overview-pill">{{ sessions.length }} recent sessions loaded</div>
+          <div class="neo-overview-pill">
+            {{ t('overviewPage.recentSessionsLoaded', { count: sessions.length }) }}
+          </div>
         </div>
 
         <div class="neo-overview-signal-grid">
           <div class="neo-overview-signal-card">
-            <div class="neo-overview-signal-label">Session duration pulse</div>
+            <div class="neo-overview-signal-label">
+              {{ t('overviewPage.sessionDurationPulseLabel') }}
+            </div>
             <SparkAreaChart
               :values="sessionDurationTrend"
               :labels="sessionTimelineLabels"
@@ -58,7 +60,9 @@
             />
           </div>
           <div class="neo-overview-signal-card">
-            <div class="neo-overview-signal-label">Action volume pulse</div>
+            <div class="neo-overview-signal-label">
+              {{ t('overviewPage.actionVolumePulseLabel') }}
+            </div>
             <SparkAreaChart
               :values="sessionActionTrend"
               :labels="sessionTimelineLabels"
@@ -69,15 +73,15 @@
 
         <div class="neo-overview-mini-grid">
           <div class="neo-overview-mini-card">
-            <span>Average actions</span>
+            <span>{{ t('overviewPage.averageActionsLabel') }}</span>
             <strong>{{ averageActionVolume }}</strong>
           </div>
           <div class="neo-overview-mini-card">
-            <span>Average unique actions</span>
+            <span>{{ t('overviewPage.averageUniqueActionsLabel') }}</span>
             <strong>{{ averageUniqueActions }}</strong>
           </div>
           <div class="neo-overview-mini-card">
-            <span>Latest anomaly score</span>
+            <span>{{ t('overviewPage.latestAnomalyScoreLabel') }}</span>
             <strong>{{ latestAnomalyScore }}</strong>
           </div>
         </div>
@@ -90,7 +94,7 @@
             </div>
             <div class="neo-overview-feed-side">
               <strong>{{ formatDate(session.startTime) }}</strong>
-              <span>{{ session.isAnomaly ? 'Anomaly' : 'Observed' }}</span>
+              <span>{{ session.isAnomaly ? t('common.anomaly') : t('common.observed') }}</span>
             </div>
           </div>
         </div>
@@ -99,8 +103,8 @@
       <article class="neo-overview-panel neo-overview-panel--map">
         <div class="neo-overview-head">
           <div>
-            <h3>Geolocation of active countries</h3>
-            <p>Live country distribution extracted from the current telemetry window.</p>
+            <h3>{{ t('overviewPage.geolocationTitle') }}</h3>
+            <p>{{ t('overviewPage.geolocationSubtitle') }}</p>
           </div>
         </div>
         <CountryActivityMap :countries="topCountries" />
@@ -109,23 +113,23 @@
       <article class="neo-overview-panel">
         <div class="neo-overview-head">
           <div>
-            <h3>Live actions</h3>
-            <p>Top actions in the last 15 minutes.</p>
+            <h3>{{ t('overviewPage.liveActionsTitle') }}</h3>
+            <p>{{ t('overviewPage.liveActionsSubtitle') }}</p>
           </div>
         </div>
-        <BarListChart :items="topActionBars" empty-message="No live action data yet." />
+        <BarListChart :items="topActionBars" :empty-message="t('overviewPage.liveActionsEmpty')" />
       </article>
 
       <article class="neo-overview-panel">
         <div class="neo-overview-head">
           <div>
-            <h3>Anomaly tier mix</h3>
-            <p>Distribution across the latest anomaly classifications.</p>
+            <h3>{{ t('overviewPage.anomalyTierMixTitle') }}</h3>
+            <p>{{ t('overviewPage.anomalyTierMixSubtitle') }}</p>
           </div>
         </div>
         <DonutBreakdownChart
           :segments="tierMixSegments"
-          center-label="Anomaly tiers"
+          :center-label="t('overviewPage.anomalyTierMixCenterLabel')"
           :center-value="String(totalAnomalies)"
         />
       </article>
@@ -133,11 +137,14 @@
       <article class="neo-overview-panel">
         <div class="neo-overview-head">
           <div>
-            <h3>Priority anomaly types</h3>
-            <p>Use this to focus analyst triage and tuning.</p>
+            <h3>{{ t('overviewPage.priorityAnomalyTypesTitle') }}</h3>
+            <p>{{ t('overviewPage.priorityAnomalyTypesSubtitle') }}</p>
           </div>
         </div>
-        <BarListChart :items="topAnomalyTypeBars" empty-message="No anomaly types yet." />
+        <BarListChart
+          :items="topAnomalyTypeBars"
+          :empty-message="t('overviewPage.priorityAnomalyTypesEmpty')"
+        />
       </article>
     </section>
   </q-page>
@@ -147,6 +154,7 @@
 // This page derives high-level overview metrics from the shared dashboard store.
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import BarListChart from 'src/components/dashboard/BarListChart.vue';
 import CountryActivityMap from 'src/components/dashboard/CountryActivityMap.vue';
 import DonutBreakdownChart from 'src/components/dashboard/DonutBreakdownChart.vue';
@@ -154,11 +162,16 @@ import KpiStrip from 'src/components/dashboard/KpiStrip.vue';
 import OverviewHero from 'src/components/dashboard/OverviewHero.vue';
 import SparkAreaChart from 'src/components/dashboard/SparkAreaChart.vue';
 import { useDashboard } from 'src/composables/useDashboard';
+import {
+  ANOMALY_TIER_COLORS,
+  FALLBACK_ANOMALY_TIER_COLOR,
+} from 'src/constants/dashboard/anomaly';
 import { formatTimelineLabel, normalizeCountryTelemetry } from 'src/utils/dashboard';
 import { formatDate, formatScore } from 'src/utils/format';
 
 // Router navigation lets the hero shortcuts jump between dashboard sections.
 const router = useRouter();
+const { t } = useI18n();
 const {
   totalSessions,
   anomalousSessions,
@@ -228,14 +241,6 @@ const topAnomalyTypeBars = computed(() =>
 
 const tierMixSegments = computed(() => {
   const counts = new Map<string, number>();
-  const colors: Record<string, string> = {
-    TIER1: '#2f8f83',
-    TIER2: '#e3a548',
-    TIER3: '#cf5d4a',
-    ML_ERROR: '#617ca8',
-    UNKNOWN: '#8899a8',
-  };
-  const fallbackColor = '#8899a8';
 
   for (const event of anomalies.value) {
     const label = event.anomalyTier || 'UNKNOWN';
@@ -245,7 +250,7 @@ const tierMixSegments = computed(() => {
   return Array.from(counts.entries()).map(([label, value]) => ({
     label,
     value,
-    color: colors[label] ?? fallbackColor,
+    color: ANOMALY_TIER_COLORS[label] ?? FALLBACK_ANOMALY_TIER_COLOR,
   }));
 });
 
@@ -279,19 +284,21 @@ const formatChartDuration = (value: number) =>
       : `${Math.round(value)}s`;
 
 const averageActionVolume = computed(() => {
-  if (!sessions.value.length) return 'n/a';
+  if (!sessions.value.length) return t('common.notAvailable');
   const total = sessions.value.reduce((sum, session) => sum + (session.sessionLength ?? 0), 0);
   return (total / sessions.value.length).toFixed(1);
 });
 
 const averageUniqueActions = computed(() => {
-  if (!sessions.value.length) return 'n/a';
+  if (!sessions.value.length) return t('common.notAvailable');
   const total = sessions.value.reduce((sum, session) => sum + (session.uniqueActionCount ?? 0), 0);
   return (total / sessions.value.length).toFixed(1);
 });
 
 const latestAnomalyScore = computed(() =>
-  anomalies.value.length ? formatScore(anomalies.value[0]?.anomalyScore ?? null) : 'n/a',
+  anomalies.value.length
+    ? formatScore(anomalies.value[0]?.anomalyScore ?? null)
+    : t('common.notAvailable'),
 );
 </script>
 

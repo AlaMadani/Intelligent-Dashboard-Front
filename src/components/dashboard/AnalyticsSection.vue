@@ -3,10 +3,8 @@
   <section id="analytics" class="neo-section">
     <div class="neo-section-header">
       <div>
-        <div class="neo-section-title">Behavior analytics</div>
-        <div class="neo-section-subtitle">
-          Live platform signals fused with anomaly events, recent sessions, and forecast output.
-        </div>
+        <div class="neo-section-title">{{ t('analyticsSection.title') }}</div>
+        <div class="neo-section-subtitle">{{ t('analyticsSection.subtitle') }}</div>
       </div>
     </div>
 
@@ -20,15 +18,17 @@
       <article class="neo-analytics-panel neo-analytics-panel--wide">
         <div class="neo-analytics-head">
           <div>
-            <h3>Anomaly tier distribution</h3>
-            <p>Live classification output from confirmed anomaly events.</p>
+            <h3>{{ t('analyticsSection.anomalyTierDistributionTitle') }}</h3>
+            <p>{{ t('analyticsSection.anomalyTierDistributionSubtitle') }}</p>
           </div>
-          <div class="neo-analytics-chip">{{ anomalies.length }} events</div>
+          <div class="neo-analytics-chip">
+            {{ t('analyticsSection.eventsCount', { count: anomalies.length }) }}
+          </div>
         </div>
 
         <DonutBreakdownChart
           :segments="tierMixSegments"
-          center-label="Confirmed"
+          :center-label="t('analyticsSection.confirmedCenterLabel')"
           :center-value="String(anomalies.length)"
         />
       </article>
@@ -36,28 +36,34 @@
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>Top anomaly types</h3>
-            <p>Prioritize tuning and response playbooks.</p>
+            <h3>{{ t('analyticsSection.topAnomalyTypesTitle') }}</h3>
+            <p>{{ t('analyticsSection.topAnomalyTypesSubtitle') }}</p>
           </div>
         </div>
-        <BarListChart :items="topAnomalyTypeBars" empty-message="No anomaly types yet." />
+        <BarListChart
+          :items="topAnomalyTypeBars"
+          :empty-message="t('analyticsSection.topAnomalyTypesEmpty')"
+        />
       </article>
 
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>Top actions in 15 minutes</h3>
-            <p>Behavior concentration from the live stats window.</p>
+            <h3>{{ t('analyticsSection.topActionsTitle') }}</h3>
+            <p>{{ t('analyticsSection.topActionsSubtitle') }}</p>
           </div>
         </div>
-        <BarListChart :items="topActionBars" empty-message="No live action data." />
+        <BarListChart
+          :items="topActionBars"
+          :empty-message="t('analyticsSection.topActionsEmpty')"
+        />
       </article>
 
       <article class="neo-analytics-panel neo-analytics-panel--map">
         <div class="neo-analytics-head">
           <div>
-            <h3>Geolocation of active countries</h3>
-            <p>Country hotspots in the current live traffic window.</p>
+            <h3>{{ t('analyticsSection.geolocationTitle') }}</h3>
+            <p>{{ t('analyticsSection.geolocationSubtitle') }}</p>
           </div>
         </div>
         <CountryActivityMap :countries="topCountries" />
@@ -66,8 +72,8 @@
       <article class="neo-analytics-panel neo-analytics-panel--wide">
         <div class="neo-analytics-head">
           <div>
-            <h3>Session duration trend</h3>
-            <p>Recent session length movement from the latest analyzed traces.</p>
+            <h3>{{ t('analyticsSection.sessionDurationTrendTitle') }}</h3>
+            <p>{{ t('analyticsSection.sessionDurationTrendSubtitle') }}</p>
           </div>
           <div class="neo-analytics-chip">{{ averageDuration }}</div>
         </div>
@@ -81,15 +87,15 @@
 
         <div class="neo-analytics-strip">
           <div class="neo-analytics-strip-card">
-            <span>Latest duration</span>
+            <span>{{ t('analyticsSection.latestDurationLabel') }}</span>
             <strong>{{ latestDuration }}</strong>
           </div>
           <div class="neo-analytics-strip-card">
-            <span>Average duration</span>
+            <span>{{ t('analyticsSection.averageDurationLabel') }}</span>
             <strong>{{ averageDuration }}</strong>
           </div>
           <div class="neo-analytics-strip-card">
-            <span>Average actions</span>
+            <span>{{ t('analyticsSection.averageActionsLabel') }}</span>
             <strong>{{ averageActionVolume }}</strong>
           </div>
         </div>
@@ -98,18 +104,21 @@
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>Forecasted spikes</h3>
-            <p>Predicted action spikes from the trend service.</p>
+            <h3>{{ t('analyticsSection.forecastedSpikesTitle') }}</h3>
+            <p>{{ t('analyticsSection.forecastedSpikesSubtitle') }}</p>
           </div>
         </div>
-        <BarListChart :items="trendSpikeBars" empty-message="No spike alerts." />
+        <BarListChart
+          :items="trendSpikeBars"
+          :empty-message="t('analyticsSection.forecastedSpikesEmpty')"
+        />
       </article>
 
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>Anomaly score pulse</h3>
-            <p>How aggressive the latest anomaly scores look.</p>
+            <h3>{{ t('analyticsSection.anomalyScorePulseTitle') }}</h3>
+            <p>{{ t('analyticsSection.anomalyScorePulseSubtitle') }}</p>
           </div>
           <div class="neo-analytics-chip neo-analytics-chip--danger">
             {{ latestAnomalyScore }}
@@ -127,14 +136,16 @@
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>Recent sessions</h3>
-            <p>Latest session activity in the current result set.</p>
+            <h3>{{ t('analyticsSection.recentSessionsTitle') }}</h3>
+            <p>{{ t('analyticsSection.recentSessionsSubtitle') }}</p>
           </div>
         </div>
 
-        <div v-if="loading" class="neo-analytics-empty">Loading sessions...</div>
+        <div v-if="loading" class="neo-analytics-empty">
+          {{ t('analyticsSection.loadingSessions') }}
+        </div>
         <div v-else-if="!sessionPreview.length" class="neo-analytics-empty">
-          No sessions returned.
+          {{ t('analyticsSection.noSessionsReturned') }}
         </div>
         <div v-else class="neo-analytics-feed">
           <div v-for="session in sessionPreview" :key="session.id" class="neo-analytics-feed-row">
@@ -144,7 +155,7 @@
             </div>
             <div class="neo-analytics-feed-side">
               <strong>{{ formatDate(session.startTime) }}</strong>
-              <span>{{ session.isAnomaly ? 'Anomaly' : 'Observed' }}</span>
+              <span>{{ session.isAnomaly ? t('common.anomaly') : t('common.observed') }}</span>
             </div>
           </div>
         </div>
@@ -153,14 +164,16 @@
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>Recent anomaly events</h3>
-            <p>Latest confirmed anomalies for analyst response.</p>
+            <h3>{{ t('analyticsSection.recentAnomalyEventsTitle') }}</h3>
+            <p>{{ t('analyticsSection.recentAnomalyEventsSubtitle') }}</p>
           </div>
         </div>
 
-        <div v-if="loading" class="neo-analytics-empty">Loading anomalies...</div>
+        <div v-if="loading" class="neo-analytics-empty">
+          {{ t('analyticsSection.loadingAnomalies') }}
+        </div>
         <div v-else-if="!anomalyPreview.length" class="neo-analytics-empty">
-          No anomaly events returned.
+          {{ t('analyticsSection.noAnomalyEventsReturned') }}
         </div>
         <div v-else class="neo-analytics-feed">
           <div
@@ -170,7 +183,7 @@
           >
             <div>
               <div class="neo-analytics-feed-title">
-                {{ event.anomalyType || 'UNKNOWN' }}
+                {{ event.anomalyType || t('common.unknown') }}
               </div>
               <div class="neo-analytics-feed-meta">
                 {{ event.insuredId }} / {{ event.sessionId }}
@@ -190,7 +203,12 @@
 <script setup lang="ts">
 // Props deliver dashboard datasets; computed blocks reshape them for charts and previews.
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { AnomalyEventDto, SessionAnalysisDto, StatsResponseDto } from 'src/types/analytics';
+import {
+  ANOMALY_TIER_COLORS,
+  FALLBACK_ANOMALY_TIER_COLOR,
+} from 'src/constants/dashboard/anomaly';
 import BarListChart from './BarListChart.vue';
 import CountryActivityMap from './CountryActivityMap.vue';
 import DonutBreakdownChart from './DonutBreakdownChart.vue';
@@ -206,6 +224,8 @@ const props = defineProps<{
   loading: boolean;
   error: string;
 }>();
+
+const { t } = useI18n();
 
 // Lightweight previews keep the larger datasets focused in the UI.
 const sessionPreview = computed(() => props.sessions.slice(0, 5));
@@ -232,20 +252,11 @@ const tierMix = computed(() => {
 });
 
 const tierMixSegments = computed(() => {
-  const colors: Record<string, string> = {
-    TIER1: '#2f8f83',
-    TIER2: '#e3a548',
-    TIER3: '#cf5d4a',
-    ML_ERROR: '#617ca8',
-    UNKNOWN: '#8899a8',
-  };
-  const fallbackColor = '#8899a8';
-
   return tierMix.value.map((item) => ({
     label: item.label,
     value: item.count,
     display: `${item.count} / ${item.percent}%`,
-    color: colors[item.label] ?? fallbackColor,
+    color: ANOMALY_TIER_COLORS[item.label] ?? FALLBACK_ANOMALY_TIER_COLOR,
   }));
 });
 
@@ -312,7 +323,9 @@ const trendSpikeBars = computed(() => {
         const label =
           typeof record.actionLabel === 'string' && record.actionLabel
             ? record.actionLabel
-            : `Action ${actionId != null ? actionId.toFixed(0) : 'n/a'}`;
+            : t('analyticsSection.actionFallback', {
+                id: actionId != null ? actionId.toFixed(0) : t('common.notAvailable'),
+              });
         const value = toNumber(record.predictedCount) ?? 0;
         return [{ label, value, display: value.toFixed(0) }];
       })
@@ -366,11 +379,11 @@ const anomalyTimelineLabels = computed(() =>
 const latestDuration = computed(() =>
   props.sessions.length
     ? formatDurationSeconds(props.sessions[0]?.sessionDurationSeconds ?? null)
-    : 'n/a',
+    : t('common.notAvailable'),
 );
 
 const averageDuration = computed(() => {
-  if (!props.sessions.length) return 'n/a';
+  if (!props.sessions.length) return t('common.notAvailable');
   const total = props.sessions.reduce(
     (sum, session) => sum + (session.sessionDurationSeconds ?? 0),
     0,
@@ -379,13 +392,15 @@ const averageDuration = computed(() => {
 });
 
 const averageActionVolume = computed(() => {
-  if (!props.sessions.length) return 'n/a';
+  if (!props.sessions.length) return t('common.notAvailable');
   const total = props.sessions.reduce((sum, session) => sum + (session.sessionLength ?? 0), 0);
   return (total / props.sessions.length).toFixed(1);
 });
 
 const latestAnomalyScore = computed(() =>
-  props.anomalies.length ? formatScore(props.anomalies[0]?.anomalyScore ?? null) : 'n/a',
+  props.anomalies.length
+    ? formatScore(props.anomalies[0]?.anomalyScore ?? null)
+    : t('common.notAvailable'),
 );
 
 // Format helpers keep durations and numeric payload values readable in charts.

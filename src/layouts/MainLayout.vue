@@ -10,7 +10,7 @@
             dense
             round
             icon="menu"
-            aria-label="Toggle navigation"
+            :aria-label="t('layout.aria.toggleNavigation')"
             class="neo-menu-btn"
             @click="toggleLeftDrawer"
           />
@@ -21,18 +21,16 @@
               <span class="neo-brand-care">Care</span>
               <span class="neo-brand-soc">Insights</span>
             </div>
-            <div class="neo-subtitle">
-              Behavior intelligence cockpit for live session operations
-            </div>
+            <div class="neo-subtitle">{{ t('layout.subtitle') }}</div>
           </q-toolbar-title>
         </div>
 
         <div class="neo-toolbar-status">
           <div class="neo-top-pill">
             <span class="neo-top-pill-dot"></span>
-            Live telemetry
+            {{ t('layout.topPillLiveTelemetry') }}
           </div>
-          <div class="neo-top-pill neo-top-pill--soft">Redis + Kafka + AI context</div>
+          <div class="neo-top-pill neo-top-pill--soft">{{ t('layout.topPillStack') }}</div>
         </div>
 
         <div class="neo-toolbar-meta">
@@ -40,26 +38,26 @@
             flat
             dense
             icon="timeline"
-            label="Grafana"
-            aria-label="Open Grafana dashboard in a new tab"
+            :label="t('layout.grafanaButton')"
+            :aria-label="t('layout.aria.openGrafana')"
             class="neo-external-btn"
             text-color="black"
             @click="openGrafana"
           >
-            <q-tooltip anchor="bottom middle">Grafana dashboards</q-tooltip>
+            <q-tooltip anchor="bottom middle">{{ t('layout.grafanaTooltip') }}</q-tooltip>
           </q-btn>
 
           <q-btn
             flat
             dense
             icon="search"
-            label="Kibana"
-            aria-label="Open Kibana overview in a new tab"
+            :label="t('layout.kibanaButton')"
+            :aria-label="t('layout.aria.openKibana')"
             class="neo-external-btn"
             text-color="black"
             @click="openKibana"
           >
-            <q-tooltip anchor="bottom middle">Kibana overview</q-tooltip>
+            <q-tooltip anchor="bottom middle">{{ t('layout.kibanaTooltip') }}</q-tooltip>
           </q-btn>
 
           <q-btn
@@ -67,7 +65,7 @@
             dense
             round
             icon="account_circle"
-            aria-label="Profile"
+            :aria-label="t('layout.aria.profile')"
             class="neo-avatar-btn"
           />
         </div>
@@ -78,16 +76,13 @@
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered :width="300" class="neo-drawer">
       <div class="neo-drawer-shell">
         <div class="neo-drawer-brand">
-          <div class="neo-drawer-kicker">Command deck</div>
-          <div class="neo-drawer-title">Navigate the live surfaces</div>
-          <div class="neo-drawer-copy">
-            Keep the stream, anomaly triage, session traces, and user intelligence aligned in one
-            operational flow.
-          </div>
+          <div class="neo-drawer-kicker">{{ t('layout.drawerKicker') }}</div>
+          <div class="neo-drawer-title">{{ t('layout.drawerTitle') }}</div>
+          <div class="neo-drawer-copy">{{ t('layout.drawerCopy') }}</div>
         </div>
 
         <q-list class="neo-nav">
-          <q-item-label header class="neo-nav-header">Control surfaces</q-item-label>
+          <q-item-label header class="neo-nav-header">{{ t('layout.navHeader') }}</q-item-label>
 
           <q-item
             v-for="item in navigation"
@@ -111,24 +106,21 @@
         </q-list>
 
         <div class="neo-drawer-footer">
-          <div class="neo-drawer-label">Operational note</div>
-          <div class="neo-drawer-note">
-            The sidebar stays open when you move between pages so the command context remains
-            visible while you investigate.
-          </div>
+          <div class="neo-drawer-label">{{ t('layout.operationalNoteLabel') }}</div>
+          <div class="neo-drawer-note">{{ t('layout.operationalNoteBody') }}</div>
 
           <div class="neo-drawer-metrics">
             <div class="neo-drawer-metric">
-              <span>Refresh</span>
-              <strong>60s</strong>
+              <span>{{ t('layout.metricRefreshLabel') }}</span>
+              <strong>{{ t('layout.metricRefreshValue') }}</strong>
             </div>
             <div class="neo-drawer-metric">
-              <span>Mode</span>
-              <strong>Live</strong>
+              <span>{{ t('layout.metricModeLabel') }}</span>
+              <strong>{{ t('layout.metricModeValue') }}</strong>
             </div>
             <div class="neo-drawer-metric">
-              <span>Focus</span>
-              <strong>Risk ops</strong>
+              <span>{{ t('layout.metricFocusLabel') }}</span>
+              <strong>{{ t('layout.metricFocusValue') }}</strong>
             </div>
           </div>
         </div>
@@ -144,59 +136,35 @@
 
 <script setup lang="ts">
 // Main layout state handles navigation, drawer visibility, and external monitoring links.
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { environment } from 'src/config/environment';
+import { LAYOUT_NAVIGATION_ITEMS } from 'src/constants/layout/navigation';
 
 interface NavigationItem {
   id: string;
+  route: string;
   label: string;
   caption: string;
   icon: string;
 }
 
+const { t } = useI18n();
 const leftDrawerOpen = ref(typeof window === 'undefined' ? true : window.innerWidth >= 1100);
 const router = useRouter();
 const route = useRoute();
 
 // Sidebar destinations map each dashboard surface to its route, label, and icon.
-const navigation: NavigationItem[] = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    caption: 'Executive signal board',
-    icon: 'dashboard',
-  },
-  {
-    id: 'anomalies',
-    label: 'Anomalies',
-    caption: 'Investigate flagged events',
-    icon: 'warning',
-  },
-  {
-    id: 'workbench',
-    label: 'Workbench',
-    caption: 'Review live stream context',
-    icon: 'hub',
-  },
-  {
-    id: 'sessions',
-    label: 'Sessions',
-    caption: 'Inspect behavior traces',
-    icon: 'analytics',
-  },
-  {
-    id: 'insights',
-    label: 'User insights',
-    caption: 'Load insured risk context',
-    icon: 'manage_search',
-  },
-  {
-    id: 'analytics',
-    label: 'Analytics',
-    caption: 'Trend and geo graphics',
-    icon: 'insights',
-  },
-];
+const navigation = computed<NavigationItem[]>(() =>
+  LAYOUT_NAVIGATION_ITEMS.map((item) => ({
+    id: item.id,
+    route: item.route,
+    icon: item.icon,
+    label: t(item.labelKey),
+    caption: t(item.captionKey),
+  })),
+);
 
 // Layout interactions and route helpers keep the shell synchronized with navigation.
 function toggleLeftDrawer() {
@@ -204,7 +172,7 @@ function toggleLeftDrawer() {
 }
 
 function pathFor(id: string) {
-  return id === 'overview' ? '/' : `/${id}`;
+  return LAYOUT_NAVIGATION_ITEMS.find((item) => item.id === id)?.route ?? '/';
 }
 
 function isActive(id: string) {
@@ -224,10 +192,10 @@ const navigateTo = async (id: string) => {
 
 // Monitoring shortcuts open the external observability tools in new tabs.
 const openGrafana = () => {
-  window.open('http://localhost:3000/dashboards', '_blank', 'noopener');
+  window.open(environment.grafanaDashboardsUrl, '_blank', 'noopener');
 };
 
 const openKibana = () => {
-  window.open('http://localhost:5601/app/kibana_overview#/', '_blank', 'noopener');
+  window.open(environment.kibanaOverviewUrl, '_blank', 'noopener');
 };
 </script>

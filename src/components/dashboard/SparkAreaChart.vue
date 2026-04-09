@@ -83,26 +83,15 @@
       </g>
     </svg>
 
-    <div v-if="!points.length" class="neo-trend-empty">No signal yet.</div>
+    <div v-if="!points.length" class="neo-trend-empty">{{ t('sparkAreaChart.noSignalYet') }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 // Convert compact numeric series into SVG points, axes, and paths for a lightweight trend chart.
 import { computed } from 'vue';
-
-interface Point {
-  x: number;
-  y: number;
-  value: number;
-  label: string;
-  isLast: boolean;
-}
-
-interface Tick {
-  value: number;
-  position: number;
-}
+import { useI18n } from 'vue-i18n';
+import type { Point, Tick } from 'src/models/chart';
 
 const props = withDefaults(
   defineProps<{
@@ -117,6 +106,8 @@ const props = withDefaults(
     tone: 'primary',
   },
 );
+
+const { t } = useI18n();
 
 // Static chart geometry keeps the SVG calculations consistent across all callers.
 const padding = {
