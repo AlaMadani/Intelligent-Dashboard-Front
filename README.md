@@ -43,6 +43,8 @@ This frontend is not standalone. It expects supporting services to be available 
 
 - **API service** at `http://localhost:8081`
   - REST endpoints for sessions, anomaly events, risk profiles, stats, and explanations
+  - **Dashboard snapshots** at `GET /api/analytics/dashboard/{view}` (Redis payloads written by the Data Processor: `alerts`, `risky-sessions`, `cluster-mix`, `drop-offs`, `path-deviations`, `forecasts`, `forecast-series`)
+  - **Live session insight** at `GET /api/analytics/sessions/{insuredId}/{sessionId}/insight` when the session is still open (Redis `session:insight:…`)
   - Server-Sent Events streams for live anomalies and live stats
 - **Logstash / logging endpoint** at `http://localhost:5001`
   - receives uncaught Vue error payloads from the frontend boot logger
@@ -130,7 +132,7 @@ src/
     index.ts         Router creation
 
   services/
-    analytics.ts     API wrappers for dashboard features
+    analytics.ts     REST wrappers (sessions, anomalies, stats, dashboard snapshots, session insight)
     http.ts          API envelope normalization
 
   types/
@@ -209,10 +211,27 @@ If this is your first time in the repository, start here:
    Most investigation-heavy surface in the UI.
 
 5. [`src/services/analytics.ts`](src/services/analytics.ts)  
-   Shows exactly what backend endpoints the frontend depends on.
+   Shows exactly what backend endpoints the frontend depends on, including `getDashboardSnapshot` and `getSessionInsight`.
 
 6. [`src/css/app.scss`](src/css/app.scss)  
    Contains the visual language and most global styling rules.
+
+---
+
+## API contract alignment (Data Processor / api-service)
+
+The backend pipeline now persists **tabular ONNX scores**, **Markov path context**, and richer session rows. The TypeScript DTOs in [`src/types/analytics.ts`](src/types/analytics.ts) match the updated **api-service** JSON:
+
+| Legacy field (old UI) | Current field |
+| --- | --- |
+| `sessionLength` | `totalEvents` |
+| `uniqueActionCount` | `uniqueActions` |
+| `meanDeltaSeconds` | `avgInterActionSeconds` |
+| `aeScore` | `isoScore` |
+
+Anomaly payloads may include `SESSION_RUNTIME` as `anomalyTier`, plus optional `anomalyProbability`, `churnProbability`, `riskScore`, `pathDeviation`, transition fields, `modelArtifact`, and `nextActions` on streamed or stored events.
+
+The **Response workbench** loads a SQL `SessionAnalysis` row when possible; if none is found (for example during an **active** session), it calls **`getSessionInsight`** and shows the result under **“Live session insight (Redis)”**.
 
 ---
 
@@ -223,9 +242,9 @@ The current frontend supports:
 - shared dashboard state across routes
 - live anomaly streaming with `EventSource`
 - live stats streaming
-- anomaly selection and session lookup
+- anomaly selection and session lookup, with **Redis session insight** fallback for in-flight sessions
 - insured risk profile lookup
-- predicted next-action display
+- predicted next-action display (including `nextActions` on anomaly payloads when present)
 - AI explanation rendering for persisted anomalies
 - analytics visualizations built from backend payloads
 - external observability shortcuts from the header

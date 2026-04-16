@@ -5,11 +5,13 @@ import type {
   AnomalyAlertDto,
   AnomalyEventDto,
   AnomalyExplanationDto,
+  DashboardView,
   NextActionPredictionDto,
   SessionAnalysisDto,
   StatsResponseDto,
   UserRiskProfileDto,
 } from 'src/types/analytics';
+import type { JsonValue } from 'src/types/api';
 import { unwrapEnvelope } from 'src/services/http';
 
 // Query parameter contracts for the analytics REST endpoints.
@@ -22,13 +24,19 @@ export interface ListSessionsParams {
   size?: number;
 }
 
-export type AnomalyTier = 'TIER1' | 'TIER2' | 'TIER3' | 'ML_ERROR';
+/** Values accepted by the anomaly list `tier` query param (aligns with persisted `anomaly_tier`). */
+export type AnomalyTierFilter =
+  | 'TIER1'
+  | 'TIER2'
+  | 'TIER3'
+  | 'ML_ERROR'
+  | 'SESSION_RUNTIME';
 
 export interface ListAnomalyEventsParams {
   insuredId?: string;
   from?: string;
   to?: string;
-  tier?: AnomalyTier;
+  tier?: AnomalyTierFilter;
   type?: string;
   page?: number;
   size?: number;
@@ -38,30 +46,28 @@ export interface ListAnomalyEventsParams {
 export const listSessions = async (
   params: ListSessionsParams = {},
 ): Promise<ApiEnvelope<SessionAnalysisDto[]>> => {
-  const response = await api.get<ApiResponse<SessionAnalysisDto[]>>('/api/analytics/sessions', {
+  const response = await api.get<ApiResponse<SessionAnalysisDto[]>>('/api/v1/sessions/risk-scores', {
     params,
   });
   return unwrapEnvelope(response.data);
 };
 
 export const getSession = async (id: number): Promise<ApiEnvelope<SessionAnalysisDto>> => {
-  const response = await api.get<ApiResponse<SessionAnalysisDto>>(`/api/analytics/sessions/${id}`);
+  const response = await api.get<ApiResponse<SessionAnalysisDto>>(`/api/v1/sessions/${id}`);
   return unwrapEnvelope(response.data);
 };
 
 export const listAnomalyEvents = async (
   params: ListAnomalyEventsParams = {},
 ): Promise<ApiEnvelope<AnomalyEventDto[]>> => {
-  const response = await api.get<ApiResponse<AnomalyEventDto[]>>('/api/analytics/anomaly-events', {
+  const response = await api.get<ApiResponse<AnomalyEventDto[]>>('/api/v1/anomalies', {
     params,
   });
   return unwrapEnvelope(response.data);
 };
 
 export const getAnomalyEvent = async (id: number): Promise<ApiEnvelope<AnomalyEventDto>> => {
-  const response = await api.get<ApiResponse<AnomalyEventDto>>(
-    `/api/analytics/anomaly-events/${id}`,
-  );
+  const response = await api.get<ApiResponse<AnomalyEventDto>>(`/api/v1/anomalies/${id}`);
   return unwrapEnvelope(response.data);
 };
 
@@ -70,7 +76,7 @@ export const getAnomalyExplanation = async (
   refresh = false,
 ): Promise<ApiEnvelope<AnomalyExplanationDto>> => {
   const response = await api.get<ApiResponse<AnomalyExplanationDto>>(
-    `/api/analytics/anomaly-events/${id}/explanation`,
+    `/api/v1/anomalies/${id}/explain`,
     { params: { refresh } },
   );
   return unwrapEnvelope(response.data);
@@ -81,7 +87,7 @@ export const getRiskProfile = async (
   insuredId: string,
 ): Promise<ApiEnvelope<UserRiskProfileDto>> => {
   const response = await api.get<ApiResponse<UserRiskProfileDto>>(
-    `/api/analytics/risk/${insuredId}`,
+    `/api/v1/sessions/risk-scores/${insuredId}`,
   );
   return unwrapEnvelope(response.data);
 };
@@ -90,21 +96,21 @@ export const getNextActions = async (
   insuredId: string,
 ): Promise<ApiEnvelope<NextActionPredictionDto>> => {
   const response = await api.get<ApiResponse<NextActionPredictionDto>>(
-    `/api/analytics/next-actions/${insuredId}`,
+    `/api/v1/next-actions/${insuredId}`,
   );
   return unwrapEnvelope(response.data);
 };
 
 // Live and trend stats power the overview hero, KPI strip, and analytics charts.
 export const getLiveStats = async (date: string): Promise<ApiEnvelope<StatsResponseDto>> => {
-  const response = await api.get<ApiResponse<StatsResponseDto>>('/api/analytics/stats/live', {
+  const response = await api.get<ApiResponse<StatsResponseDto>>('/api/v1/stats/live', {
     params: { date },
   });
   return unwrapEnvelope(response.data);
 };
 
 export const getTrendStats = async (date: string): Promise<ApiEnvelope<StatsResponseDto>> => {
-  const response = await api.get<ApiResponse<StatsResponseDto>>('/api/analytics/stats/trend', {
+  const response = await api.get<ApiResponse<StatsResponseDto>>('/api/v1/trends/forecast', {
     params: { date },
   });
   return unwrapEnvelope(response.data);
@@ -114,7 +120,26 @@ export const getActiveAnomaly = async (
   insuredId: string,
 ): Promise<ApiEnvelope<AnomalyAlertDto>> => {
   const response = await api.get<ApiResponse<AnomalyAlertDto>>(
-    `/api/analytics/anomaly/active/${insuredId}`,
+    `/api/v1/anomaly/active/${insuredId}`,
+  );
+  return unwrapEnvelope(response.data);
+};
+
+/** Redis dashboard aggregate written by the Data Processor (`dashboard:{view}`). */
+export const getDashboardSnapshot = async (
+  view: DashboardView,
+): Promise<ApiEnvelope<JsonValue>> => {
+  const response = await api.get<ApiResponse<JsonValue>>(`/api/v1/dashboard/${view}`);
+  return unwrapEnvelope(response.data);
+};
+
+/** Live per-session insight while the session is open (`session:insight:…` in Redis). */
+export const getSessionInsight = async (
+  insuredId: string,
+  sessionId: string,
+): Promise<ApiEnvelope<JsonValue>> => {
+  const response = await api.get<ApiResponse<JsonValue>>(
+    `/api/v1/sessions/${encodeURIComponent(insuredId)}/${encodeURIComponent(sessionId)}/insight`,
   );
   return unwrapEnvelope(response.data);
 };
@@ -125,7 +150,7 @@ export const getAnomalyStreamUrl = () => {
     typeof api.defaults.baseURL === 'string' && api.defaults.baseURL
       ? api.defaults.baseURL
       : window.location.origin;
-  return new URL('/api/analytics/stream/anomalies', baseUrl).toString();
+  return new URL('/api/v1/stream/anomalies', baseUrl).toString();
 };
 
 export const getLiveStatsStreamUrl = () => {
@@ -133,5 +158,5 @@ export const getLiveStatsStreamUrl = () => {
     typeof api.defaults.baseURL === 'string' && api.defaults.baseURL
       ? api.defaults.baseURL
       : window.location.origin;
-  return new URL('/api/analytics/stream/live', baseUrl).toString();
+  return new URL('/api/v1/stream/live', baseUrl).toString();
 };

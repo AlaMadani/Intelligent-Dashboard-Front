@@ -1,13 +1,14 @@
 // Shared dashboard composable: centralize data fetching, live streams, and cross-page selection state.
-import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue';
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import {
   getActiveAnomaly,
   getAnomalyExplanation,
-  getAnomalyStreamUrl,
   getLiveStatsStreamUrl,
   getLiveStats,
   getNextActions,
   getRiskProfile,
+  getSessionInsight,
   getTrendStats,
   listAnomalyEvents,
   listSessions,
@@ -22,14 +23,24 @@ import type {
   UserRiskProfileDto,
 } from 'src/types/analytics';
 import type { PaginationMeta } from 'src/types/api';
+import { anomalyEventKey } from 'src/utils/dashboard';
 import { formatDurationSeconds, formatPercent } from 'src/utils/format';
+import { useLiveStreamStore } from 'src/stores/live-stream';
 
 // Factory creates the singleton dashboard store shared across the routed dashboard pages.
 const createDashboardStore = () => {
   // Core analytics datasets and pagination metadata backing the overview, tables, and workbench.
   const sessions = ref<SessionAnalysisDto[]>([]);
   const anomalies = ref<AnomalyEventDto[]>([]);
-  const streamAlerts = ref<AnomalyEventDto[]>([]);
+  const liveStream = useLiveStreamStore();
+  const {
+    alerts: streamAlerts,
+    connected: streamConnected,
+    error: streamError,
+    latestAlert: streamLatestAlert,
+    latestKey: streamLatestKey,
+  } =
+    storeToRefs(liveStream);
   const sessionMeta = ref<PaginationMeta | null>(null);
   const anomalyMeta = ref<PaginationMeta | null>(null);
   const anomalousSessionsTotal = ref(0);
@@ -55,6 +66,8 @@ const createDashboardStore = () => {
 
   const selectedAnomalyKey = ref('');
   const selectedSessionDetail = ref<SessionAnalysisDto | null>(null);
+  /** When SQL session row is missing, Redis may still hold `session:insight:*` for active sessions. */
+  const liveSessionInsight = ref<Record<string, unknown> | null>(null);
   const selectedSessionLoading = ref(false);
   const anomalyExplanation = shallowRef<AnomalyExplanationDto | null>(null);
   const explanationLoading = ref(false);
@@ -62,10 +75,7 @@ const createDashboardStore = () => {
 
   // Live stream connection state and ephemeral UI feedback.
   const latestStreamAlert = ref<AnomalyEventDto | null>(null);
-  const streamConnected = ref(false);
-  const streamError = ref('');
 
-  let anomalyStream: EventSource | null = null;
   let liveStatsStream: EventSource | null = null;
   let liveToastTimeoutId: number | null = null;
   let started = false;
@@ -106,8 +116,8 @@ const createDashboardStore = () => {
     const key = selectedAnomalyKey.value;
     if (!key) return null;
     return (
-      anomalies.value.find((event) => anomalyKey(event) === key) ??
-      streamAlerts.value.find((event) => anomalyKey(event) === key) ??
+      anomalies.value.find((event) => anomalyEventKey(event) === key) ??
+      streamAlerts.value.find((event) => anomalyEventKey(event) === key) ??
       null
     );
   });
@@ -162,11 +172,10 @@ const createDashboardStore = () => {
 
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
       const [liveResponse, trendResponse] = await Promise.all([
         getLiveStats(today),
-        getTrendStats(tomorrow),
+        getTrendStats(today),
       ]);
 
       liveStats.value = liveResponse.data ?? null;
@@ -214,6 +223,8 @@ const createDashboardStore = () => {
 
   // When an anomaly is selected, fetch the matching session if it is not already cached locally.
   const loadSelectedSession = async (event: AnomalyEventDto) => {
+    liveSessionInsight.value = null;
+
     const existingSession =
       sessions.value.find(
         (session) => session.insuredId === event.insuredId && session.sessionId === event.sessionId,
@@ -250,6 +261,15 @@ const createDashboardStore = () => {
         totalPages = response.meta?.totalPages ?? page + 1;
         page += 1;
       }
+
+      try {
+        const insight = await getSessionInsight(event.insuredId, event.sessionId);
+        if (insight.data != null && typeof insight.data === 'object' && !Array.isArray(insight.data)) {
+          liveSessionInsight.value = insight.data as Record<string, unknown>;
+        }
+      } catch {
+        liveSessionInsight.value = null;
+      }
     } finally {
       selectedSessionLoading.value = false;
     }
@@ -257,9 +277,10 @@ const createDashboardStore = () => {
 
   // Selection orchestration keeps the anomaly, insured lookup, and session context aligned.
   const selectAnomaly = async (event: AnomalyEventDto) => {
-    const nextKey = anomalyKey(event);
+    const nextKey = anomalyEventKey(event);
     if (selectedAnomalyKey.value !== nextKey) {
       selectedSessionDetail.value = null;
+      liveSessionInsight.value = null;
       anomalyExplanation.value = null;
       explanationError.value = '';
     }
@@ -294,46 +315,17 @@ const createDashboardStore = () => {
     }
   };
 
-  // Streaming helpers attach browser EventSource listeners for anomalies and live stats.
-  const connectAnomalyStream = () => {
-    closeAnomalyStream();
-
-    try {
-      anomalyStream = new EventSource(getAnomalyStreamUrl());
-    } catch {
-      streamConnected.value = false;
-      streamError.value = 'Unable to connect to the live anomaly stream.';
-      return;
-    }
-
-    anomalyStream.addEventListener('connected', () => {
-      streamConnected.value = true;
-      streamError.value = '';
-    });
-
-    anomalyStream.addEventListener('anomaly', (event) => {
-      streamConnected.value = true;
-      streamError.value = '';
-
-      if (!(event instanceof MessageEvent) || typeof event.data !== 'string') return;
-
-      try {
-        handleStreamAlert(JSON.parse(event.data) as AnomalyEventDto);
-      } catch {
-        streamError.value = 'Live anomaly stream delivered an unreadable event.';
-      }
-    });
-
-    anomalyStream.onerror = () => {
-      streamConnected.value = false;
-      streamError.value = 'Live anomaly stream interrupted. The browser will retry automatically.';
-    };
-  };
-
-  const closeAnomalyStream = () => {
-    anomalyStream?.close();
-    anomalyStream = null;
-  };
+  // Bridge live STOMP alerts from Pinia into local anomaly/session state.
+  let lastHandledAlertKey = '';
+  watch(
+    streamLatestKey,
+    () => {
+      const key = streamLatestKey.value;
+      if (!key || key === lastHandledAlertKey || !streamLatestAlert.value) return;
+      handleStreamAlert(streamLatestAlert.value);
+      lastHandledAlertKey = key;
+    },
+  );
 
   const connectLiveStatsStream = () => {
     closeLiveStatsStream();
@@ -369,7 +361,6 @@ const createDashboardStore = () => {
 
   // Streamed alerts are merged into memory and surfaced to the UI as a temporary toast.
   const handleStreamAlert = (event: AnomalyEventDto) => {
-    streamAlerts.value = upsertNewest(streamAlerts.value, event, 8);
     anomalies.value = upsertNewest(anomalies.value, event, 40);
     latestStreamAlert.value = event;
 
@@ -403,7 +394,7 @@ const createDashboardStore = () => {
 
     void loadAnalytics();
     void loadStats();
-    connectAnomalyStream();
+    liveStream.connect();
     connectLiveStatsStream();
   };
 
@@ -411,7 +402,7 @@ const createDashboardStore = () => {
     if (!started) return;
     started = false;
 
-    closeAnomalyStream();
+    liveStream.disconnect();
     closeLiveStatsStream();
 
     if (liveToastTimeoutId != null) {
@@ -443,6 +434,7 @@ const createDashboardStore = () => {
     selectedAnomalyKey,
     selectedAnomaly,
     selectedSession,
+    liveSessionInsight,
     selectedSessionLoading,
     anomalyExplanation,
     explanationLoading,
@@ -486,11 +478,6 @@ const getDashboardStore = () => {
 };
 
 // Helper utilities keep anomaly and session collections deduplicated and consistently formatted.
-const anomalyKey = (event: AnomalyEventDto) =>
-  event.id != null
-    ? `id:${event.id}`
-    : `${event.insuredId}:${event.sessionId}:${event.eventId}:${event.detectedAt ?? ''}`;
-
 const mergeNewest = (primary: AnomalyEventDto[], secondary: AnomalyEventDto[]) => {
   let merged = primary;
   for (const item of secondary) {
@@ -500,8 +487,8 @@ const mergeNewest = (primary: AnomalyEventDto[], secondary: AnomalyEventDto[]) =
 };
 
 const upsertNewest = (items: AnomalyEventDto[], event: AnomalyEventDto, limit: number) => {
-  const key = anomalyKey(event);
-  const next = items.filter((item) => anomalyKey(item) !== key);
+  const key = anomalyEventKey(event);
+  const next = items.filter((item) => anomalyEventKey(item) !== key);
   return [event, ...next].slice(0, limit);
 };
 

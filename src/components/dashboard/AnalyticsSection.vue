@@ -178,7 +178,7 @@
         <div v-else class="neo-analytics-feed">
           <div
             v-for="event in anomalyPreview"
-            :key="anomalyKey(event)"
+            :key="anomalyEventKey(event)"
             class="neo-analytics-feed-row"
           >
             <div>
@@ -213,7 +213,7 @@ import BarListChart from './BarListChart.vue';
 import CountryActivityMap from './CountryActivityMap.vue';
 import DonutBreakdownChart from './DonutBreakdownChart.vue';
 import SparkAreaChart from './SparkAreaChart.vue';
-import { formatTimelineLabel, normalizeCountryTelemetry } from 'src/utils/dashboard';
+import { anomalyEventKey, formatTimelineLabel, normalizeCountryTelemetry } from 'src/utils/dashboard';
 import { formatDate, formatDurationSeconds, formatScore } from 'src/utils/format';
 
 const props = defineProps<{
@@ -230,11 +230,6 @@ const { t } = useI18n();
 // Lightweight previews keep the larger datasets focused in the UI.
 const sessionPreview = computed(() => props.sessions.slice(0, 5));
 const anomalyPreview = computed(() => props.anomalies.slice(0, 5));
-
-const anomalyKey = (event: AnomalyEventDto) =>
-  event.id != null
-    ? `id:${event.id}`
-    : `${event.insuredId}:${event.sessionId}:${event.eventId}:${event.detectedAt ?? ''}`;
 
 // Aggregate anomalies into chart-ready distributions and rankings.
 const tierMix = computed(() => {
@@ -393,7 +388,7 @@ const averageDuration = computed(() => {
 
 const averageActionVolume = computed(() => {
   if (!props.sessions.length) return t('common.notAvailable');
-  const total = props.sessions.reduce((sum, session) => sum + (session.sessionLength ?? 0), 0);
+  const total = props.sessions.reduce((sum, session) => sum + (session.totalEvents ?? 0), 0);
   return (total / props.sessions.length).toFixed(1);
 });
 

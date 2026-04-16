@@ -142,6 +142,18 @@
                 {{ formatScore(activeAnomaly.anomalyScore) }}
               </div>
             </div>
+            <div v-if="activeAnomaly.riskScore != null">
+              <div class="neo-explanation-label">Ensemble risk</div>
+              <div class="neo-explanation-value">
+                {{ formatScore(activeAnomaly.riskScore) }}
+              </div>
+            </div>
+            <div v-if="activeAnomaly.churnProbability != null">
+              <div class="neo-explanation-label">Churn</div>
+              <div class="neo-explanation-value">
+                {{ formatPercent(activeAnomaly.churnProbability, 1) }}
+              </div>
+            </div>
             <div>
               <div class="neo-explanation-label">Detected</div>
               <div class="neo-explanation-value">

@@ -11,6 +11,16 @@ declare module 'vue' {
   }
 }
 
+// Polyfill `global` for browser bundles (some libs expect it).
+try {
+  if (typeof window !== 'undefined') {
+    window.global = window.global || window;
+    window.globalThis = window.globalThis || window;
+  }
+} catch {
+  // ignore
+}
+
 // Shared API client for the api-service backend.
 const api = axios.create({ baseURL: environment.apiBaseUrl });
 

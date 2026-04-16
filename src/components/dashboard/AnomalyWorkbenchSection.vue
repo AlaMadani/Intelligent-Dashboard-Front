@@ -32,10 +32,10 @@
         <div v-else class="neo-stream-list">
           <button
             v-for="alert in streamAlerts"
-            :key="anomalyKey(alert)"
+            :key="anomalyEventKey(alert)"
             type="button"
             class="neo-stream-item"
-            :class="{ 'is-active': anomalyKey(alert) === selectedEventKey }"
+            :class="{ 'is-active': anomalyEventKey(alert) === selectedEventKey }"
             @click="emit('select-alert', alert)"
           >
             <div class="neo-stream-top">
@@ -88,6 +88,30 @@
               <div class="neo-explanation-label">Type confidence</div>
               <div class="neo-explanation-value">
                 {{ readablePercent(selectedEvent.typeConfidence) }}
+              </div>
+            </div>
+            <div v-if="selectedEvent.anomalyProbability != null">
+              <div class="neo-explanation-label">Anomaly probability</div>
+              <div class="neo-explanation-value">
+                {{ readablePercent(selectedEvent.anomalyProbability) }}
+              </div>
+            </div>
+            <div v-if="selectedEvent.churnProbability != null">
+              <div class="neo-explanation-label">Churn probability</div>
+              <div class="neo-explanation-value">
+                {{ readablePercent(selectedEvent.churnProbability) }}
+              </div>
+            </div>
+            <div v-if="selectedEvent.riskScore != null">
+              <div class="neo-explanation-label">Ensemble risk</div>
+              <div class="neo-explanation-value">
+                {{ readableScore(selectedEvent.riskScore) }}
+              </div>
+            </div>
+            <div v-if="selectedEvent.pathDeviation != null">
+              <div class="neo-explanation-label">Path deviation</div>
+              <div class="neo-explanation-value">
+                {{ selectedEvent.pathDeviation ? 'Yes' : 'No' }}
               </div>
             </div>
             <div>
@@ -144,6 +168,14 @@
               <div class="neo-context-line">
                 <span>Mean delta</span>
                 <strong>{{ sessionMeanDelta }}</strong>
+              </div>
+              <div class="neo-context-line">
+                <span>Tabular score</span>
+                <strong>{{ sessionIsoScore }}</strong>
+              </div>
+              <div class="neo-context-line">
+                <span>Ensemble risk</span>
+                <strong>{{ sessionEnsembleRisk }}</strong>
               </div>
               <div class="neo-context-line">
                 <span>Action diversity</span>
@@ -216,6 +248,17 @@
               </div>
             </div>
           </div>
+
+          <q-expansion-item
+            v-if="liveSessionInsight"
+            dense
+            expand-separator
+            icon="bolt"
+            label="Live session insight (Redis)"
+            class="neo-sequence-expander"
+          >
+            <pre class="neo-json-block">{{ formatJsonValue(liveSessionInsight) }}</pre>
+          </q-expansion-item>
 
           <q-expansion-item
             v-if="selectedEvent.eventJson"
@@ -315,6 +358,7 @@ import type {
   SessionAnalysisDto,
   UserRiskProfileDto,
 } from 'src/types/analytics';
+import { anomalyEventKey } from 'src/utils/dashboard';
 import { formatDate, formatDurationSeconds, formatPercent, formatScore } from 'src/utils/format';
 
 // Input contracts carry the live stream selection and all fetched enrichment data.
@@ -324,6 +368,7 @@ const props = defineProps<{
   streamAlerts: AnomalyEventDto[];
   streamConnected: boolean;
   streamError: string;
+  liveSessionInsight?: Record<string, unknown> | null;
   sessionAnalysis: SessionAnalysisDto | null;
   sessionAnalysisLoading: boolean;
   riskProfile: UserRiskProfileDto | null;
@@ -340,15 +385,11 @@ const emit = defineEmits<{
 }>();
 
 // Helper formatters turn optional backend fields into readable UI values.
-const anomalyKey = (event: AnomalyEventDto) =>
-  event.id != null
-    ? `id:${event.id}`
-    : `${event.insuredId}:${event.sessionId}:${event.eventId}:${event.detectedAt ?? ''}`;
-
 const tierColor = (tier: string | null | undefined) => {
   if (tier === 'TIER3') return 'negative';
   if (tier === 'TIER2') return 'warning';
   if (tier === 'TIER1') return 'primary';
+  if (tier === 'SESSION_RUNTIME') return 'deep-purple';
   return 'grey';
 };
 
@@ -405,14 +446,22 @@ const sessionRuleType = computed(() =>
 );
 
 const sessionActionCount = computed(() =>
-  readableNumber(props.sessionAnalysis?.sessionLength ?? props.sessionAnalysis?.uniqueActionCount),
+  readableNumber(props.sessionAnalysis?.totalEvents ?? props.sessionAnalysis?.uniqueActions),
 );
 
 const sessionUniqueActions = computed(() =>
-  readableNumber(props.sessionAnalysis?.uniqueActionCount),
+  readableNumber(props.sessionAnalysis?.uniqueActions),
 );
 
-const sessionMeanDelta = computed(() => readableDuration(props.sessionAnalysis?.meanDeltaSeconds));
+const sessionMeanDelta = computed(() =>
+  readableDuration(props.sessionAnalysis?.avgInterActionSeconds),
+);
+
+const sessionIsoScore = computed(() => readableScore(props.sessionAnalysis?.isoScore));
+
+const sessionEnsembleRisk = computed(() =>
+  readableScore(props.sessionAnalysis?.ensembleRiskScore),
+);
 
 const sessionActionDiversity = computed(() =>
   readableScore(props.sessionAnalysis?.actionDiversity),
@@ -436,6 +485,8 @@ const riskLastAnomaly = computed(() =>
 const displayedNextActions = computed(() => {
   const nextActionPayload = props.nextActions?.top3Actions ?? [];
   if (nextActionPayload.length) return nextActionPayload;
+  const fromEvent = props.selectedEvent?.nextActions ?? [];
+  if (fromEvent.length) return fromEvent;
   return props.sessionAnalysis?.top3NextActions ?? [];
 });
 
@@ -542,6 +593,14 @@ const formatJson = (value: string) => {
     return JSON.stringify(JSON.parse(value), null, 2);
   } catch {
     return value;
+  }
+};
+
+const formatJsonValue = (value: unknown) => {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return '"[unserializable]"';
   }
 };
 </script>

@@ -70,19 +70,53 @@
           {{ formatPercent(props.row.koRate, 1) }}
         </q-td>
       </template>
-      <template #body-cell-meanDeltaSeconds="props">
+      <template #body-cell-avgInterActionSeconds="props">
         <q-td :props="props">
-          {{ formatDurationSeconds(props.row.meanDeltaSeconds) }}
+          {{ formatDurationSeconds(props.row.avgInterActionSeconds) }}
         </q-td>
       </template>
-      <template #body-cell-aeScore="props">
+      <template #body-cell-isoScore="props">
         <q-td :props="props">
-          <span class="neo-score">{{ formatScore(props.row.aeScore) }}</span>
+          <span class="neo-score">{{ formatScore(props.row.isoScore) }}</span>
         </q-td>
       </template>
       <template #body-cell-typeConfidence="props">
         <q-td :props="props">
           {{ formatPercent(props.row.typeConfidence, 1) }}
+        </q-td>
+      </template>
+      <template #body-cell-ensembleRiskScore="props">
+        <q-td :props="props">
+          <div class="neo-risk-cell">
+            <q-knob
+              :model-value="safeRiskScore(props.row.ensembleRiskScore)"
+              size="42px"
+              :thickness="0.24"
+              :color="riskTone(props.row.ensembleRiskScore)"
+              track-color="grey-8"
+              readonly
+              show-value
+              font-size="11px"
+              class="neo-risk-knob"
+              :class="{ 'neo-risk-knob--critical': safeRiskScore(props.row.ensembleRiskScore) >= 80 }"
+            />
+          </div>
+        </q-td>
+      </template>
+      <template #body-cell-liveContextTags="props">
+        <q-td :props="props">
+          <div class="neo-tags-row">
+            <q-chip
+              v-for="tag in liveContextTags(props.row)"
+              :key="tag"
+              dense
+              size="12px"
+              color="orange-8"
+              text-color="white"
+            >
+              {{ tag }}
+            </q-chip>
+          </div>
         </q-td>
       </template>
     </q-table>
@@ -131,17 +165,76 @@ const columns: QTableColumn<SessionAnalysisDto>[] = [
     align: 'left',
   },
   { name: 'koRate', label: 'KO rate', field: 'koRate', align: 'left' },
-  { name: 'uniqueActionCount', label: 'Unique', field: 'uniqueActionCount', align: 'left' },
-  { name: 'meanDeltaSeconds', label: 'Mean Δ', field: 'meanDeltaSeconds', align: 'left' },
+  { name: 'uniqueActions', label: 'Unique', field: 'uniqueActions', align: 'left' },
+  { name: 'avgInterActionSeconds', label: 'Mean Δ', field: 'avgInterActionSeconds', align: 'left' },
   {
-    name: 'sessionLength',
-    label: 'Actions',
-    field: 'sessionLength',
+    name: 'totalEvents',
+    label: 'Events',
+    field: 'totalEvents',
     align: 'left',
     sortable: true,
   },
-  { name: 'aeScore', label: 'AE Score', field: 'aeScore', align: 'left', sortable: true },
+  { name: 'isoScore', label: 'Tabular score', field: 'isoScore', align: 'left', sortable: true },
+  { name: 'ensembleRiskScore', label: 'Risk', field: 'ensembleRiskScore', align: 'left' },
+  { name: 'liveContextTags', label: 'Context tags', field: 'sessionId', align: 'left' },
   { name: 'typeConfidence', label: 'Type confidence', field: 'typeConfidence', align: 'left' },
   { name: 'anomalyType', label: 'Type', field: 'anomalyType', align: 'left' },
 ];
+
+const safeRiskScore = (value: number | null | undefined) => {
+  if (value == null || Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+};
+
+const riskTone = (value: number | null | undefined) => {
+  const score = safeRiskScore(value);
+  if (score >= 80) return 'negative';
+  if (score >= 41) return 'warning';
+  return 'positive';
+};
+
+const liveContextTags = (session: SessionAnalysisDto) => {
+  const tags: string[] = [];
+  if (session.ipChanged) tags.push('IP Changed');
+  if ((session.koRate ?? 0) >= 0.3) tags.push('High Error Rate');
+  if (
+    session.pathDeviation ||
+    session.anomalyType?.toLowerCase().includes('geo') ||
+    session.ruleType?.toLowerCase().includes('geo')
+  ) {
+    tags.push('Geo-Jump');
+  }
+  return tags;
+};
 </script>
+
+<style scoped>
+.neo-risk-cell {
+  display: flex;
+  align-items: center;
+}
+
+.neo-risk-knob--critical {
+  animation: neo-risk-pulse 1.6s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.28);
+  border-radius: 999px;
+}
+
+.neo-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+@keyframes neo-risk-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.26);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+</style>

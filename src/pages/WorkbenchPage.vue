@@ -7,6 +7,7 @@
       :stream-alerts="streamAlerts"
       :stream-connected="streamConnected"
       :stream-error="streamError"
+      :live-session-insight="liveSessionInsight"
       :session-analysis="selectedSession"
       :session-analysis-loading="selectedSessionLoading"
       :risk-profile="riskProfile"
@@ -32,6 +33,7 @@ const {
   streamAlerts,
   streamConnected,
   streamError,
+  liveSessionInsight,
   selectedSession,
   selectedSessionLoading,
   riskProfile,

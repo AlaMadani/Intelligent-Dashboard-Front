@@ -107,6 +107,7 @@ const tierColor = (tier: string) => {
   if (tier === 'TIER3') return 'negative';
   if (tier === 'TIER2') return 'warning';
   if (tier === 'TIER1') return 'primary';
+  if (tier === 'SESSION_RUNTIME') return 'deep-purple';
   return 'grey';
 };
 

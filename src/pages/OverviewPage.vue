@@ -34,6 +34,10 @@
       :last-updated="lastUpdated"
     />
 
+    <section class="neo-section">
+      <TrendForecastChart :trend-stats="trendStats" :live-value="eventsPerMinuteValue" />
+    </section>
+
     <!-- Overview grid mixes trend charts, maps, and anomaly breakdown cards. -->
     <section class="neo-section neo-overview-grid">
       <article class="neo-overview-panel neo-overview-panel--wide">
@@ -161,6 +165,7 @@ import DonutBreakdownChart from 'src/components/dashboard/DonutBreakdownChart.vu
 import KpiStrip from 'src/components/dashboard/KpiStrip.vue';
 import OverviewHero from 'src/components/dashboard/OverviewHero.vue';
 import SparkAreaChart from 'src/components/dashboard/SparkAreaChart.vue';
+import TrendForecastChart from 'src/components/dashboard/TrendForecastChart.vue';
 import { useDashboard } from 'src/composables/useDashboard';
 import {
   ANOMALY_TIER_COLORS,
@@ -184,6 +189,7 @@ const {
   koRate,
   sessions,
   liveStats,
+  trendStats,
   anomalies,
   streamConnected,
   lastUpdated,
@@ -195,6 +201,16 @@ const liveStatsPayload = computed(() => {
   const payload = liveStats.value?.payload;
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
   return payload as Record<string, unknown>;
+});
+
+const eventsPerMinuteValue = computed(() => {
+  const value = liveStatsPayload.value?.events_per_minute;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
 });
 
 const recentSessions = computed(() => sessions.value.slice(0, 5));
@@ -272,7 +288,7 @@ const sessionActionTrend = computed(() =>
   sessions.value
     .slice(0, 10)
     .reverse()
-    .map((session) => session.sessionLength ?? 0),
+    .map((session) => session.totalEvents ?? 0),
 );
 
 // Presentation helpers keep chart labels and summary numbers readable.
@@ -285,13 +301,13 @@ const formatChartDuration = (value: number) =>
 
 const averageActionVolume = computed(() => {
   if (!sessions.value.length) return t('common.notAvailable');
-  const total = sessions.value.reduce((sum, session) => sum + (session.sessionLength ?? 0), 0);
+  const total = sessions.value.reduce((sum, session) => sum + (session.totalEvents ?? 0), 0);
   return (total / sessions.value.length).toFixed(1);
 });
 
 const averageUniqueActions = computed(() => {
   if (!sessions.value.length) return t('common.notAvailable');
-  const total = sessions.value.reduce((sum, session) => sum + (session.uniqueActionCount ?? 0), 0);
+  const total = sessions.value.reduce((sum, session) => sum + (session.uniqueActions ?? 0), 0);
   return (total / sessions.value.length).toFixed(1);
 });
 

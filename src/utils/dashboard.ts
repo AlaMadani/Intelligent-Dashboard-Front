@@ -5,6 +5,15 @@ export interface NormalizedCountryTelemetry {
   display?: string;
 }
 
+export interface AnomalyKeySource {
+  id?: number | null;
+  insuredId?: string | null;
+  sessionId?: string | null;
+  eventId?: string | null;
+  detectedAt?: string | null;
+  anomalyType?: string | null;
+}
+
 // Coerce mixed backend payload values into numbers whenever possible.
 const toNumber = (value: unknown) => {
   if (typeof value === 'number') return value;
@@ -103,4 +112,19 @@ export const formatTimelineLabel = (value: string | null | undefined, fallback: 
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
+};
+
+// Prefer the natural event identity so streamed alerts can merge with their persisted copy later.
+export const anomalyEventKey = (event: AnomalyKeySource) => {
+  const insuredId = event.insuredId?.trim();
+  const sessionId = event.sessionId?.trim();
+  const eventId = event.eventId?.trim();
+
+  if (insuredId && sessionId && eventId) {
+    return `${insuredId}:${sessionId}:${eventId}`;
+  }
+  if (event.id != null) {
+    return `id:${event.id}`;
+  }
+  return `${insuredId ?? 'unknown'}:${sessionId ?? 'unknown'}:${eventId ?? 'event'}:${event.detectedAt ?? ''}:${event.anomalyType ?? ''}`;
 };
