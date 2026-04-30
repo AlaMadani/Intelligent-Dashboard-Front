@@ -195,7 +195,13 @@
             </div>
           </div>
         </div>
-      </article>
+       </article>
+
+       <ClusterMixPanel :data="clusterMixData" />
+
+       <PathDeviationsPanel :data="pathDeviationsData" />
+
+       <DropOffsPanel :data="dropOffsData" />
     </div>
   </section>
 </template>
@@ -205,6 +211,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { AnomalyEventDto, SessionAnalysisDto, StatsResponseDto } from 'src/types/analytics';
+import type { JsonValue } from 'src/types/api';
 import {
   ANOMALY_TIER_COLORS,
   FALLBACK_ANOMALY_TIER_COLOR,
@@ -213,6 +220,9 @@ import BarListChart from './BarListChart.vue';
 import CountryActivityMap from './CountryActivityMap.vue';
 import DonutBreakdownChart from './DonutBreakdownChart.vue';
 import SparkAreaChart from './SparkAreaChart.vue';
+import ClusterMixPanel from './ClusterMixPanel.vue';
+import DropOffsPanel from './DropOffsPanel.vue';
+import PathDeviationsPanel from './PathDeviationsPanel.vue';
 import { anomalyEventKey, formatTimelineLabel, normalizeCountryTelemetry } from 'src/utils/dashboard';
 import { formatDate, formatDurationSeconds, formatScore } from 'src/utils/format';
 
@@ -221,6 +231,9 @@ const props = defineProps<{
   anomalies: AnomalyEventDto[];
   liveStats: StatsResponseDto | null;
   trendStats: StatsResponseDto | null;
+  clusterMix: JsonValue;
+  dropOffs: JsonValue;
+  pathDeviations: JsonValue;
   loading: boolean;
   error: string;
 }>();
@@ -281,8 +294,23 @@ const liveStatsPayload = computed(() => {
   return payload as Record<string, unknown>;
 });
 
+const extractItems = (payload: JsonValue) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (typeof payload === 'object') {
+    const items = (payload as Record<string, unknown>).items;
+    return Array.isArray(items) ? items : [];
+  }
+  return [];
+};
+
+const clusterMixData = computed(() => extractItems(props.clusterMix));
+const dropOffsData = computed(() => extractItems(props.dropOffs));
+const pathDeviationsData = computed(() => extractItems(props.pathDeviations));
+
 const topActions = computed(() => {
-  const raw = liveStatsPayload.value?.top_actions_last_15m;
+  const raw =
+    liveStatsPayload.value?.top_actions_last_15m ?? liveStatsPayload.value?.topActionsLast15m;
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
   return Object.entries(raw as Record<string, number>)
     .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
@@ -298,11 +326,40 @@ const topActionBars = computed(() =>
 );
 
 const topCountries = computed(() => {
-  const raw = liveStatsPayload.value?.top_countries_right_now;
+  const raw =
+    liveStatsPayload.value?.top_countries_right_now ??
+    liveStatsPayload.value?.topCountriesRightNow;
   return normalizeCountryTelemetry(raw, 6);
 });
 
 const trendStatsPayload = computed(() => props.trendStats?.payload ?? null);
+
+const formatForecastStatus = (status: string) => {
+  switch (status) {
+    case 'ABOVE_FORECAST':
+      return 'Above forecast';
+    case 'BELOW_FORECAST':
+      return 'Below forecast';
+    case 'WITHIN_BOUNDS':
+      return 'Within bounds';
+    case 'NO_ACTIVITY':
+      return 'No activity';
+    case 'NO_BASELINE':
+      return 'No baseline';
+    default:
+      return status.replaceAll('_', ' ').toLowerCase();
+  }
+};
+
+const buildForecastDisplay = (actual: number, delta: number | null, status: string) => {
+  if (delta != null) {
+    const roundedActual = Math.round(actual);
+    const roundedDelta = Math.round(delta);
+    const deltaPrefix = roundedDelta > 0 ? '+' : '';
+    return `${roundedActual} (${deltaPrefix}${roundedDelta})`;
+  }
+  return formatForecastStatus(status);
+};
 
 const trendSpikeBars = computed(() => {
   const payload = trendStatsPayload.value;
@@ -324,12 +381,58 @@ const trendSpikeBars = computed(() => {
         const value = toNumber(record.predictedCount) ?? 0;
         return [{ label, value, display: value.toFixed(0) }];
       })
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
   }
 
   if (typeof payload !== 'object') return [];
-  return Object.entries(payload as Record<string, { predicted?: number; spike?: boolean }>)
+
+  const record = payload as Record<string, unknown>;
+  const forecastItemsSource =
+    record.items && typeof record.items === 'object' && !Array.isArray(record.items)
+      ? (record.items as Record<string, unknown>)
+      : record;
+
+  const forecastBars = Object.entries(forecastItemsSource)
+    .flatMap(([seriesKey, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+
+      const item = value as Record<string, unknown>;
+      const hasForecastShape =
+        Array.isArray(item.points) || 'actualCount' in item || 'status' in item || 'delta' in item;
+
+      if (!hasForecastShape) {
+        return [];
+      }
+
+      const label =
+        typeof item.label === 'string' && item.label.trim().length > 0
+          ? item.label
+          : seriesKey.replaceAll('_', ' ');
+      const actual = toNumber(item.actualCount) ?? 0;
+      const delta = toNumber(item.delta);
+      const status =
+        typeof item.status === 'string' && item.status.trim().length > 0
+          ? item.status
+          : 'WITHIN_BOUNDS';
+      const magnitude = Math.abs(delta ?? actual);
+
+      return [
+        {
+          label: `${label} (${formatForecastStatus(status)})`,
+          value: magnitude,
+          display: buildForecastDisplay(actual, delta, status),
+        },
+      ];
+    })
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+
+  if (forecastBars.length) {
+    return forecastBars;
+  }
+
+  return Object.entries(record as Record<string, { predicted?: number; spike?: boolean }>)
     .filter(([, value]) => value && value.spike)
     .map(([label, value]) => ({
       label: `Action ${label}`,

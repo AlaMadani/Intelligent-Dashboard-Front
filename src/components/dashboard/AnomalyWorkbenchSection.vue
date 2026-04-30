@@ -5,7 +5,7 @@
       <div>
         <div class="neo-section-title">Response workbench</div>
         <div class="neo-section-subtitle">
-          Stream live alerts from Kafka, inspect anomaly context, and request AI explanations on
+          Review the latest anomaly events, inspect anomaly context, and request AI explanations on
           demand.
         </div>
       </div>
@@ -17,7 +17,7 @@
         <div class="neo-panel-header">
           <div>
             <div class="neo-panel-title">Live anomaly wire</div>
-            <div class="neo-panel-subtitle">Kafka alerts relayed by the API service</div>
+            <div class="neo-panel-subtitle">Latest anomaly events refreshed through the API service</div>
           </div>
           <div class="neo-live-pill" :class="{ 'is-loading': !streamConnected }">
             <span class="neo-live-dot"></span>
@@ -27,7 +27,7 @@
 
         <div v-if="streamError" class="neo-error">{{ streamError }}</div>
         <div v-else-if="!streamAlerts.length" class="neo-placeholder">
-          Waiting for anomaly alerts from the live stream.
+          Waiting for anomaly alerts from the API event stream.
         </div>
         <div v-else class="neo-stream-list">
           <button
@@ -56,7 +56,7 @@
           <div>
             <div class="neo-panel-title">Selected anomaly context</div>
             <div class="neo-panel-subtitle">
-              Session, risk, next action, and raw payload signals.
+              Session, risk, next action, explainability, and compact alert context.
             </div>
           </div>
         </div>
@@ -158,6 +158,14 @@
                 <strong>{{ sessionRuleType }}</strong>
               </div>
               <div class="neo-context-line">
+                <span>Context tags</span>
+                <strong>{{ displayedContextTags.join(', ') || 'Not returned' }}</strong>
+              </div>
+              <div class="neo-context-line">
+                <span>Warnings</span>
+                <strong>{{ displayedWarnings.join(', ') || 'Not returned' }}</strong>
+              </div>
+              <div class="neo-context-line">
                 <span>Actions</span>
                 <strong>{{ sessionActionCount }}</strong>
               </div>
@@ -249,6 +257,36 @@
             </div>
           </div>
 
+          <div class="neo-investigation-visuals">
+            <FeatureRadarChart :items="displayedFeatureContributions" />
+            <JourneyPathMap
+              :steps="displayedActionSequence"
+              :rare-transitions="displayedRareTransitions"
+              :path-deviation="sessionAnalysis?.pathDeviation ?? selectedEvent.pathDeviation ?? null"
+            />
+          </div>
+
+          <div v-if="displayedTriggeredRules.length || displayedContextTags.length" class="neo-chip-ribbon">
+            <q-chip
+              v-for="tag in displayedContextTags"
+              :key="`tag-${tag}`"
+              dense
+              color="warning"
+              text-color="black"
+            >
+              {{ tag }}
+            </q-chip>
+            <q-chip
+              v-for="rule in displayedTriggeredRules"
+              :key="`rule-${rule}`"
+              dense
+              color="secondary"
+              text-color="white"
+            >
+              {{ rule }}
+            </q-chip>
+          </div>
+
           <q-expansion-item
             v-if="liveSessionInsight"
             dense
@@ -261,14 +299,14 @@
           </q-expansion-item>
 
           <q-expansion-item
-            v-if="selectedEvent.eventJson"
+            v-if="displayedEventContext"
             dense
             expand-separator
             icon="data_object"
-            label="Raw anomaly payload"
+            label="Compact alert context"
             class="neo-sequence-expander"
           >
-            <pre class="neo-json-block">{{ formatJson(selectedEvent.eventJson) }}</pre>
+            <pre class="neo-json-block">{{ formatJsonValue(displayedEventContext) }}</pre>
           </q-expansion-item>
 
           <q-expansion-item
@@ -299,7 +337,7 @@
             color="secondary"
             unelevated
             icon="psychology"
-            label="Explain"
+            label="Generate AI Explanation"
             :disable="!selectedEvent || selectedEvent.id == null"
             :loading="explanationLoading"
             @click="emit('generate-explanation')"
@@ -350,11 +388,15 @@
 <script setup lang="ts">
 // Parent state provides the selected anomaly plus every supporting context payload.
 import { computed } from 'vue';
+import FeatureRadarChart from './FeatureRadarChart.vue';
+import JourneyPathMap from './JourneyPathMap.vue';
 import type {
   AnomalyAlertDto,
   AnomalyEventDto,
   AnomalyExplanationDto,
+  FeatureContributionDto,
   NextActionPredictionDto,
+  PathDeviationDto,
   SessionAnalysisDto,
   UserRiskProfileDto,
 } from 'src/types/analytics';
@@ -484,10 +526,10 @@ const riskLastAnomaly = computed(() =>
 
 const displayedNextActions = computed(() => {
   const nextActionPayload = props.nextActions?.top3Actions ?? [];
-  if (nextActionPayload.length) return nextActionPayload;
+  if (nextActionPayload.length) return nextActionPayload.map((action) => action.action);
   const fromEvent = props.selectedEvent?.nextActions ?? [];
-  if (fromEvent.length) return fromEvent;
-  return props.sessionAnalysis?.top3NextActions ?? [];
+  if (fromEvent.length) return fromEvent.map((action) => action.action);
+  return (props.sessionAnalysis?.top3NextActions ?? []).map((action) => action.action);
 });
 
 const activeAnomalyContext = computed(() => props.activeAnomaly ?? props.selectedEvent);
@@ -496,6 +538,37 @@ const activeTier = computed(() => readableText(activeAnomalyContext.value?.anoma
 const activeType = computed(() => readableText(activeAnomalyContext.value?.anomalyType));
 const activeDetected = computed(() => readableDate(activeAnomalyContext.value?.detectedAt));
 const activeEventTime = computed(() => readableDate(activeAnomalyContext.value?.eventTime));
+const displayedEventContext = computed(() => props.selectedEvent?.eventContext ?? props.selectedEvent?.eventJson ?? null);
+const displayedContextTags = computed(() =>
+  props.sessionAnalysis?.contextTags?.length
+    ? props.sessionAnalysis.contextTags
+    : stringArrayFromUnknown(props.liveSessionInsight?.contextTags),
+);
+const displayedWarnings = computed(() =>
+  props.sessionAnalysis?.warnings?.length
+    ? props.sessionAnalysis.warnings
+    : stringArrayFromUnknown(props.liveSessionInsight?.warnings),
+);
+const displayedTriggeredRules = computed(() =>
+  props.sessionAnalysis?.triggeredRules?.length
+    ? props.sessionAnalysis.triggeredRules
+    : stringArrayFromUnknown(props.liveSessionInsight?.triggeredRules),
+);
+const displayedActionSequence = computed(() =>
+  props.sessionAnalysis?.actionSequence?.length
+    ? props.sessionAnalysis.actionSequence
+    : stringArrayFromUnknown(props.liveSessionInsight?.actionSequence),
+);
+const displayedRareTransitions = computed<PathDeviationDto[]>(() =>
+  props.sessionAnalysis?.rareTransitions?.length
+    ? props.sessionAnalysis.rareTransitions
+    : pathDeviationArrayFromUnknown(props.liveSessionInsight?.rareTransitions),
+);
+const displayedFeatureContributions = computed<FeatureContributionDto[]>(() =>
+  props.sessionAnalysis?.topContributingFeatures?.length
+    ? props.sessionAnalysis.topContributingFeatures
+    : featureContributionArrayFromUnknown(props.liveSessionInsight?.topContributingFeatures),
+);
 
 // Explanation text is sanitized and converted from lightweight markdown into safe HTML.
 const escapeHtml = (value: string) =>
@@ -588,14 +661,6 @@ const formattedExplanationHtml = computed(() =>
 );
 
 // Pretty-print JSON payloads for the expandable debug blocks.
-const formatJson = (value: string) => {
-  try {
-    return JSON.stringify(JSON.parse(value), null, 2);
-  } catch {
-    return value;
-  }
-};
-
 const formatJsonValue = (value: unknown) => {
   try {
     return JSON.stringify(value, null, 2);
@@ -603,6 +668,17 @@ const formatJsonValue = (value: unknown) => {
     return '"[unserializable]"';
   }
 };
+
+const stringArrayFromUnknown = (value: unknown) =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+const pathDeviationArrayFromUnknown = (value: unknown) =>
+  Array.isArray(value) ? (value.filter((item) => item && typeof item === 'object') as PathDeviationDto[]) : [];
+
+const featureContributionArrayFromUnknown = (value: unknown) =>
+  Array.isArray(value)
+    ? (value.filter((item) => item && typeof item === 'object') as FeatureContributionDto[])
+    : [];
 </script>
 
 <style scoped>
@@ -702,6 +778,18 @@ const formatJsonValue = (value: unknown) => {
   font-size: 13px;
 }
 
+.neo-investigation-visuals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.neo-chip-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .neo-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -752,5 +840,11 @@ const formatJsonValue = (value: unknown) => {
 
 .neo-explanation-empty {
   color: rgba(28, 35, 51, 0.6);
+}
+
+@media (max-width: 960px) {
+  .neo-investigation-visuals {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

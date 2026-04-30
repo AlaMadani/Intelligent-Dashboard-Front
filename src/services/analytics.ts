@@ -2,9 +2,12 @@
 import { api } from 'boot/axios';
 import type { ApiEnvelope, ApiResponse } from 'src/types/api';
 import type {
+  ActiveSessionDto,
   AnomalyAlertDto,
   AnomalyEventDto,
   AnomalyExplanationDto,
+  AnomalyInvestigationDto,
+  CommandCenterDto,
   DashboardView,
   NextActionPredictionDto,
   SessionAnalysisDto,
@@ -82,6 +85,15 @@ export const getAnomalyExplanation = async (
   return unwrapEnvelope(response.data);
 };
 
+export const getAnomalyInvestigation = async (
+  id: number,
+): Promise<ApiEnvelope<AnomalyInvestigationDto>> => {
+  const response = await api.get<ApiResponse<AnomalyInvestigationDto>>(
+    `/api/v1/anomalies/${id}/investigation`,
+  );
+  return unwrapEnvelope(response.data);
+};
+
 // User-focused insight endpoints enrich the selected insured context.
 export const getRiskProfile = async (
   insuredId: string,
@@ -133,6 +145,24 @@ export const getDashboardSnapshot = async (
   return unwrapEnvelope(response.data);
 };
 
+export const getCommandCenter = async (date?: string): Promise<ApiEnvelope<CommandCenterDto>> => {
+  const response = await api.get<ApiResponse<CommandCenterDto>>('/api/v1/dashboard/command-center', {
+    params: date ? { date } : undefined,
+  });
+  return unwrapEnvelope(response.data);
+};
+
+export const getActiveSessions = async (params?: {
+  insuredId?: string;
+  anomalyOnly?: boolean;
+  limit?: number;
+}): Promise<ApiEnvelope<ActiveSessionDto[]>> => {
+  const response = await api.get<ApiResponse<ActiveSessionDto[]>>('/api/v1/sessions/active', {
+    params,
+  });
+  return unwrapEnvelope(response.data);
+};
+
 /** Live per-session insight while the session is open (`session:insight:…` in Redis). */
 export const getSessionInsight = async (
   insuredId: string,
@@ -150,7 +180,7 @@ export const getAnomalyStreamUrl = () => {
     typeof api.defaults.baseURL === 'string' && api.defaults.baseURL
       ? api.defaults.baseURL
       : window.location.origin;
-  return new URL('/api/v1/stream/anomalies', baseUrl).toString();
+  return new URL('/topic/alerts', baseUrl).toString();
 };
 
 export const getLiveStatsStreamUrl = () => {

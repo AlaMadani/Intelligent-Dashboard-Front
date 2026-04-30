@@ -1,6 +1,11 @@
 <template>
-  <!-- Route wrapper: display the shared session dataset inside the session table section. -->
-  <q-page class="neo-page">
+  <!-- Route wrapper: combine live Redis sessions with persisted session-analysis rows. -->
+  <q-page class="neo-page neo-page-stack">
+    <LiveSessionsSection
+      :sessions="activeSessionRows"
+      :loading="activeSessionsLoading"
+      :error="activeSessionsError"
+    />
     <SessionsSection
       :sessions="sessions"
       :loading="analyticsLoading"
@@ -12,9 +17,25 @@
 </template>
 
 <script setup lang="ts">
-// Consume session-table state from the shared dashboard store.
+// Combine live-session radar state with the persisted session analysis dataset.
+import LiveSessionsSection from 'src/components/dashboard/LiveSessionsSection.vue';
 import SessionsSection from 'src/components/dashboard/SessionsSection.vue';
 import { useDashboard } from 'src/composables/useDashboard';
 
-const { sessions, analyticsLoading, analyticsError, sessionSearch } = useDashboard();
+const {
+  activeSessionRows,
+  activeSessionsLoading,
+  activeSessionsError,
+  sessions,
+  analyticsLoading,
+  analyticsError,
+  sessionSearch,
+} = useDashboard();
 </script>
+
+<style scoped>
+.neo-page-stack {
+  display: grid;
+  gap: 24px;
+}
+</style>

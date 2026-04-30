@@ -3,35 +3,48 @@ import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import {
   getActiveAnomaly,
+  getActiveSessions,
+  getAnomalyInvestigation,
   getAnomalyExplanation,
+  getCommandCenter,
   getLiveStatsStreamUrl,
   getLiveStats,
   getNextActions,
   getRiskProfile,
   getSessionInsight,
   getTrendStats,
+  getDashboardSnapshot,
   listAnomalyEvents,
   listSessions,
 } from 'src/services/analytics';
 import type {
+  ActiveSessionDto,
   AnomalyAlertDto,
   AnomalyEventDto,
   AnomalyExplanationDto,
+  AnomalyInvestigationDto,
+  CommandCenterDto,
   NextActionPredictionDto,
   SessionAnalysisDto,
   StatsResponseDto,
   UserRiskProfileDto,
 } from 'src/types/analytics';
 import type { PaginationMeta } from 'src/types/api';
+import type { JsonValue } from 'src/types/api';
 import { anomalyEventKey } from 'src/utils/dashboard';
 import { formatDurationSeconds, formatPercent } from 'src/utils/format';
 import { useLiveStreamStore } from 'src/stores/live-stream';
 
+const ANALYTICS_PAGE_SIZE = 200;
+const COLLECTION_LIMIT = 200;
+const STREAM_REFRESH_DEBOUNCE_MS = 400;
+const FULL_REFRESH_FALLBACK_MS = 60000;
+
 // Factory creates the singleton dashboard store shared across the routed dashboard pages.
 const createDashboardStore = () => {
   // Core analytics datasets and pagination metadata backing the overview, tables, and workbench.
-  const sessions = ref<SessionAnalysisDto[]>([]);
-  const anomalies = ref<AnomalyEventDto[]>([]);
+  const sessions = shallowRef<SessionAnalysisDto[]>([]);
+  const anomalies = shallowRef<AnomalyEventDto[]>([]);
   const liveStream = useLiveStreamStore();
   const {
     alerts: streamAlerts,
@@ -39,8 +52,7 @@ const createDashboardStore = () => {
     error: streamError,
     latestAlert: streamLatestAlert,
     latestKey: streamLatestKey,
-  } =
-    storeToRefs(liveStream);
+  } = storeToRefs(liveStream);
   const sessionMeta = ref<PaginationMeta | null>(null);
   const anomalyMeta = ref<PaginationMeta | null>(null);
   const anomalousSessionsTotal = ref(0);
@@ -49,9 +61,17 @@ const createDashboardStore = () => {
   const analyticsLoading = ref(false);
   const analyticsError = ref('');
 
+  const commandCenter = shallowRef<CommandCenterDto | null>(null);
+  const commandCenterLoading = ref(false);
   const liveStats = shallowRef<StatsResponseDto | null>(null);
   const trendStats = shallowRef<StatsResponseDto | null>(null);
+  const clusterMix = shallowRef<JsonValue>(null);
+  const dropOffs = shallowRef<JsonValue>(null);
+  const pathDeviations = shallowRef<JsonValue>(null);
   const statsError = ref('');
+  const activeSessionRows = shallowRef<ActiveSessionDto[]>([]);
+  const activeSessionsLoading = ref(false);
+  const activeSessionsError = ref('');
 
   const anomalySearch = ref('');
   const sessionSearch = ref('');
@@ -65,7 +85,8 @@ const createDashboardStore = () => {
   const userError = ref('');
 
   const selectedAnomalyKey = ref('');
-  const selectedSessionDetail = ref<SessionAnalysisDto | null>(null);
+  const selectedInvestigation = shallowRef<AnomalyInvestigationDto | null>(null);
+  const selectedSessionDetail = shallowRef<SessionAnalysisDto | null>(null);
   /** When SQL session row is missing, Redis may still hold `session:insight:*` for active sessions. */
   const liveSessionInsight = ref<Record<string, unknown> | null>(null);
   const selectedSessionLoading = ref(false);
@@ -77,10 +98,17 @@ const createDashboardStore = () => {
   const latestStreamAlert = ref<AnomalyEventDto | null>(null);
 
   let liveStatsStream: EventSource | null = null;
+  let refreshInterval: number | null = null;
+  let refreshDebounceId: number | null = null;
   let liveToastTimeoutId: number | null = null;
   let started = false;
   const eventsSinceLoad = ref(0);
   const lastUpdated = ref<Date | null>(null);
+  let pendingRefresh = {
+    analytics: false,
+    stats: false,
+    activeSessions: false,
+  };
 
   // Summary metrics derived from the loaded sessions, anomalies, and live stats payloads.
   const totalSessions = computed(() => sessionMeta.value?.totalElements ?? sessions.value.length);
@@ -89,10 +117,10 @@ const createDashboardStore = () => {
 
   const avgSessionDuration = computed(() => {
     if (!sessions.value.length) return 'n/a';
-    const total = sessions.value.reduce(
-      (acc, session) => acc + (session.sessionDurationSeconds ?? 0),
-      0,
-    );
+    let total = 0;
+    for (const session of sessions.value) {
+      total += session.sessionDurationSeconds ?? 0;
+    }
     return formatDurationSeconds(total / sessions.value.length);
   });
 
@@ -102,38 +130,87 @@ const createDashboardStore = () => {
     return payload as Record<string, unknown>;
   });
 
-  const activeSessions = computed(() => numberOrNa(liveStatsPayload.value?.active_sessions));
-  const eventsPerMinute = computed(() => numberOrNa(liveStatsPayload.value?.events_per_minute));
+  const readLiveStat = (...keys: string[]) => {
+    const payload = liveStatsPayload.value;
+    if (!payload) return null;
+    for (const key of keys) {
+      if (key in payload && payload[key] != null) {
+        return payload[key];
+      }
+    }
+    return null;
+  };
+
+  const activeSessions = computed(() => {
+    const value = numberOrNa(readLiveStat('active_sessions', 'activeSessions'));
+    return value === 'n/a' ? '0' : value;
+  });
+  const eventsPerMinute = computed(() => {
+    const value = numberOrNa(readLiveStat('events_per_minute', 'eventsPerMinute'));
+    return value === 'n/a' ? '0' : value;
+  });
   const anomalyRate = computed(() =>
-    formatPercent(toNumber(liveStatsPayload.value?.anomaly_alert_rate_last_hour), 1),
+    formatPercent(
+      toNumber(
+        readLiveStat(
+          'current_anomaly_rate',
+          'currentAnomalyRate',
+          'anomaly_alert_rate_last_hour',
+          'anomalyAlertRateLastHour',
+        ),
+      ) ??
+        0,
+      1,
+    ),
   );
-  const koRate = computed(() =>
-    formatPercent(toNumber(liveStatsPayload.value?.ko_rate_last_15m), 1),
-  );
+  const globalRiskLevel = computed(() => {
+    const raw = readLiveStat('global_risk_level', 'globalRiskLevel');
+    if (typeof raw === 'string' && raw.trim().length > 0) {
+      return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+    }
+    return 'Low';
+  });
 
   // Selection helpers resolve the active anomaly and its matching session detail.
-  const selectedAnomaly = computed(() => {
+  const selectedAnomaly = computed<AnomalyEventDto | null>(() => {
     const key = selectedAnomalyKey.value;
     if (!key) return null;
-    return (
-      anomalies.value.find((event) => anomalyEventKey(event) === key) ??
-      streamAlerts.value.find((event) => anomalyEventKey(event) === key) ??
-      null
-    );
+    for (const event of anomalies.value) {
+      if (anomalyEventKey(event) === key) return event;
+    }
+    for (const event of streamAlerts.value) {
+      if (anomalyEventKey(event) === key) return event;
+    }
+    return null;
   });
 
-  const selectedSession = computed(() => {
+  const selectedSession = shallowRef<SessionAnalysisDto | null>(null);
+
+  const syncSelectedSession = () => {
     const anomaly = selectedAnomaly.value;
-    if (!anomaly) return null;
-    return (
-      selectedSessionDetail.value ??
-      sessions.value.find(
-        (session) =>
-          session.insuredId === anomaly.insuredId && session.sessionId === anomaly.sessionId,
-      ) ??
-      null
-    );
-  });
+    if (!anomaly) {
+      selectedSession.value = null;
+      return;
+    }
+
+    if (selectedSessionDetail.value) {
+      selectedSession.value = selectedSessionDetail.value;
+      return;
+    }
+
+    for (const session of sessions.value) {
+      if (session.insuredId === anomaly.insuredId && session.sessionId === anomaly.sessionId) {
+        selectedSession.value = session;
+        return;
+      }
+    }
+
+    selectedSession.value = null;
+  };
+
+  watch(selectedAnomalyKey, syncSelectedSession);
+  watch(selectedSessionDetail, syncSelectedSession);
+  watch(sessions, syncSelectedSession);
 
   // Initial analytics loaders fetch tables and aggregate counts from the REST API.
   const loadAnalytics = async () => {
@@ -142,8 +219,8 @@ const createDashboardStore = () => {
 
     try {
       const [sessionsResponse, anomaliesResponse, anomalousSessionsResponse] = await Promise.all([
-        listSessions({ page: 0, size: 40 }),
-        listAnomalyEvents({ page: 0, size: 40 }),
+        listSessions({ page: 0, size: ANALYTICS_PAGE_SIZE }),
+        listAnomalyEvents({ page: 0, size: ANALYTICS_PAGE_SIZE }),
         listSessions({ page: 0, size: 1, isAnomaly: true }),
       ]);
 
@@ -167,22 +244,168 @@ const createDashboardStore = () => {
   };
 
   // Stats loader hydrates the live overview counters and trend forecast panel.
+  const isStatsSource = (value: unknown): value is StatsResponseDto['source'] =>
+    value === 'redis' || value === 'missing' || value === 'sql';
+
+  const isStatsResponseDto = (value: unknown): value is StatsResponseDto => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return false;
+    }
+
+    const record = value as Record<string, unknown>;
+
+    return typeof record.date === 'string' && isStatsSource(record.source) && 'payload' in record;
+  };
+
+  const normalizeStatsDto = (value: unknown): StatsResponseDto | null => {
+    if (isStatsResponseDto(value)) {
+      return value;
+    }
+
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const record = value as Record<string, unknown>;
+      if (isStatsResponseDto(record.data)) {
+        return record.data;
+      }
+    }
+
+    return null;
+  };
+
+  const hasNonEmptyTrendPayload = (stats: StatsResponseDto | null): boolean => {
+    const payload = stats?.payload;
+
+    if (Array.isArray(payload)) {
+      return payload.length > 0;
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    const record = payload as Record<string, unknown>;
+
+    const direct =
+      record.total_events &&
+      typeof record.total_events === 'object' &&
+      !Array.isArray(record.total_events)
+        ? (record.total_events as Record<string, unknown>).points
+        : null;
+
+    if (Array.isArray(direct)) {
+      return direct.length > 0;
+    }
+
+    const wrappedItems =
+      record.items && typeof record.items === 'object' && !Array.isArray(record.items)
+        ? (record.items as Record<string, unknown>).total_events
+        : null;
+
+    const wrappedPoints =
+      wrappedItems && typeof wrappedItems === 'object' && !Array.isArray(wrappedItems)
+        ? (wrappedItems as Record<string, unknown>).points
+        : null;
+
+    return Array.isArray(wrappedPoints) && wrappedPoints.length > 0;
+  };
+
+  // Stats loader hydrates the live overview counters and trend forecast panel.
   const loadStats = async () => {
+    commandCenterLoading.value = true;
     statsError.value = '';
 
     try {
       const today = new Date().toISOString().slice(0, 10);
 
-      const [liveResponse, trendResponse] = await Promise.all([
+      const [commandCenterResponse, liveResponse, trendResponse, clusterResponse, dropoffsResponse, pathsResponse] = await Promise.all([
+        getCommandCenter(today),
         getLiveStats(today),
         getTrendStats(today),
+        getDashboardSnapshot('cluster-mix').catch(() => null),
+        getDashboardSnapshot('drop-offs').catch(() => null),
+        getDashboardSnapshot('path-deviations').catch(() => null),
       ]);
 
-      liveStats.value = liveResponse.data ?? null;
-      trendStats.value = trendResponse.data ?? null;
+      commandCenter.value = commandCenterResponse.data ?? null;
+      const commandCenterData = commandCenter.value;
+
+      const commandCenterLive = normalizeStatsDto(commandCenterData?.liveStats ?? null);
+      const commandCenterTrend = normalizeStatsDto(
+        commandCenterData?.trendForecast ?? null,
+      );
+
+      const dedicatedLive = normalizeStatsDto(liveResponse.data);
+      const dedicatedTrend = normalizeStatsDto(trendResponse.data);
+
+      liveStats.value = dedicatedLive ?? commandCenterLive ?? null;
+
+      // IMPORTANT: prefer the dedicated forecast endpoint because commandCenter trendForecast may be empty
+      trendStats.value = hasNonEmptyTrendPayload(dedicatedTrend)
+        ? dedicatedTrend
+        : hasNonEmptyTrendPayload(commandCenterTrend)
+          ? commandCenterTrend
+          : (dedicatedTrend ?? commandCenterTrend ?? null);
+
+      if (liveStats.value) {
+        lastUpdated.value = new Date();
+      }
+
+      clusterMix.value = clusterResponse?.data ?? commandCenterData?.clusterMix ?? null;
+      dropOffs.value = dropoffsResponse?.data ?? commandCenterData?.dropOffs ?? null;
+      pathDeviations.value = pathsResponse?.data ?? commandCenterData?.pathDeviations ?? null;
     } catch {
       statsError.value = 'Unable to load live stats.';
+    } finally {
+      commandCenterLoading.value = false;
     }
+  };
+
+  const loadActiveSessions = async () => {
+    activeSessionsLoading.value = true;
+    activeSessionsError.value = '';
+
+    try {
+      const response = await getActiveSessions({ limit: 60 });
+      activeSessionRows.value = response.data ?? [];
+    } catch {
+      activeSessionsError.value = 'Unable to load active sessions.';
+    } finally {
+      activeSessionsLoading.value = false;
+    }
+  };
+
+  const scheduleRefresh = (request: {
+    analytics?: boolean;
+    stats?: boolean;
+    activeSessions?: boolean;
+  }) => {
+    pendingRefresh.analytics ||= Boolean(request.analytics);
+    pendingRefresh.stats ||= Boolean(request.stats);
+    pendingRefresh.activeSessions ||= Boolean(request.activeSessions);
+
+    if (refreshDebounceId != null) {
+      return;
+    }
+
+    refreshDebounceId = window.setTimeout(() => {
+      const next = pendingRefresh;
+      pendingRefresh = {
+        analytics: false,
+        stats: false,
+        activeSessions: false,
+      };
+      refreshDebounceId = null;
+
+      if (next.analytics) {
+        void loadAnalytics();
+      }
+      if (next.stats) {
+        void loadStats();
+      }
+      if (next.activeSessions) {
+        void loadActiveSessions();
+      }
+    }, STREAM_REFRESH_DEBOUNCE_MS);
   };
 
   // User lookup loader enriches the currently selected or searched insured.
@@ -246,7 +469,7 @@ const createDashboardStore = () => {
         const response = await listSessions({
           insuredId: event.insuredId,
           page,
-          size: 100,
+          size: ANALYTICS_PAGE_SIZE,
         });
 
         const matchedSession =
@@ -254,7 +477,7 @@ const createDashboardStore = () => {
 
         if (matchedSession) {
           selectedSessionDetail.value = matchedSession;
-          sessions.value = upsertSession(sessions.value, matchedSession, 60);
+          sessions.value = upsertSession(sessions.value, matchedSession, COLLECTION_LIMIT);
           return;
         }
 
@@ -264,7 +487,11 @@ const createDashboardStore = () => {
 
       try {
         const insight = await getSessionInsight(event.insuredId, event.sessionId);
-        if (insight.data != null && typeof insight.data === 'object' && !Array.isArray(insight.data)) {
+        if (
+          insight.data != null &&
+          typeof insight.data === 'object' &&
+          !Array.isArray(insight.data)
+        ) {
           liveSessionInsight.value = insight.data as Record<string, unknown>;
         }
       } catch {
@@ -275,10 +502,53 @@ const createDashboardStore = () => {
     }
   };
 
+  const loadSelectedInvestigation = async (event: AnomalyEventDto) => {
+    selectedSessionLoading.value = true;
+    selectedInvestigation.value = null;
+    liveSessionInsight.value = null;
+    selectedSessionDetail.value = null;
+
+    if (event.id == null) {
+      try {
+        await Promise.all([loadUserInsights(), loadSelectedSession(event)]);
+      } finally {
+        anomalyExplanation.value = hydrateExplanation(event, selectedSessionDetail.value, null);
+        selectedSessionLoading.value = false;
+      }
+      return;
+    }
+
+    try {
+      const response = await getAnomalyInvestigation(event.id);
+      const investigation = response.data ?? null;
+      selectedInvestigation.value = investigation;
+      selectedSessionDetail.value = investigation?.sessionAnalysis ?? null;
+      riskProfile.value = investigation?.riskProfile ?? null;
+      nextActions.value = investigation?.nextActions ?? null;
+      activeAnomaly.value = investigation?.activeAnomaly ?? null;
+      liveSessionInsight.value = toRecord(investigation?.liveSession ?? null);
+      anomalyExplanation.value = hydrateExplanation(
+        investigation?.anomaly ?? event,
+        investigation?.sessionAnalysis ?? null,
+        investigation?.liveSession ?? null,
+      );
+
+      if (investigation?.anomaly) {
+        anomalies.value = upsertNewest(anomalies.value, investigation.anomaly, 40);
+      }
+    } catch {
+      await Promise.all([loadUserInsights(), loadSelectedSession(event)]);
+      anomalyExplanation.value = hydrateExplanation(event, selectedSessionDetail.value, null);
+    } finally {
+      selectedSessionLoading.value = false;
+    }
+  };
+
   // Selection orchestration keeps the anomaly, insured lookup, and session context aligned.
   const selectAnomaly = async (event: AnomalyEventDto) => {
     const nextKey = anomalyEventKey(event);
     if (selectedAnomalyKey.value !== nextKey) {
+      selectedInvestigation.value = null;
       selectedSessionDetail.value = null;
       liveSessionInsight.value = null;
       anomalyExplanation.value = null;
@@ -287,7 +557,7 @@ const createDashboardStore = () => {
 
     selectedAnomalyKey.value = nextKey;
     insuredIdInput.value = event.insuredId;
-    await Promise.all([loadUserInsights(), loadSelectedSession(event)]);
+    await loadSelectedInvestigation(event);
   };
 
   // AI explanation requests are only allowed for anomalies that already exist in persistent storage.
@@ -303,7 +573,13 @@ const createDashboardStore = () => {
 
     try {
       const response = await getAnomalyExplanation(selected.id);
-      anomalyExplanation.value = response.data ?? null;
+      anomalyExplanation.value =
+        response.data ??
+        hydrateExplanation(
+          selected,
+          selectedSessionDetail.value,
+          toActiveSession(liveSessionInsight.value),
+        );
 
       if (!response.data) {
         explanationError.value = 'The API returned no explanation for this anomaly.';
@@ -317,15 +593,12 @@ const createDashboardStore = () => {
 
   // Bridge live STOMP alerts from Pinia into local anomaly/session state.
   let lastHandledAlertKey = '';
-  watch(
-    streamLatestKey,
-    () => {
-      const key = streamLatestKey.value;
-      if (!key || key === lastHandledAlertKey || !streamLatestAlert.value) return;
-      handleStreamAlert(streamLatestAlert.value);
-      lastHandledAlertKey = key;
-    },
-  );
+  watch(streamLatestKey, () => {
+    const key = streamLatestKey.value;
+    if (!key || key === lastHandledAlertKey || !streamLatestAlert.value) return;
+    handleStreamAlert(streamLatestAlert.value);
+    lastHandledAlertKey = key;
+  });
 
   const connectLiveStatsStream = () => {
     closeLiveStatsStream();
@@ -348,6 +621,30 @@ const createDashboardStore = () => {
       }
     });
 
+    liveStatsStream.addEventListener('refresh', (event) => {
+      const refreshTarget = resolveRefreshTarget(event.data);
+      if (!refreshTarget) {
+        return;
+      }
+
+      if (refreshTarget === 'stats') {
+        scheduleRefresh({ activeSessions: true });
+        return;
+      }
+
+      if (refreshTarget === 'alerts') {
+        scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
+        return;
+      }
+
+      if (refreshTarget === 'risky-sessions') {
+        scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
+        return;
+      }
+
+      scheduleRefresh({ stats: true });
+    });
+
     liveStatsStream.onerror = () => {
       // It will auto-reconnect
       console.warn('Live stats stream interrupted.');
@@ -361,8 +658,9 @@ const createDashboardStore = () => {
 
   // Streamed alerts are merged into memory and surfaced to the UI as a temporary toast.
   const handleStreamAlert = (event: AnomalyEventDto) => {
-    anomalies.value = upsertNewest(anomalies.value, event, 40);
+    anomalies.value = upsertNewest(anomalies.value, event, COLLECTION_LIMIT);
     latestStreamAlert.value = event;
+    scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
 
     if (anomalyMeta.value) {
       const exceedsLoadedRows = anomalyMeta.value.totalElements > anomalies.value.length;
@@ -394,8 +692,14 @@ const createDashboardStore = () => {
 
     void loadAnalytics();
     void loadStats();
+    void loadActiveSessions();
     liveStream.connect();
     connectLiveStatsStream();
+    
+    // Keep a low-frequency fallback refresh in case a tab misses live events.
+    refreshInterval = window.setInterval(() => {
+      scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
+    }, FULL_REFRESH_FALLBACK_MS);
   };
 
   const stop = () => {
@@ -404,6 +708,22 @@ const createDashboardStore = () => {
 
     liveStream.disconnect();
     closeLiveStatsStream();
+    
+    if (refreshInterval != null) {
+      window.clearInterval(refreshInterval);
+      refreshInterval = null;
+    }
+
+    if (refreshDebounceId != null) {
+      window.clearTimeout(refreshDebounceId);
+      refreshDebounceId = null;
+    }
+
+    pendingRefresh = {
+      analytics: false,
+      stats: false,
+      activeSessions: false,
+    };
 
     if (liveToastTimeoutId != null) {
       window.clearTimeout(liveToastTimeoutId);
@@ -422,7 +742,15 @@ const createDashboardStore = () => {
     analyticsError,
     liveStats,
     trendStats,
+    clusterMix,
+    dropOffs,
+    pathDeviations,
+    commandCenter,
+    commandCenterLoading,
     statsError,
+    activeSessionRows,
+    activeSessionsLoading,
+    activeSessionsError,
     anomalySearch,
     sessionSearch,
     insuredIdInput,
@@ -433,6 +761,7 @@ const createDashboardStore = () => {
     userError,
     selectedAnomalyKey,
     selectedAnomaly,
+    selectedInvestigation,
     selectedSession,
     liveSessionInsight,
     selectedSessionLoading,
@@ -449,22 +778,26 @@ const createDashboardStore = () => {
     activeSessions,
     eventsPerMinute,
     anomalyRate,
-    koRate,
+    globalRiskLevel,
     lastUpdated,
     eventsSinceLoad,
     loadAnalytics,
     loadStats,
+    loadActiveSessions,
     loadUserInsights,
     selectAnomaly,
     generateExplanation,
     start,
     stop,
   };
-};
+};;
 
 // Singleton bookkeeping keeps one shared store instance alive across multiple route consumers.
 type DashboardStore = ReturnType<typeof createDashboardStore>;
 type DashboardPublicApi = Omit<DashboardStore, 'start' | 'stop'>;
+type ExplanationEventContext = Pick<AnomalyEventDto, 'id' | 'eventContext' | 'eventJson'>;
+type ExplanationSessionContext = Pick<SessionAnalysisDto, 'explainabilityText'>;
+type ExplanationLiveSessionContext = Pick<ActiveSessionDto, 'explainabilityText'>;
 
 let dashboardStore: DashboardStore | null = null;
 let activeConsumers = 0;
@@ -481,7 +814,7 @@ const getDashboardStore = () => {
 const mergeNewest = (primary: AnomalyEventDto[], secondary: AnomalyEventDto[]) => {
   let merged = primary;
   for (const item of secondary) {
-    merged = upsertNewest(merged, item, 40);
+    merged = upsertNewest(merged, item, COLLECTION_LIMIT);
   }
   return merged;
 };
@@ -509,6 +842,59 @@ const toNumber = (value: unknown) => {
 const numberOrNa = (value: unknown) => {
   const parsed = toNumber(value);
   return parsed == null ? 'n/a' : parsed.toLocaleString('en-GB');
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const readExplanationText = (
+  event: ExplanationEventContext | null,
+  session: ExplanationSessionContext | null,
+  liveSession: ExplanationLiveSessionContext | null,
+) => {
+  if (session?.explainabilityText) return session.explainabilityText;
+  if (liveSession?.explainabilityText) return liveSession.explainabilityText;
+  const eventContext =
+    toRecord(event?.eventContext) ?? toRecord(event?.eventJson) ?? null;
+  const text = eventContext?.explainabilityText;
+  return typeof text === 'string' && text.trim().length > 0 ? text : null;
+};
+
+const hydrateExplanation = (
+  event: ExplanationEventContext | null,
+  session: ExplanationSessionContext | null,
+  liveSession: ExplanationLiveSessionContext | null,
+): AnomalyExplanationDto | null => {
+  const explanation = readExplanationText(event, session, liveSession);
+  if (!explanation) return null;
+  return {
+    anomalyEventId: event?.id ?? 0,
+    source: session?.explainabilityText ? 'session-analysis' : liveSession?.explainabilityText ? 'session-insight' : 'anomaly-context',
+    model: 'data-processor',
+    generatedAt: new Date().toISOString(),
+    cached: true,
+    explanation,
+  };
+};
+
+const toActiveSession = (value: Record<string, unknown> | null): ExplanationLiveSessionContext | null => {
+  if (!value) return null;
+  return value as unknown as ExplanationLiveSessionContext;
+};
+
+const resolveRefreshTarget = (payload: string) => {
+  if (!payload) {
+    return '';
+  }
+
+  try {
+    const parsed = JSON.parse(payload) as Record<string, unknown>;
+    return typeof parsed.refresh === 'string' ? parsed.refresh : '';
+  } catch {
+    return '';
+  }
 };
 
 // Route consumers subscribe to the shared store and automatically manage start/stop lifecycles.

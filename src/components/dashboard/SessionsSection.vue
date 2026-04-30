@@ -89,16 +89,16 @@
         <q-td :props="props">
           <div class="neo-risk-cell">
             <q-knob
-              :model-value="safeRiskScore(props.row.ensembleRiskScore)"
+              :model-value="safeRiskScore(sessionRiskScore(props.row))"
               size="42px"
               :thickness="0.24"
-              :color="riskTone(props.row.ensembleRiskScore)"
+              :color="riskTone(sessionRiskScore(props.row))"
               track-color="grey-8"
               readonly
               show-value
               font-size="11px"
               class="neo-risk-knob"
-              :class="{ 'neo-risk-knob--critical': safeRiskScore(props.row.ensembleRiskScore) >= 80 }"
+              :class="{ 'neo-risk-knob--critical': safeRiskScore(sessionRiskScore(props.row)) >= 80 }"
             />
           </div>
         </q-td>
@@ -166,7 +166,12 @@ const columns: QTableColumn<SessionAnalysisDto>[] = [
   },
   { name: 'koRate', label: 'KO rate', field: 'koRate', align: 'left' },
   { name: 'uniqueActions', label: 'Unique', field: 'uniqueActions', align: 'left' },
-  { name: 'avgInterActionSeconds', label: 'Mean Δ', field: 'avgInterActionSeconds', align: 'left' },
+  {
+    name: 'avgInterActionSeconds',
+    label: 'Mean delta',
+    field: 'avgInterActionSeconds',
+    align: 'left',
+  },
   {
     name: 'totalEvents',
     label: 'Events',
@@ -193,7 +198,14 @@ const riskTone = (value: number | null | undefined) => {
   return 'positive';
 };
 
+const sessionRiskScore = (session: SessionAnalysisDto) =>
+  session.ensembleRiskScore ?? session.riskScoreAvg ?? session.riskScoreMax ?? null;
+
 const liveContextTags = (session: SessionAnalysisDto) => {
+  if (session.contextTags?.length) {
+    return session.contextTags.slice(0, 3);
+  }
+
   const tags: string[] = [];
   if (session.ipChanged) tags.push('IP Changed');
   if ((session.koRate ?? 0) >= 0.3) tags.push('High Error Rate');

@@ -26,10 +26,9 @@
     <!-- KPI strip highlights the live operational counters. -->
     <KpiStrip
       :active-sessions="activeSessions"
-      :events-per-minute="eventsPerMinute"
       :anomaly-rate="anomalyRate"
-      :ko-rate="koRate"
-      :stream-connected="streamConnected"
+      :global-risk-level="globalRiskLevel"
+      :events-per-minute="eventsPerMinute"
       :events-since-load="eventsSinceLoad"
       :last-updated="lastUpdated"
     />
@@ -150,6 +149,62 @@
           :empty-message="t('overviewPage.priorityAnomalyTypesEmpty')"
         />
       </article>
+
+      <article class="neo-overview-panel">
+        <div class="neo-overview-head">
+          <div>
+            <h3>Live alert feed</h3>
+            <p>Critical alerts from Redis snapshots and the API event stream.</p>
+          </div>
+        </div>
+        <div v-if="!alertFeedItems.length" class="neo-overview-empty">
+          No recent alerts were returned by the command-center payload.
+        </div>
+        <div v-else class="neo-overview-feed">
+          <div
+            v-for="item in alertFeedItems"
+            :key="item.key"
+            class="neo-overview-feed-row neo-overview-feed-row--alert"
+          >
+            <div>
+              <div class="neo-overview-feed-title">{{ item.anomalyType }}</div>
+              <div class="neo-overview-feed-meta">{{ item.insuredId }} / {{ item.sessionId }}</div>
+            </div>
+            <div class="neo-overview-feed-side">
+              <strong>{{ item.riskScore }}</strong>
+              <span>{{ item.detectedAt }}</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="neo-overview-panel">
+        <div class="neo-overview-head">
+          <div>
+            <h3>Hot sessions</h3>
+            <p>Highest-risk live sessions from the command center and Redis radar.</p>
+          </div>
+        </div>
+        <div v-if="!riskySessionPreview.length" class="neo-overview-empty">
+          No risky sessions are currently available.
+        </div>
+        <div v-else class="neo-overview-feed">
+          <div
+            v-for="session in riskySessionPreview"
+            :key="session.key"
+            class="neo-overview-feed-row"
+          >
+            <div>
+              <div class="neo-overview-feed-title">{{ session.sessionId }}</div>
+              <div class="neo-overview-feed-meta">{{ session.insuredId }}</div>
+            </div>
+            <div class="neo-overview-feed-side">
+              <strong>{{ session.riskScore }}</strong>
+              <span>{{ session.anomalyType }}</span>
+            </div>
+          </div>
+        </div>
+      </article>
     </section>
   </q-page>
 </template>
@@ -178,6 +233,7 @@ import { formatDate, formatScore } from 'src/utils/format';
 const router = useRouter();
 const { t } = useI18n();
 const {
+  commandCenter,
   totalSessions,
   anomalousSessions,
   totalAnomalies,
@@ -186,8 +242,9 @@ const {
   activeSessions,
   eventsPerMinute,
   anomalyRate,
-  koRate,
+  globalRiskLevel,
   sessions,
+  activeSessionRows,
   liveStats,
   trendStats,
   anomalies,
@@ -204,7 +261,8 @@ const liveStatsPayload = computed(() => {
 });
 
 const eventsPerMinuteValue = computed(() => {
-  const value = liveStatsPayload.value?.events_per_minute;
+  const value =
+    liveStatsPayload.value?.events_per_minute ?? liveStatsPayload.value?.eventsPerMinute;
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
     const parsed = Number(value);
@@ -216,7 +274,8 @@ const eventsPerMinuteValue = computed(() => {
 const recentSessions = computed(() => sessions.value.slice(0, 5));
 
 const topActions = computed(() => {
-  const raw = liveStatsPayload.value?.top_actions_last_15m;
+  const raw =
+    liveStatsPayload.value?.top_actions_last_15m ?? liveStatsPayload.value?.topActionsLast15m;
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
   return Object.entries(raw as Record<string, number>)
     .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
@@ -225,8 +284,76 @@ const topActions = computed(() => {
 });
 
 const topCountries = computed(() => {
-  const raw = liveStatsPayload.value?.top_countries_right_now;
+  const raw =
+    liveStatsPayload.value?.top_countries_right_now ??
+    liveStatsPayload.value?.topCountriesRightNow;
   return normalizeCountryTelemetry(raw, 6);
+});
+
+const extractItems = (payload: unknown) => {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return [];
+  const items = (payload as Record<string, unknown>).items;
+  return Array.isArray(items) ? items : [];
+};
+
+const readText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim().length > 0 ? value : fallback;
+
+const alertFeedItems = computed(() =>
+  extractItems(commandCenter.value?.alertFeed)
+    .slice(0, 6)
+    .flatMap((item, index) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+      const row = item as Record<string, unknown>;
+      const insuredId = readText(row.insuredId, 'unknown');
+      const sessionId = readText(row.sessionId, `session-${index}`);
+      const detectedAt = readText(row.detectedAt, '');
+      const anomalyType = readText(row.anomalyType, 'UNKNOWN');
+      return [
+        {
+          key: `${insuredId}:${sessionId}:${detectedAt || index}`,
+          insuredId,
+          sessionId,
+          anomalyType,
+          riskScore: formatScore(
+            typeof row.riskScore === 'number' ? row.riskScore : Number(row.riskScore ?? 0),
+          ),
+          detectedAt: formatDate(detectedAt || null),
+        },
+      ];
+    }),
+);
+
+const riskySessionPreview = computed(() => {
+  const commandCenterRows = extractItems(commandCenter.value?.riskySessions)
+    .slice(0, 4)
+    .flatMap((item, index) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+      const row = item as Record<string, unknown>;
+      const insuredId = readText(row.insuredId, 'unknown');
+      const sessionId = readText(row.sessionId, `session-${index}`);
+      return [
+        {
+          key: `${insuredId}:${sessionId}`,
+          insuredId,
+          sessionId,
+          riskScore: formatScore(
+            typeof row.riskScore === 'number' ? row.riskScore : Number(row.riskScore ?? 0),
+          ),
+          anomalyType: readText(row.anomalyType, 'observed'),
+        },
+      ];
+    });
+
+  if (commandCenterRows.length) return commandCenterRows;
+
+  return activeSessionRows.value.slice(0, 4).map((session) => ({
+    key: `${session.insuredId}:${session.sessionId}`,
+    insuredId: session.insuredId,
+    sessionId: session.sessionId,
+    riskScore: formatScore(session.riskScore ?? null),
+    anomalyType: session.anomalyType ?? 'observed',
+  }));
 });
 
 const topAnomalyTypes = computed(() => {
@@ -452,6 +579,15 @@ const latestAnomalyScore = computed(() =>
   flex-direction: column;
   gap: 4px;
   text-align: right;
+}
+
+.neo-overview-feed-row--alert {
+  border-left: 4px solid rgba(190, 65, 36, 0.5);
+}
+
+.neo-overview-empty {
+  color: var(--neo-ink-muted);
+  font-size: 13px;
 }
 
 /* Responsive stacking keeps the overview grid readable on narrower screens. */

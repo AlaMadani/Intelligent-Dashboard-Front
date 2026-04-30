@@ -1,34 +1,20 @@
-import { Client, type IMessage } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import type { AnomalyEventDto } from 'src/types/analytics';
-import { api } from 'boot/axios';
+import { getLiveStatsStreamUrl, listAnomalyEvents } from 'src/services/analytics';
 import { anomalyEventKey } from 'src/utils/dashboard';
 
 const MAX_ALERTS = 50;
+const FALLBACK_REFRESH_MS = 30000;
+const REFRESH_TARGETS = new Set(['alerts', 'risky-sessions']);
 
-const buildSocketUrl = () => {
-  const baseUrl =
-    typeof api.defaults.baseURL === 'string' && api.defaults.baseURL
-      ? api.defaults.baseURL
-      : window.location.origin;
-  const url = new URL('/websocket', baseUrl);
-  // SockJS expects an HTTP(S) endpoint for the initial handshake.
-  if (url.protocol === 'https:') {
-    url.protocol = 'https:';
-  } else {
-    url.protocol = 'http:';
-  }
-  return url.toString();
-};
-
-const parseAlert = (message: IMessage): AnomalyEventDto | null => {
-  if (!message.body) return null;
+const resolveRefreshTarget = (payload: string) => {
+  if (!payload) return '';
   try {
-    return JSON.parse(message.body) as AnomalyEventDto;
+    const parsed = JSON.parse(payload) as Record<string, unknown>;
+    return typeof parsed.refresh === 'string' ? parsed.refresh : '';
   } catch {
-    return null;
+    return '';
   }
 };
 
@@ -40,66 +26,93 @@ export const useLiveStreamStore = defineStore('liveStream', () => {
   const latestAlert = ref<AnomalyEventDto | null>(null);
   const latestKey = ref('');
 
-  let client: Client | null = null;
+  let eventSource: EventSource | null = null;
+  let refreshInterval: number | null = null;
   let refCount = 0;
+  let lastSeenKey = '';
 
   const connectionLabel = computed(() => (connected.value ? 'connected' : 'reconnecting'));
 
-  const ingestAlert = (event: AnomalyEventDto) => {
-    const key = anomalyEventKey(event);
-    latestKey.value = key;
-    latestAlert.value = event;
+  const ingestAlerts = (nextAlerts: AnomalyEventDto[]) => {
+    alerts.value = nextAlerts.slice(0, MAX_ALERTS);
+
+    const nextLatest = alerts.value[0] ?? null;
+    const nextKey = nextLatest ? anomalyEventKey(nextLatest) : '';
+    if (!nextKey || nextKey === lastSeenKey) {
+      return;
+    }
+
+    lastSeenKey = nextKey;
+    latestKey.value = nextKey;
+    latestAlert.value = nextLatest;
     eventsReceived.value += 1;
-    alerts.value = [event, ...alerts.value.filter((item) => anomalyEventKey(item) !== key)].slice(
-      0,
-      MAX_ALERTS,
-    );
+  };
+
+  const refreshAlerts = async () => {
+    try {
+      const response = await listAnomalyEvents({ page: 0, size: MAX_ALERTS });
+      ingestAlerts(response.data ?? []);
+      if (connected.value) {
+        error.value = '';
+      }
+    } catch {
+      error.value = 'Unable to refresh anomaly alerts from the API.';
+    }
+  };
+
+  const startFallbackRefresh = () => {
+    if (refreshInterval != null) return;
+    refreshInterval = window.setInterval(() => {
+      void refreshAlerts();
+    }, FALLBACK_REFRESH_MS);
+  };
+
+  const stopFallbackRefresh = () => {
+    if (refreshInterval == null) return;
+    window.clearInterval(refreshInterval);
+    refreshInterval = null;
   };
 
   const connect = () => {
     refCount += 1;
-    if (client?.active) return;
+    if (refCount > 1) return;
 
-    client = new Client({
-      // Use SockJS factory so STOMP works against the SockJS-enabled Spring endpoint.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      webSocketFactory: () => new SockJS(buildSocketUrl(), null, { withCredentials: true } as any),
-      reconnectDelay: 3000,
-      heartbeatIncoming: 10000,
-      heartbeatOutgoing: 10000,
-      onConnect: () => {
-        connected.value = true;
-        error.value = '';
-        client?.subscribe('/topic/alerts', (message) => {
-          const parsed = parseAlert(message);
-          if (!parsed) {
-            error.value = 'Received an unreadable alert frame from WebSocket.';
-            return;
-          }
-          ingestAlert(parsed);
-        });
-      },
-      onStompError: (frame) => {
-        connected.value = false;
-        error.value = frame.headers.message || 'WebSocket broker reported an error.';
-      },
-      onWebSocketClose: () => {
-        connected.value = false;
-      },
-      onWebSocketError: () => {
-        connected.value = false;
-        error.value = 'WebSocket connection interrupted.';
-      },
+    void refreshAlerts();
+    startFallbackRefresh();
+
+    try {
+      eventSource = new EventSource(getLiveStatsStreamUrl());
+    } catch {
+      connected.value = false;
+      error.value = 'Unable to connect to the API event stream.';
+      return;
+    }
+
+    eventSource.onopen = () => {
+      connected.value = true;
+      error.value = '';
+    };
+
+    eventSource.addEventListener('refresh', (event) => {
+      const refreshTarget = resolveRefreshTarget((event as MessageEvent<string>).data);
+      if (REFRESH_TARGETS.has(refreshTarget)) {
+        void refreshAlerts();
+      }
     });
 
-    client.activate();
+    eventSource.onerror = () => {
+      connected.value = false;
+      error.value = 'API event stream interrupted. Falling back to periodic refresh.';
+    };
   };
 
   const disconnect = () => {
     refCount = Math.max(0, refCount - 1);
     if (refCount > 0) return;
-    void client?.deactivate();
-    client = null;
+
+    eventSource?.close();
+    eventSource = null;
+    stopFallbackRefresh();
     connected.value = false;
   };
 

@@ -6,6 +6,9 @@
       :anomalies="anomalies"
       :live-stats="liveStats"
       :trend-stats="trendStats"
+      :cluster-mix="clusterMix"
+      :drop-offs="dropOffs"
+      :path-deviations="pathDeviations"
       :loading="analyticsLoading"
       :error="analyticsError || statsError"
     />
@@ -17,6 +20,16 @@
 import AnalyticsSection from 'src/components/dashboard/AnalyticsSection.vue';
 import { useDashboard } from 'src/composables/useDashboard';
 
-const { sessions, anomalies, liveStats, trendStats, analyticsLoading, analyticsError, statsError } =
-  useDashboard();
+const {
+  sessions,
+  anomalies,
+  liveStats,
+  trendStats,
+  clusterMix,
+  dropOffs,
+  pathDeviations,
+  analyticsLoading,
+  analyticsError,
+  statsError,
+} = useDashboard();
 </script>

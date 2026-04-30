@@ -111,8 +111,13 @@
           No next-action predictions available.
         </div>
         <div v-else class="neo-analytics-list">
-          <div v-for="action in nextActions.top3Actions" :key="action" class="neo-analytics-row">
-            <span>{{ action }}</span>
+          <div class="neo-analytics-meta">
+            {{ nextActions.sessionId ? `Session ${nextActions.sessionId}` : 'Cross-session prediction' }}
+            <span v-if="nextActions.predictedAt"> / {{ formatDate(nextActions.predictedAt) }}</span>
+          </div>
+          <div v-for="action in nextActions.top3Actions" :key="action.action" class="neo-analytics-row">
+            <span>{{ action.action }}</span>
+            <strong>{{ formatPercent(action.probability, 1) }}</strong>
           </div>
         </div>
       </div>
@@ -160,6 +165,31 @@
                 {{ formatDate(activeAnomaly.detectedAt) }}
               </div>
             </div>
+            <div v-if="activeAnomaly.ruleType">
+              <div class="neo-explanation-label">Rule type</div>
+              <div class="neo-explanation-value">{{ activeAnomaly.ruleType }}</div>
+            </div>
+            <div
+              v-if="
+                activeAnomaly.transitionFromAction ||
+                activeAnomaly.transitionToAction
+              "
+            >
+              <div class="neo-explanation-label">Transition</div>
+              <div class="neo-explanation-value">
+                {{ activeAnomaly.transitionFromAction || 'n/a' }} ->
+                {{ activeAnomaly.transitionToAction || 'n/a' }}
+              </div>
+            </div>
+            <div v-if="activeAnomaly.modelArtifact">
+              <div class="neo-explanation-label">Model artifact</div>
+              <div class="neo-explanation-value">{{ activeAnomaly.modelArtifact }}</div>
+            </div>
+          </div>
+
+          <div v-if="activeAnomaly.nextActions?.length" class="neo-analytics-meta">
+            Suggested next actions:
+            {{ activeAnomaly.nextActions.map((action) => action.action).join(', ') }}
           </div>
         </div>
       </div>

@@ -34,7 +34,7 @@
           </div>
           <div class="neo-hero-badge">
             <span class="neo-hero-badge-dot"></span>
-            Kafka anomaly stream
+            API anomaly stream
           </div>
           <div class="neo-hero-badge">
             <span class="neo-hero-badge-dot"></span>

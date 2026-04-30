@@ -22,7 +22,7 @@
         </q-input>
         <div class="neo-live-pill" :class="{ 'is-loading': loading }">
           <span class="neo-live-dot"></span>
-          Streaming
+          Live sync
         </div>
       </div>
     </div>
@@ -33,7 +33,7 @@
       class="neo-table"
       :rows="events"
       :columns="columns"
-      row-key="id"
+      :row-key="eventKey"
       :loading="loading"
       :filter="searchModel"
       :rows-per-page-options="[8, 12, 20]"
@@ -59,7 +59,7 @@
       </template>
       <template #body-cell-eventId="props">
         <q-td :props="props">
-          {{ props.row.eventId || '—' }}
+          {{ props.row.eventId || '-' }}
         </q-td>
       </template>
       <template #body-cell-detectedAt="props">
@@ -81,6 +81,7 @@
 import { computed } from 'vue';
 import type { QTableColumn } from 'quasar';
 import type { AnomalyEventDto } from 'src/types/analytics';
+import { anomalyEventKey } from 'src/utils/dashboard';
 import { formatDate, formatScore, formatPercent } from 'src/utils/format';
 
 const props = defineProps<{
@@ -111,10 +112,7 @@ const tierColor = (tier: string) => {
   return 'grey';
 };
 
-const eventKey = (event: AnomalyEventDto) =>
-  event.id != null
-    ? `id:${event.id}`
-    : `${event.insuredId}:${event.sessionId}:${event.eventId}:${event.detectedAt ?? ''}`;
+const eventKey = (event: AnomalyEventDto) => anomalyEventKey(event);
 
 const eventRowClass = (row: AnomalyEventDto) =>
   props.selectedEventKey && eventKey(row) === props.selectedEventKey ? 'neo-row-active' : '';

@@ -1,7 +1,7 @@
 // Analytics DTOs mirror the backend contracts consumed by the dashboard (api-service / Data Processor).
 import type { JsonValue } from 'src/types/api';
 
-/** Redis dashboard snapshot keys (see GET /api/analytics/dashboard/{view}). */
+/** Redis dashboard snapshot keys (see GET /api/v1/dashboard/{view}). */
 export type DashboardView =
   | 'alerts'
   | 'risky-sessions'
@@ -10,6 +10,25 @@ export type DashboardView =
   | 'path-deviations'
   | 'forecasts'
   | 'forecast-series';
+
+export interface FeatureContributionDto {
+  feature: string;
+  importance?: number | null;
+  actualValue?: JsonValue;
+  description?: string | null;
+}
+
+export interface PathDeviationDto {
+  deviated?: boolean | null;
+  fromAction?: string | null;
+  toAction?: string | null;
+  transitionProbability?: number | null;
+}
+
+export interface NextActionScoreDto {
+  action: string;
+  probability?: number | null;
+}
 
 // Session and anomaly-event payloads drive the tables, workbench, and overview cards.
 export interface SessionAnalysisDto {
@@ -68,6 +87,8 @@ export interface SessionAnalysisDto {
   anomalyTypes?: string[];
   campaignIds?: string[];
 
+  actionSequence?: string[];
+  routeSequence?: string[];
   actionSequenceSignature?: string | null;
   routeSequenceSignature?: string | null;
 
@@ -82,13 +103,19 @@ export interface SessionAnalysisDto {
   ensembleRiskScore?: number | null;
   personaCluster?: number | null;
   binaryDetectorArtifact?: string | null;
+  topContributingFeatures?: FeatureContributionDto[];
+  explainabilityText?: string | null;
+  warnings?: string[];
+  triggeredRules?: string[];
+  contextTags?: string[];
+  rareTransitions?: PathDeviationDto[];
 
   pathDeviation?: boolean | null;
   transitionProbability?: number | null;
   transitionFromAction?: string | null;
   transitionToAction?: string | null;
 
-  top3NextActions: string[];
+  top3NextActions: NextActionScoreDto[];
   ruleTriggered: boolean | null;
   ruleType: string | null;
   createdAt: string | null;
@@ -116,9 +143,79 @@ export interface AnomalyEventDto {
   transitionFromAction?: string | null;
   transitionToAction?: string | null;
   modelArtifact?: string | null;
-  nextActions?: string[];
-  eventJson: string | null;
+  nextActions?: NextActionScoreDto[];
+  eventContext?: Record<string, unknown> | null;
+  eventJson?: Record<string, unknown> | null;
   detectedAt: string | null;
+}
+
+export interface ActiveSessionDto {
+  sessionId: string;
+  insuredId: string;
+  persona?: string | null;
+  countryCode?: string | null;
+  city?: string | null;
+  month?: string | null;
+  sessionNumber?: number | null;
+  sessionStart?: string | null;
+  sessionEnd?: string | null;
+  totalEvents?: number | null;
+  totalDurationSeconds?: number | null;
+  firstAction?: string | null;
+  lastAction?: string | null;
+  firstRoute?: string | null;
+  lastRoute?: string | null;
+  avgInterActionSeconds?: number | null;
+  minInterActionSeconds?: number | null;
+  maxInterActionSeconds?: number | null;
+  uniqueActions?: number | null;
+  uniqueRoutes?: number | null;
+  uniqueIpsUsed?: number | null;
+  uniqueDevicesUsed?: number | null;
+  totalKOs?: number | null;
+  totalOKs?: number | null;
+  longestKoStreak?: number | null;
+  hasLogin?: boolean | null;
+  hasLogout?: boolean | null;
+  ipChanged?: boolean | null;
+  deviceChanged?: boolean | null;
+  totalDownloadActions?: number | null;
+  maxDownloadsIn2Minutes?: number | null;
+  pingPongCount?: number | null;
+  riskScoreMax?: number | null;
+  riskScoreAvg?: number | null;
+  anomalyEventCount?: number | null;
+  anomalyTypes?: string[];
+  campaignIds?: string[];
+  actionCounts?: Record<string, number>;
+  actionSequenceSignature?: string | null;
+  routeSequenceSignature?: string | null;
+  binaryAnomaly?: boolean | null;
+  anomalyFlag?: boolean | null;
+  anomalyType?: string | null;
+  anomalyScore?: number | null;
+  anomalyProbability?: number | null;
+  binaryDetectorArtifact?: string | null;
+  typeConfidence?: number | null;
+  churnProbability?: number | null;
+  riskScore?: number | null;
+  personaCluster?: number | null;
+  riskLevel?: string | null;
+  pathDeviation?: PathDeviationDto | null;
+  pathDeviationFlag?: boolean | null;
+  transitionProbability?: number | null;
+  transitionFromAction?: string | null;
+  transitionToAction?: string | null;
+  rareTransitions?: PathDeviationDto[];
+  nextActions?: NextActionScoreDto[];
+  contextTags?: string[];
+  triggeredRules?: string[];
+  warnings?: string[];
+  topContributingFeatures?: FeatureContributionDto[];
+  explainabilityText?: string | null;
+  actionSequence?: string[];
+  routeSequence?: string[];
+  computedAt?: string | null;
 }
 
 // User-insight payloads enrich the insured lookup and response workbench.
@@ -143,7 +240,7 @@ export interface NextActionPredictionDto {
   insuredId: string;
   sessionId: string | null;
   predictedAt: string | null;
-  top3Actions: string[];
+  top3Actions: NextActionScoreDto[];
 }
 
 // Stats and forecast payloads feed the live overview and analytics visualizations.
@@ -186,7 +283,7 @@ export interface AnomalyAlertDto {
   transitionFromAction?: string | null;
   transitionToAction?: string | null;
   modelArtifact?: string | null;
-  nextActions?: string[];
+  nextActions?: NextActionScoreDto[];
   eventTime: string | null;
   detectedAt: string | null;
 }
@@ -198,4 +295,25 @@ export interface AnomalyExplanationDto {
   generatedAt: string;
   cached: boolean;
   explanation: string;
+}
+
+export interface CommandCenterDto {
+  liveStats: StatsResponseDto | null;
+  trendForecast: StatsResponseDto | null;
+  alertFeed: JsonValue | null;
+  riskySessions: JsonValue | null;
+  clusterMix: JsonValue | null;
+  dropOffs: JsonValue | null;
+  pathDeviations: JsonValue | null;
+  forecastDetails: JsonValue | null;
+}
+
+export interface AnomalyInvestigationDto {
+  anomalyEventId: number;
+  anomaly: AnomalyEventDto | null;
+  sessionAnalysis: SessionAnalysisDto | null;
+  liveSession: ActiveSessionDto | null;
+  riskProfile: UserRiskProfileDto | null;
+  nextActions: NextActionPredictionDto | null;
+  activeAnomaly: AnomalyAlertDto | null;
 }
