@@ -1,5 +1,5 @@
 <template>
-  <article class="neo-analytics-panel">
+  <article v-if="!flat" class="neo-analytics-panel">
     <div class="neo-analytics-head">
       <div>
         <h3>User Persona Clusters</h3>
@@ -9,21 +9,28 @@
         {{ segments.length }} clusters
       </div>
     </div>
-
     <DonutBreakdownChart
       :segments="segments"
       center-label="Clusters"
       :center-value="totalUsers.toString()"
     />
   </article>
+  <DonutBreakdownChart v-else
+    :segments="segments"
+    center-label="Clusters"
+    :center-value="totalUsers.toString()"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import DonutBreakdownChart from 'src/components/dashboard/DonutBreakdownChart.vue';
+import type { StatsSummaryDto } from 'src/types/analytics';
 
 const props = defineProps<{
   data: Array<Record<string, unknown>> | null;
+  statsSummary?: StatsSummaryDto | null;
+  flat?: boolean;
 }>();
 
 const CLUSTER_COLORS: Record<number, string> = {
@@ -60,9 +67,11 @@ const toNumber = (value: unknown) => {
 const normalizeShare = (value: number) => (value <= 1 ? value * 100 : value);
 
 const normalizedClusters = computed(() => {
-  if (!props.data || !Array.isArray(props.data)) return [];
+  const rawData = (Array.isArray(props.data) && props.data.length > 0)
+    ? props.data
+    : buildFallbackClusters(props.statsSummary);
 
-  return props.data.flatMap((item, index) => {
+  return rawData.flatMap((item, index) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
 
     const clusterId = toNumber(
@@ -119,6 +128,14 @@ const segments = computed(() =>
     color,
   })),
 );
+
+const buildFallbackClusters = (summary: StatsSummaryDto | null | undefined): Array<Record<string, unknown>> => {
+  if (!summary?.sessionsByPersonaCluster) return [];
+  return Object.entries(summary.sessionsByPersonaCluster).map(([clusterId, count]) => ({
+    cluster_id: Number(clusterId),
+    count,
+  }));
+};
 </script>
 
 <style scoped>

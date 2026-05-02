@@ -205,6 +205,98 @@
           </div>
         </div>
       </article>
+
+      <!-- Stats summary panel: aggregate counts across all sessions, anomalies, and risk tiers. -->
+      <article class="neo-overview-panel neo-overview-panel--wide">
+        <div class="neo-overview-head">
+          <div>
+            <h3>System snapshot</h3>
+            <p>Rolling aggregates across sessions, anomalies, and risk tiers. Updated every 60s.</p>
+          </div>
+          <q-icon name="info" class="neo-hint-icon">
+            <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">
+              These counts reflect all persisted sessions and anomalies in the database, plus Redis-based live counters.
+            </q-tooltip>
+          </q-icon>
+        </div>
+        <div v-if="statsSummaryLoading" class="neo-overview-empty">Loading summary…</div>
+        <div v-else-if="!statsSummary" class="neo-overview-empty">Summary not available yet.</div>
+        <div v-else class="neo-summary-grid">
+          <div class="neo-summary-card">
+            <strong>{{ statsSummary.totalSessions.toLocaleString() }}</strong>
+            <span>Total sessions <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>All sessions ever persisted in the session_analysis table.</q-tooltip></q-icon></span>
+          </div>
+          <div class="neo-summary-card">
+            <strong>{{ statsSummary.totalAnomalies.toLocaleString() }}</strong>
+            <span>Total anomalies <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>All anomaly events ever generated, across all tiers and types.</q-tooltip></q-icon></span>
+          </div>
+          <div class="neo-summary-card">
+            <strong>{{ statsSummary.anomalousSessions.toLocaleString() }}</strong>
+            <span>Anomalous sessions <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Sessions flagged as anomalous by the ML detector.</q-tooltip></q-icon></span>
+          </div>
+          <div class="neo-summary-card">
+            <strong>{{ (statsSummary.anomalyRate * 100).toFixed(1) }}%</strong>
+            <span>Anomaly rate <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Percentage of all sessions that were flagged as anomalous.</q-tooltip></q-icon></span>
+          </div>
+          <div class="neo-summary-card">
+            <strong>{{ statsSummary.activeSessionsNow.toLocaleString() }}</strong>
+            <span>Active now <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Currently open sessions tracked in Redis.</q-tooltip></q-icon></span>
+          </div>
+          <div class="neo-summary-card">
+            <strong>{{ statsSummary.eventsToday.toLocaleString() }}</strong>
+            <span>Events today <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Total audit events received today (from Redis counter).</q-tooltip></q-icon></span>
+          </div>
+          <div class="neo-summary-card" v-for="(count, type) in statsSummary.anomaliesByType" :key="type">
+            <strong>{{ count.toLocaleString() }}</strong>
+            <span>{{ type }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Anomaly events grouped by detection type.</q-tooltip></q-icon></span>
+          </div>
+          <div class="neo-summary-card" v-for="(count, tier) in statsSummary.usersByRiskTier" :key="tier">
+            <strong>{{ count.toLocaleString() }}</strong>
+            <span>{{ tier }} risk users <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Number of users currently classified in this risk tier.</q-tooltip></q-icon></span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Health panel: service connectivity status. -->
+      <article class="neo-overview-panel">
+        <div class="neo-overview-head">
+          <div>
+            <h3>Service health</h3>
+            <p>Connectivity status of backend services consumed by this dashboard.</p>
+          </div>
+        </div>
+        <div v-if="healthLoading" class="neo-overview-empty">Checking…</div>
+        <div v-else-if="!healthStatus" class="neo-overview-empty">Not checked yet.</div>
+        <div v-else class="neo-summary-grid">
+          <div class="neo-summary-card">
+            <strong :class="healthStatus.status === 'UP' ? 'neo-health-ok' : 'neo-health-warn'">{{ healthStatus.status }}</strong>
+            <span>Overall <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Overall system status: UP means all checks pass, DEGRADED means one or more services are down.</q-tooltip></q-icon></span>
+          </div>
+          <template v-if="healthStatus.checks">
+            <div class="neo-summary-card" v-for="(check, name, idx) in (healthStatus.checks as Record<string, unknown>)" :key="idx">
+              <strong :class="check === 'UP' ? 'neo-health-ok' : 'neo-health-warn'">{{ check }}</strong>
+              <span>{{ name }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Health check result for {{ name }}.</q-tooltip></q-icon></span>
+            </div>
+          </template>
+        </div>
+      </article>
+
+      <!-- Deep-dive section: analytics panels not shown on overview elsewhere. -->
+      <article class="neo-overview-panel neo-overview-panel--wide">
+        <div class="neo-overview-head">
+          <div>
+            <h3>User Persona Clusters</h3>
+            <p>Behaviour segmentation distribution across active sessions</p>
+          </div>
+        </div>
+        <ClusterMixPanel :data="clusterMixRows" :stats-summary="statsSummary" flat />
+      </article>
+
+      <DropOffsPanel :data="dropOffRows" :sessions="sessions" />
+
+      <article class="neo-overview-panel neo-overview-panel--wide">
+        <PathDeviationsPanel :data="pathDeviationRows" flat />
+      </article>
     </section>
   </q-page>
 </template>
@@ -221,12 +313,15 @@ import KpiStrip from 'src/components/dashboard/KpiStrip.vue';
 import OverviewHero from 'src/components/dashboard/OverviewHero.vue';
 import SparkAreaChart from 'src/components/dashboard/SparkAreaChart.vue';
 import TrendForecastChart from 'src/components/dashboard/TrendForecastChart.vue';
+import ClusterMixPanel from 'src/components/dashboard/ClusterMixPanel.vue';
+import DropOffsPanel from 'src/components/dashboard/DropOffsPanel.vue';
+import PathDeviationsPanel from 'src/components/dashboard/PathDeviationsPanel.vue';
 import { useDashboard } from 'src/composables/useDashboard';
 import {
   ANOMALY_TIER_COLORS,
   FALLBACK_ANOMALY_TIER_COLOR,
 } from 'src/constants/dashboard/anomaly';
-import { formatTimelineLabel, normalizeCountryTelemetry } from 'src/utils/dashboard';
+import { formatTimelineLabel, mergeCountriesWithSessions } from 'src/utils/dashboard';
 import { formatDate, formatScore } from 'src/utils/format';
 
 // Router navigation lets the hero shortcuts jump between dashboard sections.
@@ -248,9 +343,16 @@ const {
   liveStats,
   trendStats,
   anomalies,
+  clusterMix,
+  dropOffs,
+  pathDeviations,
   streamConnected,
   lastUpdated,
   eventsSinceLoad,
+  statsSummary,
+  statsSummaryLoading,
+  healthStatus,
+  healthLoading,
 } = useDashboard();
 
 // Normalize raw stats payloads into chart- and card-friendly structures.
@@ -287,14 +389,22 @@ const topCountries = computed(() => {
   const raw =
     liveStatsPayload.value?.top_countries_right_now ??
     liveStatsPayload.value?.topCountriesRightNow;
-  return normalizeCountryTelemetry(raw, 6);
+  return mergeCountriesWithSessions(raw, sessions.value, 6);
 });
 
 const extractItems = (payload: unknown) => {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return [];
-  const items = (payload as Record<string, unknown>).items;
-  return Array.isArray(items) ? items : [];
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (typeof payload === 'object') {
+    const items = (payload as Record<string, unknown>).items;
+    return Array.isArray(items) ? items : [];
+  }
+  return [];
 };
+
+const clusterMixRows = computed(() => extractItems(clusterMix.value));
+const dropOffRows = computed(() => extractItems(dropOffs.value));
+const pathDeviationRows = computed(() => extractItems(pathDeviations.value));
 
 const readText = (value: unknown, fallback: string) =>
   typeof value === 'string' && value.trim().length > 0 ? value : fallback;
@@ -605,4 +715,44 @@ const latestAnomalyScore = computed(() =>
     grid-template-columns: 1fr;
   }
 }
+
+.neo-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.neo-summary-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,248,238,0.72));
+  border: 1px solid rgba(16,32,43,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.neo-summary-card strong {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.neo-summary-card span {
+  font-size: 12px;
+  color: var(--neo-ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.neo-health-ok { color: var(--neo-accent); }
+.neo-health-warn { color: #be4124; }
+
+.neo-hint-icon {
+  font-size: 14px;
+  color: var(--neo-ink-muted);
+  cursor: help;
+  opacity: 0.6;
+}
+.neo-hint-icon:hover { opacity: 1; }
 </style>

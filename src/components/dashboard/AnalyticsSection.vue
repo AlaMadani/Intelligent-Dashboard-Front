@@ -197,11 +197,11 @@
         </div>
        </article>
 
-       <ClusterMixPanel :data="clusterMixData" />
+       <ClusterMixPanel :data="clusterMixData" :stats-summary="props.statsSummary" />
 
        <PathDeviationsPanel :data="pathDeviationsData" />
 
-       <DropOffsPanel :data="dropOffsData" />
+       <DropOffsPanel :data="dropOffsData" :sessions="props.sessions" />
     </div>
   </section>
 </template>
@@ -210,7 +210,7 @@
 // Props deliver dashboard datasets; computed blocks reshape them for charts and previews.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { AnomalyEventDto, SessionAnalysisDto, StatsResponseDto } from 'src/types/analytics';
+import type { AnomalyEventDto, SessionAnalysisDto, StatsResponseDto, StatsSummaryDto } from 'src/types/analytics';
 import type { JsonValue } from 'src/types/api';
 import {
   ANOMALY_TIER_COLORS,
@@ -223,7 +223,7 @@ import SparkAreaChart from './SparkAreaChart.vue';
 import ClusterMixPanel from './ClusterMixPanel.vue';
 import DropOffsPanel from './DropOffsPanel.vue';
 import PathDeviationsPanel from './PathDeviationsPanel.vue';
-import { anomalyEventKey, formatTimelineLabel, normalizeCountryTelemetry } from 'src/utils/dashboard';
+import { anomalyEventKey, formatTimelineLabel, mergeCountriesWithSessions } from 'src/utils/dashboard';
 import { formatDate, formatDurationSeconds, formatScore } from 'src/utils/format';
 
 const props = defineProps<{
@@ -234,6 +234,7 @@ const props = defineProps<{
   clusterMix: JsonValue;
   dropOffs: JsonValue;
   pathDeviations: JsonValue;
+  statsSummary: StatsSummaryDto | null;
   loading: boolean;
   error: string;
 }>();
@@ -329,7 +330,7 @@ const topCountries = computed(() => {
   const raw =
     liveStatsPayload.value?.top_countries_right_now ??
     liveStatsPayload.value?.topCountriesRightNow;
-  return normalizeCountryTelemetry(raw, 6);
+  return mergeCountriesWithSessions(raw, props.sessions, 6);
 });
 
 const trendStatsPayload = computed(() => props.trendStats?.payload ?? null);

@@ -13,6 +13,8 @@ import {
   getRiskProfile,
   getSessionInsight,
   getTrendStats,
+  getStatsSummary,
+  getHealth,
   getDashboardSnapshot,
   listAnomalyEvents,
   listSessions,
@@ -27,6 +29,7 @@ import type {
   NextActionPredictionDto,
   SessionAnalysisDto,
   StatsResponseDto,
+  StatsSummaryDto,
   UserRiskProfileDto,
 } from 'src/types/analytics';
 import type { PaginationMeta } from 'src/types/api';
@@ -72,6 +75,11 @@ const createDashboardStore = () => {
   const activeSessionRows = shallowRef<ActiveSessionDto[]>([]);
   const activeSessionsLoading = ref(false);
   const activeSessionsError = ref('');
+
+  const statsSummary = ref<StatsSummaryDto | null>(null);
+  const statsSummaryLoading = ref(false);
+  const healthStatus = ref<Record<string, unknown> | null>(null);
+  const healthLoading = ref(false);
 
   const anomalySearch = ref('');
   const sessionSearch = ref('');
@@ -408,6 +416,30 @@ const createDashboardStore = () => {
     }, STREAM_REFRESH_DEBOUNCE_MS);
   };
 
+  const loadStatsSummary = async () => {
+    statsSummaryLoading.value = true;
+    try {
+      const response = await getStatsSummary();
+      statsSummary.value = response.data ?? null;
+    } catch {
+      // silently fail — summary is non-critical
+    } finally {
+      statsSummaryLoading.value = false;
+    }
+  };
+
+  const loadHealth = async () => {
+    healthLoading.value = true;
+    try {
+      const response = await getHealth();
+      healthStatus.value = response.data ?? null;
+    } catch {
+      healthStatus.value = { status: 'DOWN', checks: {}, timestamp: new Date().toISOString() };
+    } finally {
+      healthLoading.value = false;
+    }
+  };
+
   // User lookup loader enriches the currently selected or searched insured.
   const loadUserInsights = async () => {
     const insuredId = insuredIdInput.value.trim();
@@ -692,13 +724,17 @@ const createDashboardStore = () => {
 
     void loadAnalytics();
     void loadStats();
+    void loadStatsSummary();
+    void loadHealth();
     void loadActiveSessions();
     liveStream.connect();
     connectLiveStatsStream();
     
     // Keep a low-frequency fallback refresh in case a tab misses live events.
     refreshInterval = window.setInterval(() => {
-      scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
+      void loadStatsSummary();
+    void loadHealth();
+    scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
     }, FULL_REFRESH_FALLBACK_MS);
   };
 
@@ -779,11 +815,17 @@ const createDashboardStore = () => {
     eventsPerMinute,
     anomalyRate,
     globalRiskLevel,
+    statsSummary,
+    statsSummaryLoading,
+    healthStatus,
+    healthLoading,
     lastUpdated,
     eventsSinceLoad,
     loadAnalytics,
     loadStats,
+    loadStatsSummary,
     loadActiveSessions,
+    loadHealth,
     loadUserInsights,
     selectAnomaly,
     generateExplanation,
@@ -795,7 +837,7 @@ const createDashboardStore = () => {
 // Singleton bookkeeping keeps one shared store instance alive across multiple route consumers.
 type DashboardStore = ReturnType<typeof createDashboardStore>;
 type DashboardPublicApi = Omit<DashboardStore, 'start' | 'stop'>;
-type ExplanationEventContext = Pick<AnomalyEventDto, 'id' | 'eventContext' | 'eventJson'>;
+type ExplanationEventContext = Pick<AnomalyEventDto, 'id' | 'eventContext'>;
 type ExplanationSessionContext = Pick<SessionAnalysisDto, 'explainabilityText'>;
 type ExplanationLiveSessionContext = Pick<ActiveSessionDto, 'explainabilityText'>;
 
@@ -857,7 +899,7 @@ const readExplanationText = (
   if (session?.explainabilityText) return session.explainabilityText;
   if (liveSession?.explainabilityText) return liveSession.explainabilityText;
   const eventContext =
-    toRecord(event?.eventContext) ?? toRecord(event?.eventJson) ?? null;
+    toRecord(event?.eventContext) ?? null;
   const text = eventContext?.explainabilityText;
   return typeof text === 'string' && text.trim().length > 0 ? text : null;
 };

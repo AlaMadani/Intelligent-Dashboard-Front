@@ -1,5 +1,5 @@
 <template>
-  <article class="neo-analytics-panel neo-analytics-panel--wide">
+  <article v-if="!flat" class="neo-analytics-panel neo-analytics-panel--wide">
     <div class="neo-analytics-head">
       <div>
         <h3>Path Deviations</h3>
@@ -42,6 +42,38 @@
       </div>
     </div>
   </article>
+  <template v-else>
+    <div v-if="!deviations.length" class="neo-overview-empty">
+      No path deviations detected in the last 24 hours.
+    </div>
+    <div v-else class="neo-path-deviations-feed">
+      <div
+        v-for="item in deviations"
+        :key="item.key"
+        class="neo-path-deviation-row"
+      >
+        <div class="neo-path-flow">
+          <span class="neo-path-step neo-path-step--from">{{ item.fromAction }}</span>
+          <span class="neo-path-arrow">-></span>
+          <span class="neo-path-step neo-path-step--to">{{ item.toAction }}</span>
+        </div>
+        <div class="neo-path-meta">
+          <div class="neo-path-probability">
+            <div
+              class="neo-path-probability-bar"
+              :style="{ width: `${Math.max(5, 100 - item.probability * 100)}%` }"
+            ></div>
+          </div>
+          <span class="neo-path-score">{{ item.score }}</span>
+        </div>
+        <div class="neo-path-details">
+          <span>{{ item.sessionCount }} sessions</span>
+          <span>|</span>
+          <span>Confidence: {{ Math.round((1 - item.probability) * 100) }}%</span>
+        </div>
+      </div>
+    </div>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -49,6 +81,7 @@ import { computed } from 'vue';
 
 const props = defineProps<{
   data: Array<Record<string, unknown>> | null;
+  flat?: boolean;
 }>();
 
 const toNumber = (value: unknown) => {
@@ -76,12 +109,12 @@ const deviations = computed(() => {
       if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
 
       const probability = clampProbability(
-        toNumber(item.transition_probability ?? item.transitionProbability ?? item.probability),
+        toNumber(item.train_probability ?? item.transition_probability ?? item.transitionProbability ?? item.probability),
       );
       const sessionCount =
         toNumber(item.session_count ?? item.sessionCount ?? item.sessions ?? item.count) ?? 0;
-      const fromAction = readText(item.from_action ?? item.fromAction, 'unknown');
-      const toAction = readText(item.to_action ?? item.toAction, 'unknown');
+      const fromAction = readText(item.current_action ?? item.from_action ?? item.fromAction, 'unknown');
+      const toAction = readText(item.actual_next_action ?? item.to_action ?? item.toAction, 'unknown');
 
       return [
         {

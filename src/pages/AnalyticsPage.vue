@@ -9,6 +9,7 @@
       :cluster-mix="clusterMix"
       :drop-offs="dropOffs"
       :path-deviations="pathDeviations"
+      :stats-summary="statsSummary"
       :loading="analyticsLoading"
       :error="analyticsError || statsError"
     />
@@ -28,6 +29,7 @@ const {
   clusterMix,
   dropOffs,
   pathDeviations,
+  statsSummary,
   analyticsLoading,
   analyticsError,
   statsError,

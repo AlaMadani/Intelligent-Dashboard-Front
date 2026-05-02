@@ -39,9 +39,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { SessionAnalysisDto } from 'src/types/analytics';
 
 const props = defineProps<{
   data: Array<Record<string, unknown>> | null;
+  sessions?: SessionAnalysisDto[];
+  flat?: boolean;
 }>();
 
 const toNumber = (value: unknown) => {
@@ -76,9 +79,11 @@ const readStepLabel = (item: Record<string, unknown>, index: number) => {
 };
 
 const dropOffPoints = computed(() => {
-  if (!props.data || !Array.isArray(props.data) || props.data.length === 0) return [];
+  const rawData = (Array.isArray(props.data) && props.data.length > 0)
+    ? props.data
+    : buildFallbackDropOffs(props.sessions);
 
-  const points = props.data
+  const points = rawData
     .slice(0, 6)
     .flatMap((item, index) => {
       if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
@@ -118,6 +123,17 @@ const dropOffPoints = computed(() => {
         : 0,
   }));
 });
+
+const buildFallbackDropOffs = (sessions: SessionAnalysisDto[] | undefined): Array<Record<string, unknown>> => {
+  if (!sessions || sessions.length === 0) return [];
+  const total = sessions.length;
+  const abruptEndings = sessions.filter((s) => s.endedAbruptly).length;
+  return [
+    { step: 'Session start', count: total },
+    { step: 'Completed normally', count: total - abruptEndings },
+    { step: 'Ended abruptly', count: abruptEndings },
+  ].filter((item) => item.count > 0);
+};
 </script>
 
 <style scoped>

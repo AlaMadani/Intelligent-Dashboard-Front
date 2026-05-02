@@ -1,7 +1,5 @@
-// Analytics DTOs mirror the backend contracts consumed by the dashboard (api-service / Data Processor).
 import type { JsonValue } from 'src/types/api';
 
-/** Redis dashboard snapshot keys (see GET /api/v1/dashboard/{view}). */
 export type DashboardView =
   | 'alerts'
   | 'risky-sessions'
@@ -30,70 +28,53 @@ export interface NextActionScoreDto {
   probability?: number | null;
 }
 
-// Session and anomaly-event payloads drive the tables, workbench, and overview cards.
 export interface SessionAnalysisDto {
   id: number;
   insuredId: string;
   sessionId: string;
-
   persona?: string | null;
   countryCode?: string | null;
   city?: string | null;
   month?: string | null;
   sessionNumber?: number | null;
-
   startTime: string | null;
   endTime: string | null;
-
   firstAction?: string | null;
   lastAction?: string | null;
   firstRoute?: string | null;
   lastRoute?: string | null;
-
-  /** Total events in session (SQL `session_length`). */
   totalEvents: number | null;
   sessionDurationSeconds: number | null;
-
   uniqueActions: number | null;
   uniqueRoutes?: number | null;
   uniqueIpsUsed?: number | null;
   uniqueDevicesUsed?: number | null;
-
   totalKOs?: number | null;
   totalOKs?: number | null;
   longestKoStreak?: number | null;
-
   koRate: number | null;
-  /** Mean inter-action seconds (backend `mean_delta_seconds`). */
   avgInterActionSeconds: number | null;
   minInterActionSeconds?: number | null;
   maxInterActionSeconds?: number | null;
   actionDiversity: number | null;
-
   hasLogin?: boolean | null;
   hasLogout?: boolean | null;
   ipChanged?: boolean | null;
   deviceChanged?: boolean | null;
-
   totalDownloadActions?: number | null;
   maxDownloadsIn2Minutes?: number | null;
   pingPongCount?: number | null;
-
   riskScoreMax?: number | null;
   riskScoreAvg?: number | null;
   endedAbruptly?: boolean | null;
   anomalyEventCount?: number | null;
-
   anomalyTypes?: string[];
   campaignIds?: string[];
-
   actionSequence?: string[];
   routeSequence?: string[];
   actionSequenceSignature?: string | null;
   routeSequenceSignature?: string | null;
-
   actionCounts?: Record<string, number>;
-  /** Tabular / isolation-style detector score (SQL `iso_score`). */
   isoScore: number | null;
   isAnomaly: boolean | null;
   anomalyType: string | null;
@@ -109,12 +90,10 @@ export interface SessionAnalysisDto {
   triggeredRules?: string[];
   contextTags?: string[];
   rareTransitions?: PathDeviationDto[];
-
   pathDeviation?: boolean | null;
   transitionProbability?: number | null;
   transitionFromAction?: string | null;
   transitionToAction?: string | null;
-
   top3NextActions: NextActionScoreDto[];
   ruleTriggered: boolean | null;
   ruleType: string | null;
@@ -145,7 +124,6 @@ export interface AnomalyEventDto {
   modelArtifact?: string | null;
   nextActions?: NextActionScoreDto[];
   eventContext?: Record<string, unknown> | null;
-  eventJson?: Record<string, unknown> | null;
   detectedAt: string | null;
 }
 
@@ -218,7 +196,6 @@ export interface ActiveSessionDto {
   computedAt?: string | null;
 }
 
-// User-insight payloads enrich the insured lookup and response workbench.
 export interface UserRiskProfileDto {
   id: number;
   insuredId: string;
@@ -243,27 +220,25 @@ export interface NextActionPredictionDto {
   top3Actions: NextActionScoreDto[];
 }
 
-// Stats and forecast payloads feed the live overview and analytics visualizations.
 export interface StatsResponseDto {
   date: string;
   source: 'redis' | 'missing' | 'sql';
   payload: JsonValue;
 }
 
-export interface ActionStatsDailyDto {
-  id: number;
-  statDate: string;
-  actionId: number;
-  actionLabel: string;
-  actualCount: number;
-  predictedCount: number;
-  rollingMean7: number;
-  rollingStd7: number;
-  spikeAlert: boolean;
-  createdAt: string;
+export interface StatsSummaryDto {
+  totalSessions: number;
+  totalAnomalies: number;
+  anomalousSessions: number;
+  activeSessionsNow: number;
+  eventsToday: number;
+  anomalyRate: number;
+  anomaliesByType: Record<string, number>;
+  usersByRiskTier: Record<string, number>;
+  sessionsByPersonaCluster: Record<number, number>;
+  generatedAt: string;
 }
 
-// Alert and explanation payloads support the active anomaly snapshot and AI narrative.
 export interface AnomalyAlertDto {
   insuredId: string;
   sessionId: string;
@@ -314,6 +289,14 @@ export interface AnomalyInvestigationDto {
   sessionAnalysis: SessionAnalysisDto | null;
   liveSession: ActiveSessionDto | null;
   riskProfile: UserRiskProfileDto | null;
+  nextActions: NextActionPredictionDto | null;
+  activeAnomaly: AnomalyAlertDto | null;
+}
+
+export interface UserDashboardDto {
+  riskProfile: UserRiskProfileDto | null;
+  recentSessions: SessionAnalysisDto[];
+  recentAnomalies: AnomalyEventDto[];
   nextActions: NextActionPredictionDto | null;
   activeAnomaly: AnomalyAlertDto | null;
 }

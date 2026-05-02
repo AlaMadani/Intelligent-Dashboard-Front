@@ -1,4 +1,3 @@
-// Analytics service: wrap the backend endpoints consumed by the dashboard views and streams.
 import { api } from 'boot/axios';
 import type { ApiEnvelope, ApiResponse } from 'src/types/api';
 import type {
@@ -12,22 +11,23 @@ import type {
   NextActionPredictionDto,
   SessionAnalysisDto,
   StatsResponseDto,
+  StatsSummaryDto,
   UserRiskProfileDto,
+  UserDashboardDto,
 } from 'src/types/analytics';
 import type { JsonValue } from 'src/types/api';
 import { unwrapEnvelope } from 'src/services/http';
 
-// Query parameter contracts for the analytics REST endpoints.
 export interface ListSessionsParams {
   insuredId?: string;
   from?: string;
   to?: string;
   isAnomaly?: boolean;
+  signature?: string;
   page?: number;
   size?: number;
 }
 
-/** Values accepted by the anomaly list `tier` query param (aligns with persisted `anomaly_tier`). */
 export type AnomalyTierFilter =
   | 'TIER1'
   | 'TIER2'
@@ -45,13 +45,10 @@ export interface ListAnomalyEventsParams {
   size?: number;
 }
 
-// Session and anomaly retrieval endpoints used by the dashboard tables and workbench.
 export const listSessions = async (
   params: ListSessionsParams = {},
 ): Promise<ApiEnvelope<SessionAnalysisDto[]>> => {
-  const response = await api.get<ApiResponse<SessionAnalysisDto[]>>('/api/v1/sessions/risk-scores', {
-    params,
-  });
+  const response = await api.get<ApiResponse<SessionAnalysisDto[]>>('/api/v1/sessions', { params });
   return unwrapEnvelope(response.data);
 };
 
@@ -63,9 +60,7 @@ export const getSession = async (id: number): Promise<ApiEnvelope<SessionAnalysi
 export const listAnomalyEvents = async (
   params: ListAnomalyEventsParams = {},
 ): Promise<ApiEnvelope<AnomalyEventDto[]>> => {
-  const response = await api.get<ApiResponse<AnomalyEventDto[]>>('/api/v1/anomalies', {
-    params,
-  });
+  const response = await api.get<ApiResponse<AnomalyEventDto[]>>('/api/v1/anomalies', { params });
   return unwrapEnvelope(response.data);
 };
 
@@ -94,13 +89,22 @@ export const getAnomalyInvestigation = async (
   return unwrapEnvelope(response.data);
 };
 
-// User-focused insight endpoints enrich the selected insured context.
 export const getRiskProfile = async (
   insuredId: string,
 ): Promise<ApiEnvelope<UserRiskProfileDto>> => {
   const response = await api.get<ApiResponse<UserRiskProfileDto>>(
-    `/api/v1/sessions/risk-scores/${insuredId}`,
+    `/api/v1/risk-profiles/${insuredId}`,
   );
+  return unwrapEnvelope(response.data);
+};
+
+export const listRiskProfiles = async (
+  page = 0,
+  size = 20,
+): Promise<ApiEnvelope<UserRiskProfileDto[]>> => {
+  const response = await api.get<ApiResponse<UserRiskProfileDto[]>>('/api/v1/risk-profiles', {
+    params: { page, size },
+  });
   return unwrapEnvelope(response.data);
 };
 
@@ -113,11 +117,15 @@ export const getNextActions = async (
   return unwrapEnvelope(response.data);
 };
 
-// Live and trend stats power the overview hero, KPI strip, and analytics charts.
 export const getLiveStats = async (date: string): Promise<ApiEnvelope<StatsResponseDto>> => {
   const response = await api.get<ApiResponse<StatsResponseDto>>('/api/v1/stats/live', {
     params: { date },
   });
+  return unwrapEnvelope(response.data);
+};
+
+export const getStatsSummary = async (): Promise<ApiEnvelope<StatsSummaryDto>> => {
+  const response = await api.get<ApiResponse<StatsSummaryDto>>('/api/v1/stats/summary');
   return unwrapEnvelope(response.data);
 };
 
@@ -132,12 +140,11 @@ export const getActiveAnomaly = async (
   insuredId: string,
 ): Promise<ApiEnvelope<AnomalyAlertDto>> => {
   const response = await api.get<ApiResponse<AnomalyAlertDto>>(
-    `/api/v1/anomaly/active/${insuredId}`,
+    `/api/v1/anomalies/active/${insuredId}`,
   );
   return unwrapEnvelope(response.data);
 };
 
-/** Redis dashboard aggregate written by the Data Processor (`dashboard:{view}`). */
 export const getDashboardSnapshot = async (
   view: DashboardView,
 ): Promise<ApiEnvelope<JsonValue>> => {
@@ -163,7 +170,6 @@ export const getActiveSessions = async (params?: {
   return unwrapEnvelope(response.data);
 };
 
-/** Live per-session insight while the session is open (`session:insight:…` in Redis). */
 export const getSessionInsight = async (
   insuredId: string,
   sessionId: string,
@@ -174,7 +180,32 @@ export const getSessionInsight = async (
   return unwrapEnvelope(response.data);
 };
 
-// Stream URL builders reuse the configured API base for EventSource connections.
+export const getUserDashboard = async (
+  insuredId: string,
+): Promise<ApiEnvelope<UserDashboardDto>> => {
+  const response = await api.get<ApiResponse<UserDashboardDto>>(
+    `/api/v1/users/${encodeURIComponent(insuredId)}/dashboard`,
+  );
+  return unwrapEnvelope(response.data);
+};
+
+export const getUserSessions = async (
+  insuredId: string,
+  page = 0,
+  size = 10,
+): Promise<ApiEnvelope<SessionAnalysisDto[]>> => {
+  const response = await api.get<ApiResponse<SessionAnalysisDto[]>>(
+    `/api/v1/users/${encodeURIComponent(insuredId)}/sessions`,
+    { params: { page, size } },
+  );
+  return unwrapEnvelope(response.data);
+};
+
+export const getHealth = async (): Promise<ApiEnvelope<Record<string, unknown>>> => {
+  const response = await api.get<ApiResponse<Record<string, unknown>>>('/api/v1/health');
+  return unwrapEnvelope(response.data);
+};
+
 export const getAnomalyStreamUrl = () => {
   const baseUrl =
     typeof api.defaults.baseURL === 'string' && api.defaults.baseURL

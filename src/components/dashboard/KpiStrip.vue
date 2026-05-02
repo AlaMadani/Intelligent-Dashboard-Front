@@ -19,6 +19,9 @@
             <q-icon :name="card.icon" />
           </div>
           <div class="neo-kpi-label">{{ card.label }}</div>
+          <q-icon name="help_outline" class="neo-kpi-hint">
+            <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">{{ card.tooltip }}</q-tooltip>
+          </q-icon>
         </div>
         <div class="neo-kpi-value">{{ card.value }}</div>
         <div class="neo-kpi-meta">{{ card.meta }}</div>
@@ -65,24 +68,28 @@ const cards = computed(() => [
     value: props.activeSessions,
     meta: 'Current Redis session buffers',
     icon: 'motion_photos_on',
+    tooltip: 'Number of sessions currently being tracked in Redis. These are open/in-progress user sessions that have not yet ended.',
   },
   {
     label: 'Current anomaly rate',
     value: props.anomalyRate,
     meta: 'Live anomaly pressure from the worker',
     icon: 'notification_important',
+    tooltip: 'Ratio of anomaly alerts to total events in the last hour. A higher rate indicates elevated risk across the platform.',
   },
   {
     label: 'Global risk level',
     value: props.globalRiskLevel,
     meta: 'Platform-wide posture from Redis stats',
     icon: 'shield',
+    tooltip: 'Overall platform risk posture derived from anomaly rate, KO rate, and recent alert volume. LOW / MEDIUM / HIGH.',
   },
   {
     label: 'Events per minute',
     value: props.eventsPerMinute,
     meta: 'Rolling 60 second behavior throughput',
     icon: 'timeline',
+    tooltip: 'Average number of audit events processed per minute. Helps gauge platform traffic volume and detect sudden drops or spikes.',
   },
 ]);
 </script>
@@ -134,6 +141,15 @@ const cards = computed(() => [
   background: rgba(97, 124, 168, 0.1);
   color: var(--kpi-card-color-4);
 }
+
+.neo-kpi-hint {
+  font-size: 14px;
+  color: var(--neo-ink-muted);
+  cursor: help;
+  opacity: 0.5;
+  margin-left: auto;
+}
+.neo-kpi-hint:hover { opacity: 1; }
 
 .neo-kpi-card:nth-child(1) .neo-kpi-accent {
   background: linear-gradient(90deg, var(--kpi-card-color-1), rgba(47, 143, 131, 0.4));

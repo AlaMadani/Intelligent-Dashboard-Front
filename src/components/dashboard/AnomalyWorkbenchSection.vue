@@ -538,7 +538,7 @@ const activeTier = computed(() => readableText(activeAnomalyContext.value?.anoma
 const activeType = computed(() => readableText(activeAnomalyContext.value?.anomalyType));
 const activeDetected = computed(() => readableDate(activeAnomalyContext.value?.detectedAt));
 const activeEventTime = computed(() => readableDate(activeAnomalyContext.value?.eventTime));
-const displayedEventContext = computed(() => props.selectedEvent?.eventContext ?? props.selectedEvent?.eventJson ?? null);
+const displayedEventContext = computed(() => props.selectedEvent?.eventContext ?? null);
 const displayedContextTags = computed(() =>
   props.sessionAnalysis?.contextTags?.length
     ? props.sessionAnalysis.contextTags

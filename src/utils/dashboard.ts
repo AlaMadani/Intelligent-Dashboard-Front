@@ -103,6 +103,42 @@ export const normalizeCountryTelemetry = (
     }));
 };
 
+// Merge live stats country data with session-level country codes for richer geo.
+export const mergeCountriesWithSessions = (
+  liveRaw: unknown,
+  sessions: { countryCode?: string | null }[],
+  limit = 6,
+): NormalizedCountryTelemetry[] => {
+  const liveCountries = normalizeCountryTelemetry(liveRaw, limit);
+
+  const sessionCountries = new Map<string, number>();
+  for (const session of sessions) {
+    if (session.countryCode) {
+      sessionCountries.set(
+        session.countryCode,
+        (sessionCountries.get(session.countryCode) ?? 0) + 1,
+      );
+    }
+  }
+  const sessionEntries = Array.from(sessionCountries.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([label, count]) => ({ label, count }));
+
+  if (!liveCountries.length) return sessionEntries;
+  if (!sessionEntries.length) return liveCountries;
+
+  const seen = new Set(liveCountries.map((c) => c.label));
+  const merged = [...liveCountries];
+  for (const entry of sessionEntries) {
+    if (!seen.has(entry.label)) {
+      merged.push(entry);
+      seen.add(entry.label);
+    }
+  }
+  return merged.slice(0, limit);
+};
+
 // Timeline labels collapse timestamps into a compact hour/minute representation.
 export const formatTimelineLabel = (value: string | null | undefined, fallback: string) => {
   if (!value) return fallback;

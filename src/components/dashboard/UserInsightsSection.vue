@@ -44,27 +44,27 @@
         <div v-else class="neo-explanation">
           <div class="neo-explanation-meta">
             <div>
-              <div class="neo-explanation-label">Risk tier</div>
+              <div class="neo-explanation-label">Risk tier <q-icon name="help_outline" class="neo-hint-icon-sm"><q-tooltip>Overall risk classification derived from anomaly rate, average risk score, and presence of high-risk anomaly types.</q-tooltip></q-icon></div>
               <div class="neo-explanation-value">{{ riskProfile.riskTier ?? 'n/a' }}</div>
             </div>
             <div>
-              <div class="neo-explanation-label">Anomaly rate (30d)</div>
+              <div class="neo-explanation-label">Anomaly rate (30d) <q-icon name="help_outline" class="neo-hint-icon-sm"><q-tooltip>Ratio of anomalous sessions to total sessions over the last 30 days.</q-tooltip></q-icon></div>
               <div class="neo-explanation-value">
                 {{ formatPercent(riskProfile.anomalyRate30d, 1) }}
               </div>
             </div>
             <div>
-              <div class="neo-explanation-label">Sessions (30d)</div>
+              <div class="neo-explanation-label">Sessions (30d) <q-icon name="help_outline" class="neo-hint-icon-sm"><q-tooltip>Total sessions recorded for this user in the last 30 days.</q-tooltip></q-icon></div>
               <div class="neo-explanation-value">{{ riskProfile.sessions30d ?? 0 }}</div>
             </div>
             <div>
-              <div class="neo-explanation-label">Last anomaly</div>
+              <div class="neo-explanation-label">Last anomaly <q-icon name="help_outline" class="neo-hint-icon-sm"><q-tooltip>The most recent anomaly type detected for this user.</q-tooltip></q-icon></div>
               <div class="neo-explanation-value">
                 {{ riskProfile.lastAnomalyType || 'n/a' }}
               </div>
             </div>
             <div>
-              <div class="neo-explanation-label">Last updated</div>
+              <div class="neo-explanation-label">Last updated <q-icon name="help_outline" class="neo-hint-icon-sm"><q-tooltip>Timestamp of the last risk profile computation by the Data Processor.</q-tooltip></q-icon></div>
               <div class="neo-explanation-value">{{ formatDate(riskProfile.lastUpdated) }}</div>
             </div>
             <div>
