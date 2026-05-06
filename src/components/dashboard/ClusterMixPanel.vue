@@ -2,36 +2,40 @@
   <article v-if="!flat" class="neo-analytics-panel">
     <div class="neo-analytics-head">
       <div>
-        <h3>User Persona Clusters</h3>
-        <p>Behaviour segmentation distribution across active sessions</p>
+        <h3>{{ t('clusterMixPanel.title') }}</h3>
+        <p>{{ t('clusterMixPanel.subtitle') }}</p>
       </div>
       <div class="neo-analytics-chip">
-        {{ segments.length }} clusters
+        {{ t('common.clusters', { count: segments.length }) }}
       </div>
     </div>
     <DonutBreakdownChart
       :segments="segments"
-      center-label="Clusters"
+      :center-label="t('clusterMixPanel.centerLabel')"
       :center-value="totalUsers.toString()"
     />
   </article>
   <DonutBreakdownChart v-else
     :segments="segments"
-    center-label="Clusters"
+    :center-label="t('clusterMixPanel.centerLabel')"
     :center-value="totalUsers.toString()"
   />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import DonutBreakdownChart from 'src/components/dashboard/DonutBreakdownChart.vue';
 import type { StatsSummaryDto } from 'src/types/analytics';
+import { formatNumber } from 'src/utils/format';
 
 const props = defineProps<{
   data: Array<Record<string, unknown>> | null;
   statsSummary?: StatsSummaryDto | null;
   flat?: boolean;
 }>();
+
+const { t } = useI18n();
 
 const CLUSTER_COLORS: Record<number, string> = {
   0: '#2f8f83',
@@ -42,17 +46,6 @@ const CLUSTER_COLORS: Record<number, string> = {
   5: '#9b78c7',
   6: '#4aa8cf',
   7: '#c7789f',
-};
-
-const CLUSTER_NAMES: Record<number, string> = {
-  0: 'High Risk',
-  1: 'Normal Explorer',
-  2: 'Power User',
-  3: 'Quick Visitor',
-  4: 'Downloader',
-  5: 'Form Filler',
-  6: 'Navigator',
-  7: 'Idle User',
 };
 
 const toNumber = (value: unknown) => {
@@ -67,43 +60,37 @@ const toNumber = (value: unknown) => {
 const normalizeShare = (value: number) => (value <= 1 ? value * 100 : value);
 
 const normalizedClusters = computed(() => {
-  const rawData = (Array.isArray(props.data) && props.data.length > 0)
-    ? props.data
-    : buildFallbackClusters(props.statsSummary);
-
-  return rawData.flatMap((item, index) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
-
-    const clusterId = toNumber(
-      item.cluster_id ??
-        item.clusterId ??
-        item.cluster ??
-        item.persona_cluster ??
-        item.personaCluster,
+  const raw = props.data?.length ? props.data : buildFallbackClusters(props.statsSummary);
+  if (!raw?.length) return [];
+  return raw.map((item, index) => {
+    const clusterId =
+      toNumber(item.cluster_id) ??
+      toNumber(item.clusterId) ??
+      toNumber(item.cluster) ??
+      toNumber(item.persona_cluster) ??
+      toNumber(item.personaCluster) ??
+      index;
+    const value = normalizeShare(
+      toNumber(item.traffic_share) ??
+        toNumber(item.trafficShare) ??
+        toNumber(item.share) ??
+        toNumber(item.percentage) ??
+        toNumber(item.count) ??
+        toNumber(item.user_count) ??
+        toNumber(item.userCount) ??
+        toNumber(item.session_count) ??
+        toNumber(item.sessionCount) ??
+        0,
     );
-    const share = toNumber(item.traffic_share ?? item.trafficShare ?? item.share ?? item.percentage);
-    const count = toNumber(
-      item.count ?? item.user_count ?? item.userCount ?? item.session_count ?? item.sessionCount,
-    );
-    const value = count ?? (share != null ? normalizeShare(share) : null);
-    if (value == null) return [];
 
     const label =
-      typeof item.label === 'string' && item.label.trim().length > 0
-        ? item.label
-        : clusterId != null
-          ? CLUSTER_NAMES[clusterId] ?? `Cluster ${clusterId}`
-          : `Cluster ${index + 1}`;
-
-    return [
-      {
-        label,
-        value,
-        count,
-        display: share != null ? `${Math.round(normalizeShare(share))}%` : `${Math.round(value)}`,
-        color: clusterId != null ? CLUSTER_COLORS[clusterId] ?? '#666' : '#666',
-      },
-    ];
+      (item.label as string) ||
+      clusterName(clusterId) ||
+      t('clusterMixPanel.clusterFallback', { id: clusterId });
+    const color = CLUSTER_COLORS[clusterId] ?? '#666';
+    const display = typeof item.display === 'string' ? item.display : formatNumber(value);
+    const count = toNumber(item.count) ?? toNumber(item.user_count) ?? toNumber(item.userCount) ?? toNumber(item.session_count) ?? toNumber(item.sessionCount) ?? null;
+    return { clusterId, value, label, color, item, count, display };
   });
 });
 
@@ -135,6 +122,21 @@ const buildFallbackClusters = (summary: StatsSummaryDto | null | undefined): Arr
     cluster_id: Number(clusterId),
     count,
   }));
+};
+
+const clusterName = (clusterId: number) => {
+  switch (clusterId) {
+    case 0:
+      return t('clusterMixPanel.names.selfService');
+    case 1:
+      return t('clusterMixPanel.names.aggressiveDownloader');
+    case 2:
+      return t('clusterMixPanel.names.accountSwitcher');
+    case 3:
+      return t('clusterMixPanel.names.zombieSession');
+    default:
+      return null;
+  }
 };
 </script>
 

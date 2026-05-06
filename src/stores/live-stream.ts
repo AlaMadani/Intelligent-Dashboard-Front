@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import { i18n } from 'src/boot/i18n';
 import type { AnomalyEventDto } from 'src/types/analytics';
 import { getLiveStatsStreamUrl, listAnomalyEvents } from 'src/services/analytics';
 import { anomalyEventKey } from 'src/utils/dashboard';
@@ -31,7 +32,9 @@ export const useLiveStreamStore = defineStore('liveStream', () => {
   let refCount = 0;
   let lastSeenKey = '';
 
-  const connectionLabel = computed(() => (connected.value ? 'connected' : 'reconnecting'));
+  const connectionLabel = computed(() =>
+    connected.value ? i18n.global.t('common.connected') : i18n.global.t('common.reconnecting'),
+  );
 
   const ingestAlerts = (nextAlerts: AnomalyEventDto[]) => {
     alerts.value = nextAlerts.slice(0, MAX_ALERTS);
@@ -56,7 +59,7 @@ export const useLiveStreamStore = defineStore('liveStream', () => {
         error.value = '';
       }
     } catch {
-      error.value = 'Unable to refresh anomaly alerts from the API.';
+      error.value = i18n.global.t('liveStreamStore.errors.refreshAlerts');
     }
   };
 
@@ -84,7 +87,7 @@ export const useLiveStreamStore = defineStore('liveStream', () => {
       eventSource = new EventSource(getLiveStatsStreamUrl());
     } catch {
       connected.value = false;
-      error.value = 'Unable to connect to the API event stream.';
+      error.value = i18n.global.t('liveStreamStore.errors.streamConnect');
       return;
     }
 
@@ -102,7 +105,7 @@ export const useLiveStreamStore = defineStore('liveStream', () => {
 
     eventSource.onerror = () => {
       connected.value = false;
-      error.value = 'API event stream interrupted. Falling back to periodic refresh.';
+      error.value = i18n.global.t('liveStreamStore.errors.streamInterrupted');
     };
   };
 

@@ -2,8 +2,8 @@
   <div class="neo-forecast-card">
     <div class="neo-forecast-head">
       <div>
-        <h3>Trend forecasting</h3>
-        <p>Forecast, trend baseline, and expected confidence bounds.</p>
+        <h3>{{ t('trendForecastChart.title') }}</h3>
+        <p>{{ t('trendForecastChart.subtitle') }}</p>
       </div>
       <div class="neo-forecast-controls">
         <q-btn
@@ -20,19 +20,20 @@
       </div>
       <q-icon name="help_outline" class="neo-forecast-hint">
         <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">
-          Prophet-generated forecasts. The shaded band represents the 80% confidence interval. Drag the bottom slider to zoom, or use the scroll wheel on the chart.
+          {{ t('trendForecastChart.help') }}
         </q-tooltip>
       </q-icon>
     </div>
 
-    <div v-if="!resolvedTrendStats" class="neo-empty">No trend stats received</div>
-    <div v-else-if="!points.length" class="neo-empty">Trend stats received, but payload is empty</div>
+    <div v-if="!resolvedTrendStats" class="neo-empty">{{ t('trendForecastChart.noStats') }}</div>
+    <div v-else-if="!points.length" class="neo-empty">{{ t('trendForecastChart.emptyPayload') }}</div>
     <VChart v-else :option="option" autoresize class="neo-forecast-chart" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import VChart from 'vue-echarts';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
@@ -44,6 +45,8 @@ import {
   DataZoomComponent,
 } from 'echarts/components';
 import type { StatsResponseDto } from 'src/types/analytics';
+import type { ForecastPoint, ForecastSeries } from 'src/models/chart';
+import { formatNumber } from 'src/utils/format';
 
 use([
   CanvasRenderer,
@@ -55,19 +58,7 @@ use([
   DataZoomComponent,
 ]);
 
-interface ForecastPoint {
-  label: string;
-  forecast: number | null;
-  trend: number | null;
-  lower: number | null;
-  upper: number | null;
-}
-
-interface ForecastSeries {
-  key: string;
-  label: string;
-  points: ForecastPoint[];
-}
+const { t } = useI18n();
 
 const props = defineProps<{
   trendStats: unknown;
@@ -75,7 +66,7 @@ const props = defineProps<{
 }>();
 
 const availableSeries = ref<{ key: string; label: string }[]>([
-  { key: 'total_events', label: 'Events' },
+  { key: 'total_events', label: t('trendForecastChart.eventsSeries') },
 ]);
 
 const selectedSeries = ref('total_events');
@@ -116,7 +107,7 @@ const parsePoints = (rows: unknown[]): ForecastPoint[] =>
       const label =
         (typeof row.ds === 'string' && row.ds) ||
         (typeof row.timestamp === 'string' && row.timestamp) ||
-        `P${index + 1}`;
+        t('trendForecastChart.pointFallback', { index: index + 1 });
       const forecast = toNumber(row.yhat) ?? null;
       const trend = toNumber(row.trend) ?? null;
       const lower =
@@ -140,16 +131,18 @@ const seriesMap = computed(() => {
 
   const map = new Map<string, ForecastSeries>();
 
-  const items = record.items && typeof record.items === 'object' && !Array.isArray(record.items)
-    ? (record.items as Record<string, unknown>)
-    : record;
+  const items =
+    record.items && typeof record.items === 'object' && !Array.isArray(record.items)
+      ? (record.items as Record<string, unknown>)
+      : record;
 
   for (const [key, value] of Object.entries(items)) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
     const item = value as Record<string, unknown>;
     const rows = Array.isArray(item.points) ? item.points : [];
     if (!rows.length) continue;
-    const label = typeof item.label === 'string' && item.label.trim() ? item.label : key.replace(/_/g, ' ');
+    const label =
+      typeof item.label === 'string' && item.label.trim() ? item.label : key.replace(/_/g, ' ');
     map.set(key, { key, label, points: parsePoints(rows) });
   }
 
@@ -159,34 +152,43 @@ const seriesMap = computed(() => {
 const computeSeriesItems = (payload: unknown): [string, string][] => {
   if (!payload || typeof payload !== 'object') return [];
   const record = payload as Record<string, unknown>;
-  const items = record.items && typeof record.items === 'object' && !Array.isArray(record.items)
-    ? (record.items as Record<string, unknown>)
-    : record;
+  const items =
+    record.items && typeof record.items === 'object' && !Array.isArray(record.items)
+      ? (record.items as Record<string, unknown>)
+      : record;
   const result: [string, string][] = [];
   for (const [key, value] of Object.entries(items)) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
     const item = value as Record<string, unknown>;
     if (!Array.isArray(item.points)) continue;
-    const label = typeof item.label === 'string' && item.label.trim() ? item.label : key.replace(/_/g, ' ');
+    const label =
+      typeof item.label === 'string' && item.label.trim() ? item.label : key.replace(/_/g, ' ');
     result.push([key, label]);
   }
   return result;
 };
 
-watch(() => resolvedTrendStats.value?.payload, (payload) => {
-  const entries = computeSeriesItems(payload);
-  if (!entries.length) return;
-  const updated = new Map(availableSeries.value.map((s) => [s.key, s.label]));
-  for (const [key, label] of entries) {
-    if (!updated.has(key)) {
-      updated.set(key, label);
+watch(
+  () => resolvedTrendStats.value?.payload,
+  (payload) => {
+    const entries = computeSeriesItems(payload);
+    if (!entries.length) return;
+    const updated = new Map(availableSeries.value.map((s) => [s.key, s.label]));
+    for (const [key, label] of entries) {
+      if (!updated.has(key)) {
+        updated.set(key, label);
+      }
     }
-  }
-  availableSeries.value = Array.from(updated.entries()).map(([k, l]) => ({ key: k, label: l }));
-  if (!updated.has(selectedSeries.value)) {
-    selectedSeries.value = entries[0]![0];
-  }
-}, { immediate: true });
+    availableSeries.value = Array.from(updated.entries()).map(([k, l]) => ({
+      key: k,
+      label: l,
+    }));
+    if (!updated.has(selectedSeries.value)) {
+      selectedSeries.value = entries[0]![0];
+    }
+  },
+  { immediate: true },
+);
 
 const points = computed<ForecastPoint[]>(() => {
   return seriesMap.value.get(selectedSeries.value)?.points ?? [];
@@ -211,16 +213,19 @@ const option = computed(() => ({
   backgroundColor: 'transparent',
   tooltip: {
     trigger: 'axis',
-    valueFormatter: (v: number | null) => (v != null ? v.toFixed(1) : '—'),
+    valueFormatter: (v: number | null) =>
+      v != null
+        ? formatNumber(v, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        : '-',
   },
   legend: {
     textStyle: { color: '#CBD5E1', fontSize: 11 },
     top: 0,
     selected: {
-      'Lower base': false,
-      'Confidence band': false,
-      'Upper bound': false,
-      'Lower bound': false,
+      [t('common.lowerBase')]: false,
+      [t('common.confidenceBand')]: false,
+      [t('common.upperBound')]: false,
+      [t('common.lowerBound')]: false,
     },
   },
   grid: { left: 48, right: 20, top: 36, bottom: 52 },
@@ -256,7 +261,7 @@ const option = computed(() => ({
   ],
   series: [
     {
-      name: 'Lower base',
+      name: t('common.lowerBase'),
       type: 'line',
       data: lowerBase.value,
       stack: 'confidence-band',
@@ -267,7 +272,7 @@ const option = computed(() => ({
       tooltip: { show: false },
     },
     {
-      name: 'Confidence band',
+      name: t('common.confidenceBand'),
       type: 'line',
       data: bandRange.value,
       stack: 'confidence-band',
@@ -278,7 +283,7 @@ const option = computed(() => ({
       emphasis: { disabled: true },
     },
     {
-      name: 'Upper bound',
+      name: t('common.upperBound'),
       type: 'line',
       data: points.value.map((p) => p.upper),
       symbol: 'none',
@@ -286,7 +291,7 @@ const option = computed(() => ({
       itemStyle: { color: '#94A3B8' },
     },
     {
-      name: 'Lower bound',
+      name: t('common.lowerBound'),
       type: 'line',
       data: points.value.map((p) => p.lower),
       symbol: 'none',
@@ -294,7 +299,7 @@ const option = computed(() => ({
       itemStyle: { color: '#64748B' },
     },
     {
-      name: 'Forecast',
+      name: t('common.forecast'),
       type: 'line',
       data: points.value.map((p) => p.forecast),
       smooth: true,
@@ -304,7 +309,7 @@ const option = computed(() => ({
       itemStyle: { color: '#22C55E' },
     },
     {
-      name: 'Trend',
+      name: t('common.trend'),
       type: 'line',
       data: points.value.map((p) => p.trend),
       smooth: true,
@@ -313,7 +318,7 @@ const option = computed(() => ({
       itemStyle: { color: '#F59E0B' },
     },
     {
-      name: 'Current live',
+      name: t('common.currentLive'),
       type: 'scatter',
       data: currentLiveMarker.value,
       symbolSize: 10,

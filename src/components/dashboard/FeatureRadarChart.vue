@@ -1,16 +1,19 @@
 <template>
   <div class="neo-radar-card">
     <div class="neo-radar-head">
-      <h3>Feature importance</h3>
-      <p>Why the model escalated this session.</p>
+      <h3>{{ t('featureRadarChart.title') }}</h3>
+      <p>{{ t('featureRadarChart.subtitle') }}</p>
     </div>
-    <div v-if="!chartItems.length" class="neo-radar-empty">No feature contribution payload returned.</div>
+    <div v-if="!chartItems.length" class="neo-radar-empty">
+      {{ t('featureRadarChart.empty') }}
+    </div>
     <VChart v-else :option="option" autoresize class="neo-radar-chart" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import VChart from 'vue-echarts';
 import { use } from 'echarts/core';
 import { RadarChart } from 'echarts/charts';
@@ -19,6 +22,8 @@ import { LegendComponent, TooltipComponent } from 'echarts/components';
 import type { FeatureContributionDto } from 'src/types/analytics';
 
 use([CanvasRenderer, RadarChart, LegendComponent, TooltipComponent]);
+
+const { t } = useI18n();
 
 const props = defineProps<{
   items?: FeatureContributionDto[] | null;
@@ -59,7 +64,7 @@ const option = computed(() => ({
       data: [
         {
           value: chartItems.value.map((item) => item.importance),
-          name: 'Contribution',
+          name: t('featureRadarChart.contribution'),
           areaStyle: { color: 'rgba(190, 65, 36, 0.22)' },
           lineStyle: { color: '#be4124', width: 2 },
           itemStyle: { color: '#be4124' },

@@ -141,14 +141,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { environment } from 'src/config/environment';
 import { LAYOUT_NAVIGATION_ITEMS } from 'src/constants/layout/navigation';
-
-interface NavigationItem {
-  id: string;
-  route: string;
-  label: string;
-  caption: string;
-  icon: string;
-}
+import type { NavigationItem } from 'src/types/navigation';
 
 const { t } = useI18n();
 const leftDrawerOpen = ref(typeof window === 'undefined' ? true : window.innerWidth >= 1100);

@@ -153,12 +153,12 @@
       <article class="neo-overview-panel">
         <div class="neo-overview-head">
           <div>
-            <h3>Live alert feed</h3>
-            <p>Critical alerts from Redis snapshots and the API event stream.</p>
+            <h3>{{ t('overviewPage.liveAlertFeedTitle') }}</h3>
+            <p>{{ t('overviewPage.liveAlertFeedSubtitle') }}</p>
           </div>
         </div>
         <div v-if="!alertFeedItems.length" class="neo-overview-empty">
-          No recent alerts were returned by the command-center payload.
+          {{ t('overviewPage.liveAlertFeedEmpty') }}
         </div>
         <div v-else class="neo-overview-feed">
           <div
@@ -181,12 +181,12 @@
       <article class="neo-overview-panel">
         <div class="neo-overview-head">
           <div>
-            <h3>Hot sessions</h3>
-            <p>Highest-risk live sessions from the command center and Redis radar.</p>
+            <h3>{{ t('overviewPage.hotSessionsTitle') }}</h3>
+            <p>{{ t('overviewPage.hotSessionsSubtitle') }}</p>
           </div>
         </div>
         <div v-if="!riskySessionPreview.length" class="neo-overview-empty">
-          No risky sessions are currently available.
+          {{ t('overviewPage.hotSessionsEmpty') }}
         </div>
         <div v-else class="neo-overview-feed">
           <div
@@ -210,49 +210,49 @@
       <article class="neo-overview-panel neo-overview-panel--wide">
         <div class="neo-overview-head">
           <div>
-            <h3>System snapshot</h3>
-            <p>Rolling aggregates across sessions, anomalies, and risk tiers. Updated every 60s.</p>
+            <h3>{{ t('overviewPage.systemSnapshotTitle') }}</h3>
+            <p>{{ t('overviewPage.systemSnapshotSubtitle') }}</p>
           </div>
           <q-icon name="info" class="neo-hint-icon">
             <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">
-              These counts reflect all persisted sessions and anomalies in the database, plus Redis-based live counters.
+              {{ t('overviewPage.systemSnapshotTooltip') }}
             </q-tooltip>
           </q-icon>
         </div>
-        <div v-if="statsSummaryLoading" class="neo-overview-empty">Loading summary…</div>
-        <div v-else-if="!statsSummary" class="neo-overview-empty">Summary not available yet.</div>
+        <div v-if="statsSummaryLoading" class="neo-overview-empty">{{ t('overviewPage.loadingSummary') }}</div>
+        <div v-else-if="!statsSummary" class="neo-overview-empty">{{ t('overviewPage.summaryUnavailable') }}</div>
         <div v-else class="neo-summary-grid">
           <div class="neo-summary-card">
-            <strong>{{ statsSummary.totalSessions.toLocaleString() }}</strong>
-            <span>Total sessions <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>All sessions ever persisted in the session_analysis table.</q-tooltip></q-icon></span>
+            <strong>{{ formatNumber(statsSummary.totalSessions) }}</strong>
+            <span>{{ t('overviewPage.totalSessionsLabel') }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.totalSessionsTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <div class="neo-summary-card">
-            <strong>{{ statsSummary.totalAnomalies.toLocaleString() }}</strong>
-            <span>Total anomalies <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>All anomaly events ever generated, across all tiers and types.</q-tooltip></q-icon></span>
+            <strong>{{ formatNumber(statsSummary.totalAnomalies) }}</strong>
+            <span>{{ t('overviewPage.totalAnomaliesLabel') }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.totalAnomaliesTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <div class="neo-summary-card">
-            <strong>{{ statsSummary.anomalousSessions.toLocaleString() }}</strong>
-            <span>Anomalous sessions <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Sessions flagged as anomalous by the ML detector.</q-tooltip></q-icon></span>
+            <strong>{{ formatNumber(statsSummary.anomalousSessions) }}</strong>
+            <span>{{ t('overviewPage.anomalousSessionsLabel') }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.anomalousSessionsTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <div class="neo-summary-card">
-            <strong>{{ (statsSummary.anomalyRate * 100).toFixed(1) }}%</strong>
-            <span>Anomaly rate <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Percentage of all sessions that were flagged as anomalous.</q-tooltip></q-icon></span>
+            <strong>{{ formatPercent(statsSummary.anomalyRate, 1) }}</strong>
+            <span>{{ t('overviewPage.anomalyRateLabel') }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.anomalyRateTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <div class="neo-summary-card">
-            <strong>{{ statsSummary.activeSessionsNow.toLocaleString() }}</strong>
-            <span>Active now <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Currently open sessions tracked in Redis.</q-tooltip></q-icon></span>
+            <strong>{{ formatNumber(statsSummary.activeSessionsNow) }}</strong>
+            <span>{{ t('overviewPage.activeNowLabel') }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.activeNowTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <div class="neo-summary-card">
-            <strong>{{ statsSummary.eventsToday.toLocaleString() }}</strong>
-            <span>Events today <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Total audit events received today (from Redis counter).</q-tooltip></q-icon></span>
+            <strong>{{ formatNumber(statsSummary.eventsToday) }}</strong>
+            <span>{{ t('overviewPage.eventsTodayLabel') }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.eventsTodayTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <div class="neo-summary-card" v-for="(count, type) in statsSummary.anomaliesByType" :key="type">
-            <strong>{{ count.toLocaleString() }}</strong>
-            <span>{{ type }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Anomaly events grouped by detection type.</q-tooltip></q-icon></span>
+            <strong>{{ formatNumber(count) }}</strong>
+            <span>{{ type }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.anomalyTypeGroupTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <div class="neo-summary-card" v-for="(count, tier) in statsSummary.usersByRiskTier" :key="tier">
-            <strong>{{ count.toLocaleString() }}</strong>
-            <span>{{ tier }} risk users <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Number of users currently classified in this risk tier.</q-tooltip></q-icon></span>
+            <strong>{{ formatNumber(count) }}</strong>
+            <span>{{ t('overviewPage.riskUsersLabel', { tier: formatRiskTierLabel(tier) }) }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.riskUsersTooltip') }}</q-tooltip></q-icon></span>
           </div>
         </div>
       </article>
@@ -261,21 +261,21 @@
       <article class="neo-overview-panel">
         <div class="neo-overview-head">
           <div>
-            <h3>Service health</h3>
-            <p>Connectivity status of backend services consumed by this dashboard.</p>
+            <h3>{{ t('overviewPage.serviceHealthTitle') }}</h3>
+            <p>{{ t('overviewPage.serviceHealthSubtitle') }}</p>
           </div>
         </div>
-        <div v-if="healthLoading" class="neo-overview-empty">Checking…</div>
-        <div v-else-if="!healthStatus" class="neo-overview-empty">Not checked yet.</div>
+        <div v-if="healthLoading" class="neo-overview-empty">{{ t('common.checking') }}</div>
+        <div v-else-if="!healthStatus" class="neo-overview-empty">{{ t('overviewPage.healthNotChecked') }}</div>
         <div v-else class="neo-summary-grid">
           <div class="neo-summary-card">
-            <strong :class="healthStatus.status === 'UP' ? 'neo-health-ok' : 'neo-health-warn'">{{ healthStatus.status }}</strong>
-            <span>Overall <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Overall system status: UP means all checks pass, DEGRADED means one or more services are down.</q-tooltip></q-icon></span>
+            <strong :class="healthStatus.status === 'UP' ? 'neo-health-ok' : 'neo-health-warn'">{{ formatHealthStatus(healthStatus.status) }}</strong>
+            <span>{{ t('overviewPage.overallLabel') }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.overallTooltip') }}</q-tooltip></q-icon></span>
           </div>
           <template v-if="healthStatus.checks">
             <div class="neo-summary-card" v-for="(check, name, idx) in (healthStatus.checks as Record<string, unknown>)" :key="idx">
-              <strong :class="check === 'UP' ? 'neo-health-ok' : 'neo-health-warn'">{{ check }}</strong>
-              <span>{{ name }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>Health check result for {{ name }}.</q-tooltip></q-icon></span>
+              <strong :class="check === 'UP' ? 'neo-health-ok' : 'neo-health-warn'">{{ formatHealthStatus(check) }}</strong>
+              <span>{{ name }} <q-icon name="help_outline" class="neo-hint-icon"><q-tooltip>{{ t('overviewPage.healthCheckTooltip', { name }) }}</q-tooltip></q-icon></span>
             </div>
           </template>
         </div>
@@ -285,8 +285,8 @@
       <article class="neo-overview-panel neo-overview-panel--wide">
         <div class="neo-overview-head">
           <div>
-            <h3>User Persona Clusters</h3>
-            <p>Behaviour segmentation distribution across active sessions</p>
+            <h3>{{ t('clusterMixPanel.title') }}</h3>
+            <p>{{ t('clusterMixPanel.subtitle') }}</p>
           </div>
         </div>
         <ClusterMixPanel :data="clusterMixRows" :stats-summary="statsSummary" flat />
@@ -322,7 +322,7 @@ import {
   FALLBACK_ANOMALY_TIER_COLOR,
 } from 'src/constants/dashboard/anomaly';
 import { formatTimelineLabel, mergeCountriesWithSessions } from 'src/utils/dashboard';
-import { formatDate, formatScore } from 'src/utils/format';
+import { formatDate, formatNumber, formatPercent, formatScore } from 'src/utils/format';
 
 // Router navigation lets the hero shortcuts jump between dashboard sections.
 const router = useRouter();
@@ -389,7 +389,7 @@ const topCountries = computed(() => {
   const raw =
     liveStatsPayload.value?.top_countries_right_now ??
     liveStatsPayload.value?.topCountriesRightNow;
-  return mergeCountriesWithSessions(raw, sessions.value, 6);
+  return mergeCountriesWithSessions(raw, sessions.value, 10);
 });
 
 const extractItems = (payload: unknown) => {
@@ -415,10 +415,10 @@ const alertFeedItems = computed(() =>
     .flatMap((item, index) => {
       if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
       const row = item as Record<string, unknown>;
-      const insuredId = readText(row.insuredId, 'unknown');
-      const sessionId = readText(row.sessionId, `session-${index}`);
+      const insuredId = readText(row.insuredId, t('overviewPage.unknownUser'));
+      const sessionId = readText(row.sessionId, t('overviewPage.sessionFallback', { index }));
       const detectedAt = readText(row.detectedAt, '');
-      const anomalyType = readText(row.anomalyType, 'UNKNOWN');
+      const anomalyType = readText(row.anomalyType, t('common.unknown'));
       return [
         {
           key: `${insuredId}:${sessionId}:${detectedAt || index}`,
@@ -440,8 +440,8 @@ const riskySessionPreview = computed(() => {
     .flatMap((item, index) => {
       if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
       const row = item as Record<string, unknown>;
-      const insuredId = readText(row.insuredId, 'unknown');
-      const sessionId = readText(row.sessionId, `session-${index}`);
+      const insuredId = readText(row.insuredId, t('overviewPage.unknownUser'));
+      const sessionId = readText(row.sessionId, t('overviewPage.sessionFallback', { index }));
       return [
         {
           key: `${insuredId}:${sessionId}`,
@@ -450,7 +450,7 @@ const riskySessionPreview = computed(() => {
           riskScore: formatScore(
             typeof row.riskScore === 'number' ? row.riskScore : Number(row.riskScore ?? 0),
           ),
-          anomalyType: readText(row.anomalyType, 'observed'),
+          anomalyType: readText(row.anomalyType, t('common.observed')),
         },
       ];
     });
@@ -462,14 +462,14 @@ const riskySessionPreview = computed(() => {
     insuredId: session.insuredId,
     sessionId: session.sessionId,
     riskScore: formatScore(session.riskScore ?? null),
-    anomalyType: session.anomalyType ?? 'observed',
+    anomalyType: session.anomalyType ?? t('common.observed'),
   }));
 });
 
 const topAnomalyTypes = computed(() => {
   const counts = new Map<string, number>();
   for (const event of anomalies.value) {
-    const label = event.anomalyType || 'UNKNOWN';
+    const label = event.anomalyType || t('common.unknown');
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
   return Array.from(counts.entries())
@@ -496,7 +496,7 @@ const tierMixSegments = computed(() => {
   const counts = new Map<string, number>();
 
   for (const event of anomalies.value) {
-    const label = event.anomalyTier || 'UNKNOWN';
+    const label = event.anomalyTier || t('common.unknown');
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
 
@@ -539,13 +539,19 @@ const formatChartDuration = (value: number) =>
 const averageActionVolume = computed(() => {
   if (!sessions.value.length) return t('common.notAvailable');
   const total = sessions.value.reduce((sum, session) => sum + (session.totalEvents ?? 0), 0);
-  return (total / sessions.value.length).toFixed(1);
+  return formatNumber(total / sessions.value.length, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
 });
 
 const averageUniqueActions = computed(() => {
   if (!sessions.value.length) return t('common.notAvailable');
   const total = sessions.value.reduce((sum, session) => sum + (session.uniqueActions ?? 0), 0);
-  return (total / sessions.value.length).toFixed(1);
+  return formatNumber(total / sessions.value.length, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
 });
 
 const latestAnomalyScore = computed(() =>
@@ -553,6 +559,42 @@ const latestAnomalyScore = computed(() =>
     ? formatScore(anomalies.value[0]?.anomalyScore ?? null)
     : t('common.notAvailable'),
 );
+
+const formatRiskTierLabel = (value: unknown) => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return t('common.unknown');
+  }
+
+  switch (value.trim().toUpperCase()) {
+    case 'CRITICAL':
+      return t('common.critical');
+    case 'HIGH':
+      return t('common.high');
+    case 'MEDIUM':
+      return t('common.medium');
+    case 'LOW':
+      return t('common.low');
+    default:
+      return value;
+  }
+};
+
+const formatHealthStatus = (value: unknown) => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return t('common.unknown');
+  }
+
+  switch (value.trim().toUpperCase()) {
+    case 'UP':
+      return t('common.up');
+    case 'DOWN':
+      return t('common.down');
+    case 'DEGRADED':
+      return t('common.degraded');
+    default:
+      return value;
+  }
+};
 </script>
 
 <style scoped>
@@ -560,21 +602,40 @@ const latestAnomalyScore = computed(() =>
 .neo-overview-grid {
   display: grid;
   gap: 18px;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .neo-overview-panel {
-  grid-column: span 4;
+  grid-column: span 1;
   padding: 22px;
   border-radius: 24px;
-  background: rgba(255, 250, 243, 0.84);
+  background:
+    radial-gradient(circle at top right, rgba(227, 165, 72, 0.08), transparent 40%),
+    rgba(255, 250, 243, 0.84);
   border: var(--neo-border);
   box-shadow: var(--neo-shadow-soft);
   backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neo-overview-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(9, 22, 30, 0.15);
+}
+
+.neo-overview-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(9, 22, 30, 0.15);
 }
 
 .neo-overview-panel--wide {
-  grid-column: span 8;
+  grid-column: span 2;
+}
+
+@media (max-width: 1200px) {
+  .neo-overview-panel--wide {
+    grid-column: span 1;
+  }
 }
 
 .neo-overview-panel--map {

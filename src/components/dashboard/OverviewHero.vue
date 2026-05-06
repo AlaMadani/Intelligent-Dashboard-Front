@@ -3,25 +3,22 @@
   <section id="overview" class="neo-section neo-hero">
     <div class="neo-hero-content">
       <div class="neo-hero-copy">
-        <div class="neo-kicker">Behavior intelligence</div>
-        <h1 class="neo-hero-title">Operational clarity for insured behavior and risk.</h1>
-        <p class="neo-hero-subtitle">
-          Session analytics, anomaly detection, and live telemetry from the data processor pipeline.
-          Track user risk, spot spikes, and keep response teams aligned from one command surface.
-        </p>
+        <div class="neo-kicker">{{ t('overviewHero.kicker') }}</div>
+        <h1 class="neo-hero-title">{{ t('overviewHero.title') }}</h1>
+        <p class="neo-hero-subtitle">{{ t('overviewHero.subtitle') }}</p>
 
         <div class="neo-hero-actions">
           <q-btn
             color="primary"
             unelevated
-            label="Review anomalies"
+            :label="t('overviewHero.reviewAnomalies')"
             icon="warning"
             @click="emit('navigate', 'anomalies')"
           />
           <q-btn
             outline
             color="primary"
-            label="Open workbench"
+            :label="t('overviewHero.openWorkbench')"
             icon="hub"
             @click="emit('navigate', 'workbench')"
           />
@@ -30,15 +27,15 @@
         <div class="neo-hero-badges">
           <div class="neo-hero-badge">
             <span class="neo-hero-badge-dot"></span>
-            Redis live cache
+            {{ t('overviewHero.redisLiveCache') }}
           </div>
           <div class="neo-hero-badge">
             <span class="neo-hero-badge-dot"></span>
-            API anomaly stream
+            {{ t('overviewHero.apiAnomalyStream') }}
           </div>
           <div class="neo-hero-badge">
             <span class="neo-hero-badge-dot"></span>
-            AI explanation workflow
+            {{ t('overviewHero.aiExplanationWorkflow') }}
           </div>
         </div>
       </div>
@@ -47,8 +44,10 @@
       <div class="neo-hero-panel">
         <div class="neo-panel-header">
           <div>
-            <div class="neo-panel-title">Live posture</div>
-            <div class="neo-panel-footnote">Events updated {{ lastUpdatedFormatted }} ago</div>
+            <div class="neo-panel-title">{{ t('overviewHero.livePosture') }}</div>
+            <div class="neo-panel-footnote">
+              {{ t('overviewHero.eventsUpdatedAgo', { age: lastUpdatedFormatted }) }}
+            </div>
           </div>
           <LivePulse
             :status="streamConnected ? 'connected' : 'disconnected'"
@@ -59,41 +58,38 @@
         <div class="neo-panel-body">
           <div class="neo-panel-metric">
             <div class="neo-panel-value">{{ totalSessions }}</div>
-            <div class="neo-panel-label">Total sessions</div>
+            <div class="neo-panel-label">{{ t('overviewHero.totalSessions') }}</div>
           </div>
           <div class="neo-panel-metric">
             <div class="neo-panel-value">{{ anomalousSessions }}</div>
-            <div class="neo-panel-label">Anomalous sessions</div>
+            <div class="neo-panel-label">{{ t('overviewHero.anomalousSessions') }}</div>
           </div>
           <div class="neo-panel-metric">
             <div class="neo-panel-value">{{ totalAnomalies }}</div>
-            <div class="neo-panel-label">Anomaly events</div>
+            <div class="neo-panel-label">{{ t('overviewHero.anomalyEvents') }}</div>
           </div>
           <div class="neo-panel-metric">
             <div class="neo-panel-value">{{ avgSessionDuration }}</div>
-            <div class="neo-panel-label">Average session</div>
+            <div class="neo-panel-label">{{ t('overviewHero.averageSession') }}</div>
           </div>
         </div>
 
         <div class="neo-hero-status-grid">
           <div class="neo-hero-status-card">
-            <div class="neo-hero-status-label">Classifier</div>
-            <div class="neo-hero-status-value">Active</div>
+            <div class="neo-hero-status-label">{{ t('overviewHero.classifier') }}</div>
+            <div class="neo-hero-status-value">{{ t('overviewHero.active') }}</div>
           </div>
           <div class="neo-hero-status-card">
-            <div class="neo-hero-status-label">Response mode</div>
-            <div class="neo-hero-status-value">Live triage</div>
+            <div class="neo-hero-status-label">{{ t('overviewHero.responseMode') }}</div>
+            <div class="neo-hero-status-value">{{ t('overviewHero.liveTriage') }}</div>
           </div>
           <div class="neo-hero-status-card">
-            <div class="neo-hero-status-label">Forecasts</div>
-            <div class="neo-hero-status-value">Ready</div>
+            <div class="neo-hero-status-label">{{ t('overviewHero.forecasts') }}</div>
+            <div class="neo-hero-status-value">{{ t('overviewHero.ready') }}</div>
           </div>
         </div>
 
-        <div class="neo-panel-footer">
-          Live stats refresh automatically and anomaly alerts stream directly into the dashboard
-          workbench.
-        </div>
+        <div class="neo-panel-footer">{{ t('overviewHero.footer') }}</div>
       </div>
     </div>
   </section>
@@ -101,6 +97,10 @@
 
 <script setup lang="ts">
 // Hero props and emits keep the component focused on messaging and high-level status display.
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import LivePulse from './LivePulse.vue';
+
 const props = defineProps<{
   totalSessions: number;
   anomalousSessions: number;
@@ -115,8 +115,7 @@ const emit = defineEmits<{
   (event: 'navigate', target: string): void;
 }>();
 
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import LivePulse from './LivePulse.vue';
+const { t } = useI18n();
 
 // A local timer keeps the "updated Xs ago" label fresh without making extra API calls.
 const now = ref(new Date());

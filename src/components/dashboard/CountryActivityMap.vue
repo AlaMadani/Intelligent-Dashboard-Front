@@ -31,7 +31,7 @@
             </span>
           </div>
         </div>
-        <strong>{{ country.display ?? country.count.toLocaleString('en-GB') }}</strong>
+        <strong>{{ country.display ?? formatNumber(country.count) }}</strong>
       </div>
       <div v-if="!normalizedCountries.length" class="neo-geo-empty">
         {{ t('countryActivityMap.noTelemetry') }}
@@ -51,6 +51,7 @@ import {
   COUNTRY_MAP_MERIDIANS,
 } from 'src/constants/dashboard/country-map';
 import type { CountryCount, MappedCountry } from 'src/models/country-map';
+import { formatNumber } from 'src/utils/format';
 
 const props = defineProps<{
   countries: CountryCount[];

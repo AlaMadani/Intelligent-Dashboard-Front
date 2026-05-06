@@ -1,18 +1,6 @@
 // Dashboard utility helpers reshape raw telemetry into UI-friendly structures.
-export interface NormalizedCountryTelemetry {
-  label: string;
-  count: number;
-  display?: string;
-}
-
-export interface AnomalyKeySource {
-  id?: number | null;
-  insuredId?: string | null;
-  sessionId?: string | null;
-  eventId?: string | null;
-  detectedAt?: string | null;
-  anomalyType?: string | null;
-}
+import type { AnomalyKeySource, NormalizedCountryTelemetry } from 'src/types/dashboard';
+import { formatNumber, getCurrentLocale } from 'src/utils/format';
 
 // Coerce mixed backend payload values into numbers whenever possible.
 const toNumber = (value: unknown) => {
@@ -99,7 +87,7 @@ export const normalizeCountryTelemetry = (
     .slice(0, limit)
     .map((item) => ({
       ...item,
-      display: item.count.toLocaleString('en-GB'),
+      display: formatNumber(item.count),
     }));
 };
 
@@ -144,7 +132,7 @@ export const formatTimelineLabel = (value: string | null | undefined, fallback: 
   if (!value) return fallback;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat(getCurrentLocale(), {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);

@@ -53,8 +53,8 @@ body {
   color: white;
 }
 
-/* Smooth hover transitions for all interactive elements */
-* {
+/* Smooth hover transitions for interactive elements only */
+a, button, .q-btn, .q-item, .neo-nav-item, .neo-analytics-panel, .neo-overview-panel {
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
@@ -76,7 +76,6 @@ body {
   }
 }
 
-/* Scroll reveal animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -99,27 +98,15 @@ body {
   }
 }
 
-.neo-section {
-  animation: fadeInUp 0.6s ease-out forwards;
-  animation-delay: calc(var(--animation-order, 0) * 100ms);
-}
-
-.neo-analytics-panel,
-.neo-overview-panel {
-  animation: scaleIn 0.5s ease-out forwards;
-  animation-delay: calc(var(--animation-order, 0) * 50ms + 100ms);
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(11, 28, 38, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(11, 28, 38, 0.03) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.24), transparent 70%);
+/* Disable ALL animations during live updates to prevent layout chaos */
+[data-live-update] *,
+[data-live-update] *::before,
+[data-live-update] *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  caret-color: transparent;
 }
 
 /* Skeleton loading animation */
@@ -217,14 +204,19 @@ body::before {
 
 .neo-section {
   margin-bottom: 38px;
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: calc(var(--animation-order, 0) * 100ms);
 }
 
 /* Card hover effects and micro-interactions */
 .neo-analytics-panel,
 .neo-overview-panel {
+  animation: scaleIn 0.3s ease-out forwards;
+  animation-delay: calc(var(--animation-order, 0) * 50ms + 100ms);
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
               box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform, box-shadow;
+  min-height: 120px;
 }
 
 .neo-analytics-panel:hover,

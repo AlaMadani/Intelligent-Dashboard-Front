@@ -1,11 +1,11 @@
 <template>
   <div class="neo-journey-card">
     <div class="neo-journey-head">
-      <h3>Process deviation</h3>
-      <p>Observed navigation path with rare transitions highlighted.</p>
+      <h3>{{ t('journeyPathMap.title') }}</h3>
+      <p>{{ t('journeyPathMap.subtitle') }}</p>
     </div>
 
-    <div v-if="!stepList.length" class="neo-journey-empty">No action sequence available for this session.</div>
+    <div v-if="!stepList.length" class="neo-journey-empty">{{ t('journeyPathMap.empty') }}</div>
 
     <div v-else class="neo-journey-flow">
       <template v-for="(step, index) in stepList" :key="`${step}-${index}`">
@@ -28,13 +28,16 @@
       >
         {{ transition.fromAction }} -> {{ transition.toAction }}
       </q-chip>
-      <q-chip v-if="pathDeviation" dense color="warning" text-color="black">Path deviation detected</q-chip>
+      <q-chip v-if="pathDeviation" dense color="warning" text-color="black">
+        {{ t('journeyPathMap.pathDeviationDetected') }}
+      </q-chip>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { PathDeviationDto } from 'src/types/analytics';
 
 const props = defineProps<{
@@ -42,6 +45,8 @@ const props = defineProps<{
   rareTransitions?: PathDeviationDto[] | null;
   pathDeviation?: boolean | null;
 }>();
+
+const { t } = useI18n();
 
 const visibleRareTransitions = computed(() =>
   (props.rareTransitions ?? []).filter(

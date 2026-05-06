@@ -3,11 +3,8 @@
   <section id="workbench" class="neo-section neo-investigation">
     <div class="neo-section-header">
       <div>
-        <div class="neo-section-title">Response workbench</div>
-        <div class="neo-section-subtitle">
-          Review the latest anomaly events, inspect anomaly context, and request AI explanations on
-          demand.
-        </div>
+        <div class="neo-section-title">{{ t('anomalyWorkbenchSection.title') }}</div>
+        <div class="neo-section-subtitle">{{ t('anomalyWorkbenchSection.subtitle') }}</div>
       </div>
     </div>
 
@@ -16,18 +13,18 @@
       <div class="neo-panel">
         <div class="neo-panel-header">
           <div>
-            <div class="neo-panel-title">Live anomaly wire</div>
-            <div class="neo-panel-subtitle">Latest anomaly events refreshed through the API service</div>
+            <div class="neo-panel-title">{{ t('anomalyWorkbenchSection.liveWireTitle') }}</div>
+            <div class="neo-panel-subtitle">{{ t('anomalyWorkbenchSection.liveWireSubtitle') }}</div>
           </div>
           <div class="neo-live-pill" :class="{ 'is-loading': !streamConnected }">
             <span class="neo-live-dot"></span>
-            {{ streamConnected ? 'Connected' : 'Reconnecting' }}
+            {{ streamConnected ? t('common.connected') : t('common.reconnecting') }}
           </div>
         </div>
 
         <div v-if="streamError" class="neo-error">{{ streamError }}</div>
         <div v-else-if="!streamAlerts.length" class="neo-placeholder">
-          Waiting for anomaly alerts from the API event stream.
+          {{ t('anomalyWorkbenchSection.waitingForAlerts') }}
         </div>
         <div v-else class="neo-stream-list">
           <button
@@ -40,11 +37,11 @@
           >
             <div class="neo-stream-top">
               <q-badge :color="tierColor(alert.anomalyTier)" text-color="white">
-                {{ alert.anomalyTier || 'UNKNOWN' }}
+                {{ alert.anomalyTier || t('common.unknown') }}
               </q-badge>
               <span class="neo-stream-time">{{ formatDate(alert.detectedAt) }}</span>
             </div>
-            <div class="neo-stream-title">{{ alert.anomalyType || 'UNKNOWN' }}</div>
+            <div class="neo-stream-title">{{ alert.anomalyType || t('common.unknown') }}</div>
             <div class="neo-stream-meta">{{ alert.insuredId }} / {{ alert.sessionId }}</div>
           </button>
         </div>
@@ -54,68 +51,66 @@
       <div class="neo-panel neo-panel-contrast">
         <div class="neo-panel-header">
           <div>
-            <div class="neo-panel-title">Selected anomaly context</div>
-            <div class="neo-panel-subtitle">
-              Session, risk, next action, explainability, and compact alert context.
-            </div>
+            <div class="neo-panel-title">{{ t('anomalyWorkbenchSection.selectedContextTitle') }}</div>
+            <div class="neo-panel-subtitle">{{ t('anomalyWorkbenchSection.selectedContextSubtitle') }}</div>
           </div>
         </div>
 
         <div v-if="!selectedEvent" class="neo-placeholder">
-          Select an anomaly from the live wire or the anomaly table.
+          {{ t('anomalyWorkbenchSection.selectAnomalyPrompt') }}
         </div>
         <div v-else class="neo-explanation">
           <div class="neo-explanation-meta">
             <div>
-              <div class="neo-explanation-label">Insured</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.insured') }}</div>
               <div class="neo-explanation-value">{{ selectedEvent.insuredId }}</div>
             </div>
             <div>
-              <div class="neo-explanation-label">Tier</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.tier') }}</div>
               <div class="neo-explanation-value">{{ selectedEvent.anomalyTier }}</div>
             </div>
             <div>
-              <div class="neo-explanation-label">Type</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.type') }}</div>
               <div class="neo-explanation-value">{{ readableText(selectedEvent.anomalyType) }}</div>
             </div>
             <div>
-              <div class="neo-explanation-label">Score</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.score') }}</div>
               <div class="neo-explanation-value">
                 {{ readableScore(selectedEvent.anomalyScore) }}
               </div>
             </div>
             <div>
-              <div class="neo-explanation-label">Type confidence</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.typeConfidence') }}</div>
               <div class="neo-explanation-value">
                 {{ readablePercent(selectedEvent.typeConfidence) }}
               </div>
             </div>
             <div v-if="selectedEvent.anomalyProbability != null">
-              <div class="neo-explanation-label">Anomaly probability</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.anomalyProbability') }}</div>
               <div class="neo-explanation-value">
                 {{ readablePercent(selectedEvent.anomalyProbability) }}
               </div>
             </div>
             <div v-if="selectedEvent.churnProbability != null">
-              <div class="neo-explanation-label">Churn probability</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.churnProbability') }}</div>
               <div class="neo-explanation-value">
                 {{ readablePercent(selectedEvent.churnProbability) }}
               </div>
             </div>
             <div v-if="selectedEvent.riskScore != null">
-              <div class="neo-explanation-label">Ensemble risk</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.ensembleRisk') }}</div>
               <div class="neo-explanation-value">
                 {{ readableScore(selectedEvent.riskScore) }}
               </div>
             </div>
             <div v-if="selectedEvent.pathDeviation != null">
-              <div class="neo-explanation-label">Path deviation</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.pathDeviation') }}</div>
               <div class="neo-explanation-value">
-                {{ selectedEvent.pathDeviation ? 'Yes' : 'No' }}
+                {{ selectedEvent.pathDeviation ? t('common.yes') : t('common.no') }}
               </div>
             </div>
             <div>
-              <div class="neo-explanation-label">Event</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.event') }}</div>
               <div class="neo-explanation-value">
                 {{ selectedEvent.eventId || selectedEvent.id }}
               </div>
@@ -124,100 +119,99 @@
 
           <div class="neo-context-grid">
             <div class="neo-context-card">
-              <div class="neo-context-title">Session</div>
+              <div class="neo-context-title">{{ t('anomalyWorkbenchSection.sessionTitle') }}</div>
               <div v-if="sessionAnalysisLoading" class="neo-context-note">
-                Loading matching session trace for this anomaly.
+                {{ t('anomalyWorkbenchSection.sessionLoading') }}
               </div>
               <div v-else-if="!sessionAnalysis" class="neo-context-note">
-                No matching session trace was returned by the API. Event-level fallback values are
-                shown where possible.
+                {{ t('anomalyWorkbenchSection.sessionEmpty') }}
               </div>
 
               <div class="neo-context-line">
-                <span>Status</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.status') }}</span>
                 <strong>{{ sessionStatus }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Started</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.started') }}</span>
                 <strong>{{ sessionStarted }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Ended</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.ended') }}</span>
                 <strong>{{ sessionEnded }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Duration</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.duration') }}</span>
                 <strong>{{ sessionDuration }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>KO rate</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.koRate') }}</span>
                 <strong>{{ sessionKoRate }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Rule type</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.ruleType') }}</span>
                 <strong>{{ sessionRuleType }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Context tags</span>
-                <strong>{{ displayedContextTags.join(', ') || 'Not returned' }}</strong>
+                <span>{{ t('anomalyWorkbenchSection.labels.contextTags') }}</span>
+                <strong>{{ displayedContextTags.join(', ') || t('common.notReturned') }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Warnings</span>
-                <strong>{{ displayedWarnings.join(', ') || 'Not returned' }}</strong>
+                <span>{{ t('anomalyWorkbenchSection.labels.warnings') }}</span>
+                <strong>{{ displayedWarnings.join(', ') || t('common.notReturned') }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Actions</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.actions') }}</span>
                 <strong>{{ sessionActionCount }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Unique actions</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.uniqueActions') }}</span>
                 <strong>{{ sessionUniqueActions }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Mean delta</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.meanDelta') }}</span>
                 <strong>{{ sessionMeanDelta }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Tabular score</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.tabularScore') }}</span>
                 <strong>{{ sessionIsoScore }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Ensemble risk</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.ensembleRisk') }}</span>
                 <strong>{{ sessionEnsembleRisk }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Action diversity</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.actionDiversity') }}</span>
                 <strong>{{ sessionActionDiversity }}</strong>
               </div>
             </div>
 
             <div class="neo-context-card">
-              <div class="neo-context-title">Risk profile</div>
+              <div class="neo-context-title">{{ t('anomalyWorkbenchSection.riskProfileTitle') }}</div>
               <div v-if="!riskProfile" class="neo-context-note">
-                The risk profile endpoint returned no profile for this insured.
+                {{ t('anomalyWorkbenchSection.riskProfileEmpty') }}
               </div>
               <div class="neo-context-line">
-                <span>Risk tier</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.riskTier') }}</span>
                 <strong>{{ riskTier }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>30d anomaly rate</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.anomalyRate30d') }}</span>
                 <strong>{{ riskAnomalyRate }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Clean streak</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.cleanStreak') }}</span>
                 <strong>{{ riskCleanStreak }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Last anomaly</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.lastAnomaly') }}</span>
                 <strong>{{ riskLastAnomaly }}</strong>
               </div>
             </div>
 
             <div class="neo-context-card">
-              <div class="neo-context-title">Predicted next actions</div>
+              <div class="neo-context-title">{{ t('anomalyWorkbenchSection.predictedActionsTitle') }}</div>
               <div v-if="!displayedNextActions.length" class="neo-context-empty">
-                No prediction payload was returned for this insured or session.
+                {{ t('anomalyWorkbenchSection.predictionsEmpty') }}
               </div>
               <div v-else class="neo-chip-row">
                 <q-chip
@@ -233,25 +227,24 @@
             </div>
 
             <div class="neo-context-card">
-              <div class="neo-context-title">Active anomaly</div>
+              <div class="neo-context-title">{{ t('anomalyWorkbenchSection.activeAnomalyTitle') }}</div>
               <div v-if="!activeAnomalyContext" class="neo-context-note">
-                No separate active anomaly payload was returned. The selected anomaly is shown as
-                the fallback.
+                {{ t('anomalyWorkbenchSection.activeAnomalyEmpty') }}
               </div>
               <div class="neo-context-line">
-                <span>Tier</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.tier') }}</span>
                 <strong>{{ activeTier }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Type</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.type') }}</span>
                 <strong>{{ activeType }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Detected</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.detected') }}</span>
                 <strong>{{ activeDetected }}</strong>
               </div>
               <div class="neo-context-line">
-                <span>Event time</span>
+                <span>{{ t('anomalyWorkbenchSection.labels.eventTime') }}</span>
                 <strong>{{ activeEventTime }}</strong>
               </div>
             </div>
@@ -292,7 +285,7 @@
             dense
             expand-separator
             icon="bolt"
-            label="Live session insight (Redis)"
+            :label="t('anomalyWorkbenchSection.liveSessionInsightLabel')"
             class="neo-sequence-expander"
           >
             <pre class="neo-json-block">{{ formatJsonValue(liveSessionInsight) }}</pre>
@@ -303,7 +296,7 @@
             dense
             expand-separator
             icon="data_object"
-            label="Compact alert context"
+            :label="t('anomalyWorkbenchSection.compactAlertContextLabel')"
             class="neo-sequence-expander"
           >
             <pre class="neo-json-block">{{ formatJsonValue(displayedEventContext) }}</pre>
@@ -314,7 +307,7 @@
             dense
             expand-separator
             icon="list_alt"
-            label="Session action counts"
+            :label="t('anomalyWorkbenchSection.sessionActionCountsLabel')"
             class="neo-sequence-expander"
           >
             <pre class="neo-json-block">{{
@@ -328,16 +321,14 @@
       <div class="neo-panel neo-panel-sequence">
         <div class="neo-panel-header">
           <div>
-            <div class="neo-panel-title">AI explanation</div>
-            <div class="neo-panel-subtitle">
-              Prompted with anomaly, session, risk, next action, and live stats context.
-            </div>
+            <div class="neo-panel-title">{{ t('anomalyWorkbenchSection.aiExplanationTitle') }}</div>
+            <div class="neo-panel-subtitle">{{ t('anomalyWorkbenchSection.aiExplanationSubtitle') }}</div>
           </div>
           <q-btn
             color="secondary"
             unelevated
             icon="psychology"
-            label="Generate AI Explanation"
+            :label="t('anomalyWorkbenchSection.generateAiExplanation')"
             :disable="!selectedEvent || selectedEvent.id == null"
             :loading="explanationLoading"
             @click="emit('generate-explanation')"
@@ -345,7 +336,7 @@
         </div>
 
         <div v-if="!selectedEvent" class="neo-placeholder">
-          Select an anomaly to request an explanation.
+          {{ t('anomalyWorkbenchSection.selectForExplanation') }}
         </div>
         <div v-else-if="explanationError" class="neo-error">
           {{ explanationError }}
@@ -353,27 +344,27 @@
         <div v-else class="neo-explanation">
           <div class="neo-explanation-meta">
             <div>
-              <div class="neo-explanation-label">Source</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.source') }}</div>
               <div class="neo-explanation-value">
-                {{ explanation?.source || 'not requested' }}
+                {{ explanation?.source || t('common.notRequested') }}
               </div>
             </div>
             <div>
-              <div class="neo-explanation-label">Model</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.model') }}</div>
               <div class="neo-explanation-value">
-                {{ explanation?.model || 'n/a' }}
+                {{ explanation?.model || t('common.notAvailable') }}
               </div>
             </div>
             <div>
-              <div class="neo-explanation-label">Generated</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.generated') }}</div>
               <div class="neo-explanation-value">
                 {{ formatDate(explanation?.generatedAt) }}
               </div>
             </div>
             <div>
-              <div class="neo-explanation-label">Cache</div>
+              <div class="neo-explanation-label">{{ t('anomalyWorkbenchSection.labels.cache') }}</div>
               <div class="neo-explanation-value">
-                {{ explanation?.cached ? 'hit' : explanation ? 'fresh' : 'n/a' }}
+                {{ explanation?.cached ? t('common.cacheHit') : explanation ? t('common.cacheFresh') : t('common.notAvailable') }}
               </div>
             </div>
           </div>
@@ -388,6 +379,7 @@
 <script setup lang="ts">
 // Parent state provides the selected anomaly plus every supporting context payload.
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import FeatureRadarChart from './FeatureRadarChart.vue';
 import JourneyPathMap from './JourneyPathMap.vue';
 import type {
@@ -401,7 +393,7 @@ import type {
   UserRiskProfileDto,
 } from 'src/types/analytics';
 import { anomalyEventKey } from 'src/utils/dashboard';
-import { formatDate, formatDurationSeconds, formatPercent, formatScore } from 'src/utils/format';
+import { formatDate, formatDurationSeconds, formatNumber, formatPercent, formatScore } from 'src/utils/format';
 
 // Input contracts carry the live stream selection and all fetched enrichment data.
 const props = defineProps<{
@@ -426,6 +418,8 @@ const emit = defineEmits<{
   (event: 'generate-explanation'): void;
 }>();
 
+const { t } = useI18n();
+
 // Helper formatters turn optional backend fields into readable UI values.
 const tierColor = (tier: string | null | undefined) => {
   if (tier === 'TIER3') return 'negative';
@@ -435,30 +429,30 @@ const tierColor = (tier: string | null | undefined) => {
   return 'grey';
 };
 
-const readableText = (value: string | null | undefined, fallback = 'Not returned') =>
+const readableText = (value: string | null | undefined, fallback = t('common.notReturned')) =>
   value && value.trim().length > 0 ? value : fallback;
 
-const readableDate = (value: string | null | undefined, fallback = 'Not returned') =>
+const readableDate = (value: string | null | undefined, fallback = t('common.notReturned')) =>
   value ? formatDate(value) : fallback;
 
-const readablePercent = (value: number | null | undefined, fallback = 'Not returned') =>
+const readablePercent = (value: number | null | undefined, fallback = t('common.notReturned')) =>
   value == null || Number.isNaN(value) ? fallback : formatPercent(value, 1);
 
-const readableScore = (value: number | null | undefined, fallback = 'Not returned') =>
+const readableScore = (value: number | null | undefined, fallback = t('common.notReturned')) =>
   value == null || Number.isNaN(value) ? fallback : formatScore(value);
 
-const readableDuration = (value: number | null | undefined, fallback = 'Not returned') =>
+const readableDuration = (value: number | null | undefined, fallback = t('common.notReturned')) =>
   value == null || Number.isNaN(value) ? fallback : formatDurationSeconds(value);
 
-const readableNumber = (value: number | null | undefined, fallback = 'Not returned') =>
-  value == null || Number.isNaN(value) ? fallback : value.toLocaleString('en-GB');
+const readableNumber = (value: number | null | undefined, fallback = t('common.notReturned')) =>
+  value == null || Number.isNaN(value) ? fallback : formatNumber(value);
 
 // Derived fields merge session data with anomaly fallbacks so the context card stays informative.
 const sessionStatus = computed(() => {
   if (props.sessionAnalysis?.isAnomaly != null) {
-    return props.sessionAnalysis.isAnomaly ? 'Anomalous' : 'Observed';
+    return props.sessionAnalysis.isAnomaly ? t('common.anomalous') : t('common.observed');
   }
-  return props.selectedEvent ? 'Anomalous' : 'Not returned';
+  return props.selectedEvent ? t('common.anomalous') : t('common.notReturned');
 });
 
 const sessionStarted = computed(() =>
@@ -512,7 +506,11 @@ const sessionActionDiversity = computed(() =>
 const riskTier = computed(() =>
   readableText(
     props.riskProfile?.riskTier ??
-      (props.selectedEvent?.anomalyTier ? `Investigate ${props.selectedEvent.anomalyTier}` : null),
+      (props.selectedEvent?.anomalyTier
+        ? t('anomalyWorkbenchSection.investigateTier', {
+            tier: props.selectedEvent.anomalyTier,
+          })
+        : null),
   ),
 );
 
@@ -534,7 +532,9 @@ const displayedNextActions = computed(() => {
 
 const activeAnomalyContext = computed(() => props.activeAnomaly ?? props.selectedEvent);
 
-const activeTier = computed(() => readableText(activeAnomalyContext.value?.anomalyTier, 'None'));
+const activeTier = computed(() =>
+  readableText(activeAnomalyContext.value?.anomalyTier, t('common.none')),
+);
 const activeType = computed(() => readableText(activeAnomalyContext.value?.anomalyType));
 const activeDetected = computed(() => readableDate(activeAnomalyContext.value?.detectedAt));
 const activeEventTime = computed(() => readableDate(activeAnomalyContext.value?.eventTime));
@@ -589,7 +589,9 @@ const inlineMarkdownToHtml = (value: string) => {
 
 const formatExplanationHtml = (value: string) => {
   const trimmed = value.trim();
-  if (!trimmed) return '<p class="neo-explanation-empty">No explanation requested yet.</p>';
+  if (!trimmed) {
+    return `<p class="neo-explanation-empty">${escapeHtml(t('anomalyWorkbenchSection.noExplanationRequested'))}</p>`;
+  }
   const lines = trimmed.split(/\r?\n/);
   const html: string[] = [];
   let listType: 'ul' | 'ol' | null = null;
@@ -665,7 +667,7 @@ const formatJsonValue = (value: unknown) => {
   try {
     return JSON.stringify(value, null, 2);
   } catch {
-    return '"[unserializable]"';
+    return t('anomalyWorkbenchSection.jsonUnserializable');
   }
 };
 

@@ -92,6 +92,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { Point, Tick } from 'src/models/chart';
+import { formatNumber } from 'src/utils/format';
 
 const props = withDefaults(
   defineProps<{
@@ -241,7 +242,7 @@ const xTicks = computed(() => {
 // Allow callers to override axis formatting while keeping a sensible default.
 const formatValue = (value: number) => {
   if (props.valueFormatter) return props.valueFormatter(value);
-  return value.toLocaleString('en-GB', { maximumFractionDigits: 1 });
+  return formatNumber(value, { maximumFractionDigits: 1 });
 };
 </script>
 

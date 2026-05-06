@@ -34,14 +34,39 @@ import type {
 } from 'src/types/analytics';
 import type { PaginationMeta } from 'src/types/api';
 import type { JsonValue } from 'src/types/api';
+import { i18n } from 'src/boot/i18n';
 import { anomalyEventKey } from 'src/utils/dashboard';
-import { formatDurationSeconds, formatPercent } from 'src/utils/format';
+import { formatDurationSeconds, formatNumber, formatPercent } from 'src/utils/format';
 import { useLiveStreamStore } from 'src/stores/live-stream';
 
 const ANALYTICS_PAGE_SIZE = 200;
 const COLLECTION_LIMIT = 200;
 const STREAM_REFRESH_DEBOUNCE_MS = 400;
 const FULL_REFRESH_FALLBACK_MS = 60000;
+
+const translate = (key: string, params?: Record<string, unknown>) =>
+  params ? i18n.global.t(key, params) : i18n.global.t(key);
+
+const formatRiskLevel = (value: unknown) => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return translate('common.low');
+  }
+
+  switch (value.trim().toUpperCase()) {
+    case 'CRITICAL':
+      return translate('common.critical');
+    case 'HIGH':
+      return translate('common.high');
+    case 'MEDIUM':
+      return translate('common.medium');
+    case 'LOW':
+      return translate('common.low');
+    default: {
+      const normalized = value.trim().toLowerCase();
+      return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    }
+  }
+};
 
 // Factory creates the singleton dashboard store shared across the routed dashboard pages.
 const createDashboardStore = () => {
@@ -109,7 +134,9 @@ const createDashboardStore = () => {
   let refreshInterval: number | null = null;
   let refreshDebounceId: number | null = null;
   let liveToastTimeoutId: number | null = null;
+  let liveUpdateTimeoutId: number | null = null;
   let started = false;
+  let hasLoadedOnce = false;
   const eventsSinceLoad = ref(0);
   const lastUpdated = ref<Date | null>(null);
   let pendingRefresh = {
@@ -118,13 +145,22 @@ const createDashboardStore = () => {
     activeSessions: false,
   };
 
+  const setLiveUpdate = () => {
+    document.body.setAttribute('data-live-update', 'true');
+    if (liveUpdateTimeoutId != null) window.clearTimeout(liveUpdateTimeoutId);
+    liveUpdateTimeoutId = window.setTimeout(() => {
+      document.body.removeAttribute('data-live-update');
+      liveUpdateTimeoutId = null;
+    }, 400);
+  };
+
   // Summary metrics derived from the loaded sessions, anomalies, and live stats payloads.
   const totalSessions = computed(() => sessionMeta.value?.totalElements ?? sessions.value.length);
   const totalAnomalies = computed(() => anomalyMeta.value?.totalElements ?? anomalies.value.length);
   const anomalousSessions = computed(() => anomalousSessionsTotal.value);
 
   const avgSessionDuration = computed(() => {
-    if (!sessions.value.length) return 'n/a';
+    if (!sessions.value.length) return translate('common.notAvailable');
     let total = 0;
     for (const session of sessions.value) {
       total += session.sessionDurationSeconds ?? 0;
@@ -151,11 +187,11 @@ const createDashboardStore = () => {
 
   const activeSessions = computed(() => {
     const value = numberOrNa(readLiveStat('active_sessions', 'activeSessions'));
-    return value === 'n/a' ? '0' : value;
+    return value ?? '0';
   });
   const eventsPerMinute = computed(() => {
     const value = numberOrNa(readLiveStat('events_per_minute', 'eventsPerMinute'));
-    return value === 'n/a' ? '0' : value;
+    return value ?? '0';
   });
   const anomalyRate = computed(() =>
     formatPercent(
@@ -172,11 +208,7 @@ const createDashboardStore = () => {
     ),
   );
   const globalRiskLevel = computed(() => {
-    const raw = readLiveStat('global_risk_level', 'globalRiskLevel');
-    if (typeof raw === 'string' && raw.trim().length > 0) {
-      return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-    }
-    return 'Low';
+    return formatRiskLevel(readLiveStat('global_risk_level', 'globalRiskLevel'));
   });
 
   // Selection helpers resolve the active anomaly and its matching session detail.
@@ -222,7 +254,8 @@ const createDashboardStore = () => {
 
   // Initial analytics loaders fetch tables and aggregate counts from the REST API.
   const loadAnalytics = async () => {
-    analyticsLoading.value = true;
+    setLiveUpdate();
+    if (!hasLoadedOnce) analyticsLoading.value = true;
     analyticsError.value = '';
 
     try {
@@ -245,7 +278,7 @@ const createDashboardStore = () => {
         }
       }
     } catch {
-      analyticsError.value = 'Unable to load analytics data. Check the API service.';
+      analyticsError.value = translate('dashboardState.errors.analyticsLoad');
     } finally {
       analyticsLoading.value = false;
     }
@@ -319,7 +352,8 @@ const createDashboardStore = () => {
 
   // Stats loader hydrates the live overview counters and trend forecast panel.
   const loadStats = async () => {
-    commandCenterLoading.value = true;
+    setLiveUpdate();
+    if (!hasLoadedOnce) commandCenterLoading.value = true;
     statsError.value = '';
 
     try {
@@ -362,21 +396,22 @@ const createDashboardStore = () => {
       dropOffs.value = dropoffsResponse?.data ?? commandCenterData?.dropOffs ?? null;
       pathDeviations.value = pathsResponse?.data ?? commandCenterData?.pathDeviations ?? null;
     } catch {
-      statsError.value = 'Unable to load live stats.';
+      statsError.value = translate('dashboardState.errors.liveStatsLoad');
     } finally {
       commandCenterLoading.value = false;
     }
   };
 
   const loadActiveSessions = async () => {
-    activeSessionsLoading.value = true;
+    setLiveUpdate();
+    if (!hasLoadedOnce) activeSessionsLoading.value = true;
     activeSessionsError.value = '';
 
     try {
       const response = await getActiveSessions({ limit: 60 });
       activeSessionRows.value = response.data ?? [];
     } catch {
-      activeSessionsError.value = 'Unable to load active sessions.';
+      activeSessionsError.value = translate('dashboardState.errors.activeSessionsLoad');
     } finally {
       activeSessionsLoading.value = false;
     }
@@ -417,7 +452,8 @@ const createDashboardStore = () => {
   };
 
   const loadStatsSummary = async () => {
-    statsSummaryLoading.value = true;
+    setLiveUpdate();
+    if (!hasLoadedOnce) statsSummaryLoading.value = true;
     try {
       const response = await getStatsSummary();
       statsSummary.value = response.data ?? null;
@@ -429,7 +465,8 @@ const createDashboardStore = () => {
   };
 
   const loadHealth = async () => {
-    healthLoading.value = true;
+    setLiveUpdate();
+    if (!hasLoadedOnce) healthLoading.value = true;
     try {
       const response = await getHealth();
       healthStatus.value = response.data ?? null;
@@ -444,7 +481,7 @@ const createDashboardStore = () => {
   const loadUserInsights = async () => {
     const insuredId = insuredIdInput.value.trim();
     if (!insuredId) {
-      userError.value = 'Enter an insured ID to load insights.';
+      userError.value = translate('dashboardState.errors.insuredRequired');
       return;
     }
 
@@ -469,7 +506,7 @@ const createDashboardStore = () => {
       activeAnomaly.value = active;
 
       if (!risk && !next && !active) {
-        userError.value = 'No data found for this insured.';
+        userError.value = translate('dashboardState.errors.insuredNotFound');
       }
     } finally {
       userLoading.value = false;
@@ -596,7 +633,7 @@ const createDashboardStore = () => {
   const generateExplanation = async () => {
     const selected = selectedAnomaly.value;
     if (!selected || selected.id == null) {
-      explanationError.value = 'This live alert has not been persisted yet. Retry in a moment.';
+      explanationError.value = translate('dashboardState.errors.liveAlertPending');
       return;
     }
 
@@ -614,16 +651,16 @@ const createDashboardStore = () => {
         );
 
       if (!response.data) {
-        explanationError.value = 'The API returned no explanation for this anomaly.';
+        explanationError.value = translate('dashboardState.errors.explanationMissing');
       }
     } catch {
-      explanationError.value = 'Unable to explain this anomaly right now.';
+      explanationError.value = translate('dashboardState.errors.explanationLoad');
     } finally {
       explanationLoading.value = false;
     }
   };
 
-  // Bridge live STOMP alerts from Pinia into local anomaly/session state.
+// Bridge live STOMP alerts from Pinia into local anomaly/session state.
   let lastHandledAlertKey = '';
   watch(streamLatestKey, () => {
     const key = streamLatestKey.value;
@@ -638,22 +675,24 @@ const createDashboardStore = () => {
     try {
       liveStatsStream = new EventSource(getLiveStatsStreamUrl());
     } catch {
-      statsError.value = 'Unable to connect to live stats stream.';
+      statsError.value = translate('dashboardState.errors.liveStatsStreamConnect');
       return;
     }
 
-    liveStatsStream.addEventListener('stats', (event) => {
+liveStatsStream.addEventListener('stats', (event) => {
+      setLiveUpdate();
       try {
         const stats = JSON.parse(event.data);
         liveStats.value = stats;
         lastUpdated.value = new Date();
         eventsSinceLoad.value += 1;
       } catch {
-        statsError.value = 'Failed to parse live stats.';
+        statsError.value = translate('dashboardState.errors.liveStatsParse');
       }
     });
 
-    liveStatsStream.addEventListener('refresh', (event) => {
+liveStatsStream.addEventListener('refresh', (event) => {
+      setLiveUpdate();
       const refreshTarget = resolveRefreshTarget(event.data);
       if (!refreshTarget) {
         return;
@@ -679,7 +718,7 @@ const createDashboardStore = () => {
 
     liveStatsStream.onerror = () => {
       // It will auto-reconnect
-      console.warn('Live stats stream interrupted.');
+      console.warn(translate('dashboardState.logs.liveStatsInterrupted'));
     };
   };
 
@@ -690,6 +729,7 @@ const createDashboardStore = () => {
 
   // Streamed alerts are merged into memory and surfaced to the UI as a temporary toast.
   const handleStreamAlert = (event: AnomalyEventDto) => {
+    setLiveUpdate();
     anomalies.value = upsertNewest(anomalies.value, event, COLLECTION_LIMIT);
     latestStreamAlert.value = event;
     scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
@@ -722,7 +762,7 @@ const createDashboardStore = () => {
     if (started) return;
     started = true;
 
-    void loadAnalytics();
+    void loadAnalytics().then(() => { hasLoadedOnce = true; });
     void loadStats();
     void loadStatsSummary();
     void loadHealth();
@@ -732,9 +772,10 @@ const createDashboardStore = () => {
     
     // Keep a low-frequency fallback refresh in case a tab misses live events.
     refreshInterval = window.setInterval(() => {
+      setLiveUpdate();
       void loadStatsSummary();
-    void loadHealth();
-    scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
+      void loadHealth();
+      scheduleRefresh({ analytics: true, stats: true, activeSessions: true });
     }, FULL_REFRESH_FALLBACK_MS);
   };
 
@@ -883,7 +924,7 @@ const toNumber = (value: unknown) => {
 
 const numberOrNa = (value: unknown) => {
   const parsed = toNumber(value);
-  return parsed == null ? 'n/a' : parsed.toLocaleString('en-GB');
+  return parsed == null ? null : formatNumber(parsed);
 };
 
 const toRecord = (value: unknown): Record<string, unknown> | null => {

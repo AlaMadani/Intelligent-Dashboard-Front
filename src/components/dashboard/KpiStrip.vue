@@ -33,7 +33,8 @@
 
 <script setup lang="ts">
 // KPI cards are derived from a small set of live counters passed in by the overview page.
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, shallowRef } from 'vue';
+import { useI18n } from 'vue-i18n';
 import SkeletonCard from './SkeletonCard.vue';
 
 const props = defineProps<{
@@ -45,10 +46,12 @@ const props = defineProps<{
   lastUpdated?: Date | null;
 }>();
 
+const { t } = useI18n();
+
 const animationTrigger = ref(false);
-const showSkeleton = computed(
-  () => !props.lastUpdated && (!props.eventsSinceLoad || props.eventsSinceLoad === 0),
-);
+const hasData = shallowRef(false);
+watch(() => props.lastUpdated, (v) => { if (v) hasData.value = true; }, { immediate: true });
+const showSkeleton = computed(() => !hasData.value);
 
 // Briefly animate KPI changes whenever new live events have been processed.
 watch(
@@ -64,32 +67,32 @@ watch(
 // Card descriptors keep the template small while pairing each metric with copy and iconography.
 const cards = computed(() => [
   {
-    label: 'Active sessions',
+    label: t('kpiStrip.activeSessions.label'),
     value: props.activeSessions,
-    meta: 'Current Redis session buffers',
+    meta: t('kpiStrip.activeSessions.meta'),
     icon: 'motion_photos_on',
-    tooltip: 'Number of sessions currently being tracked in Redis. These are open/in-progress user sessions that have not yet ended.',
+    tooltip: t('kpiStrip.activeSessions.tooltip'),
   },
   {
-    label: 'Current anomaly rate',
+    label: t('kpiStrip.anomalyRate.label'),
     value: props.anomalyRate,
-    meta: 'Live anomaly pressure from the worker',
+    meta: t('kpiStrip.anomalyRate.meta'),
     icon: 'notification_important',
-    tooltip: 'Ratio of anomaly alerts to total events in the last hour. A higher rate indicates elevated risk across the platform.',
+    tooltip: t('kpiStrip.anomalyRate.tooltip'),
   },
   {
-    label: 'Global risk level',
+    label: t('kpiStrip.globalRisk.label'),
     value: props.globalRiskLevel,
-    meta: 'Platform-wide posture from Redis stats',
+    meta: t('kpiStrip.globalRisk.meta'),
     icon: 'shield',
-    tooltip: 'Overall platform risk posture derived from anomaly rate, KO rate, and recent alert volume. LOW / MEDIUM / HIGH.',
+    tooltip: t('kpiStrip.globalRisk.tooltip'),
   },
   {
-    label: 'Events per minute',
+    label: t('kpiStrip.eventsPerMinute.label'),
     value: props.eventsPerMinute,
-    meta: 'Rolling 60 second behavior throughput',
+    meta: t('kpiStrip.eventsPerMinute.meta'),
     icon: 'timeline',
-    tooltip: 'Average number of audit events processed per minute. Helps gauge platform traffic volume and detect sudden drops or spikes.',
+    tooltip: t('kpiStrip.eventsPerMinute.tooltip'),
   },
 ]);
 </script>
@@ -97,10 +100,15 @@ const cards = computed(() => [
 <style scoped>
 /* KPI card header, accent, and value-change animation styling. */
 .neo-kpis {
-  --kpi-card-color-1: var(--neo-accent);
-  --kpi-card-color-2: var(--neo-warm);
-  --kpi-card-color-3: var(--neo-danger);
-  --kpi-card-color-4: #617ca8;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin: 18px 0;
+  padding: 16px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(16, 32, 43, 0.06);
 }
 
 .neo-kpi-card {
@@ -114,6 +122,7 @@ const cards = computed(() => [
     box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     background 0.2s ease;
   cursor: default;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .neo-kpi-card:hover {

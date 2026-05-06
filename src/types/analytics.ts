@@ -9,6 +9,33 @@ export type DashboardView =
   | 'forecasts'
   | 'forecast-series';
 
+export type AnomalyTierFilter =
+  | 'TIER1'
+  | 'TIER2'
+  | 'TIER3'
+  | 'ML_ERROR'
+  | 'SESSION_RUNTIME';
+
+export interface ListSessionsParams {
+  insuredId?: string;
+  from?: string;
+  to?: string;
+  isAnomaly?: boolean;
+  signature?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface ListAnomalyEventsParams {
+  insuredId?: string;
+  from?: string;
+  to?: string;
+  tier?: AnomalyTierFilter;
+  type?: string;
+  page?: number;
+  size?: number;
+}
+
 export interface FeatureContributionDto {
   feature: string;
   importance?: number | null;

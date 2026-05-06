@@ -224,7 +224,7 @@ import ClusterMixPanel from './ClusterMixPanel.vue';
 import DropOffsPanel from './DropOffsPanel.vue';
 import PathDeviationsPanel from './PathDeviationsPanel.vue';
 import { anomalyEventKey, formatTimelineLabel, mergeCountriesWithSessions } from 'src/utils/dashboard';
-import { formatDate, formatDurationSeconds, formatScore } from 'src/utils/format';
+import { formatDate, formatDurationSeconds, formatNumber, formatScore } from 'src/utils/format';
 
 const props = defineProps<{
   sessions: SessionAnalysisDto[];
@@ -249,7 +249,7 @@ const anomalyPreview = computed(() => props.anomalies.slice(0, 5));
 const tierMix = computed(() => {
   const buckets = new Map<string, number>();
   for (const event of props.anomalies) {
-    const label = event.anomalyTier || 'UNKNOWN';
+    const label = event.anomalyTier || t('common.unknown');
     buckets.set(label, (buckets.get(label) ?? 0) + 1);
   }
   const total = props.anomalies.length || 1;
@@ -264,7 +264,7 @@ const tierMixSegments = computed(() => {
   return tierMix.value.map((item) => ({
     label: item.label,
     value: item.count,
-    display: `${item.count} / ${item.percent}%`,
+    display: `${formatNumber(item.count)} / ${formatNumber(item.percent, { maximumFractionDigits: 0 })}%`,
     color: ANOMALY_TIER_COLORS[item.label] ?? FALLBACK_ANOMALY_TIER_COLOR,
   }));
 });
@@ -272,7 +272,7 @@ const tierMixSegments = computed(() => {
 const topAnomalyTypes = computed(() => {
   const counts = new Map<string, number>();
   for (const event of props.anomalies) {
-    const label = event.anomalyType || 'UNKNOWN';
+    const label = event.anomalyType || t('common.unknown');
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
   return Array.from(counts.entries())
@@ -338,15 +338,15 @@ const trendStatsPayload = computed(() => props.trendStats?.payload ?? null);
 const formatForecastStatus = (status: string) => {
   switch (status) {
     case 'ABOVE_FORECAST':
-      return 'Above forecast';
+      return t('analyticsSection.forecastStatus.aboveForecast');
     case 'BELOW_FORECAST':
-      return 'Below forecast';
+      return t('analyticsSection.forecastStatus.belowForecast');
     case 'WITHIN_BOUNDS':
-      return 'Within bounds';
+      return t('analyticsSection.forecastStatus.withinBounds');
     case 'NO_ACTIVITY':
-      return 'No activity';
+      return t('analyticsSection.forecastStatus.noActivity');
     case 'NO_BASELINE':
-      return 'No baseline';
+      return t('analyticsSection.forecastStatus.noBaseline');
     default:
       return status.replaceAll('_', ' ').toLowerCase();
   }
@@ -354,10 +354,10 @@ const formatForecastStatus = (status: string) => {
 
 const buildForecastDisplay = (actual: number, delta: number | null, status: string) => {
   if (delta != null) {
-    const roundedActual = Math.round(actual);
+    const roundedActual = formatNumber(Math.round(actual), { maximumFractionDigits: 0 });
     const roundedDelta = Math.round(delta);
     const deltaPrefix = roundedDelta > 0 ? '+' : '';
-    return `${roundedActual} (${deltaPrefix}${roundedDelta})`;
+    return `${roundedActual} (${deltaPrefix}${formatNumber(roundedDelta, { maximumFractionDigits: 0 })})`;
   }
   return formatForecastStatus(status);
 };
@@ -377,10 +377,19 @@ const trendSpikeBars = computed(() => {
           typeof record.actionLabel === 'string' && record.actionLabel
             ? record.actionLabel
             : t('analyticsSection.actionFallback', {
-                id: actionId != null ? actionId.toFixed(0) : t('common.notAvailable'),
+                id:
+                  actionId != null
+                    ? formatNumber(actionId, { maximumFractionDigits: 0 })
+                    : t('common.notAvailable'),
               });
         const value = toNumber(record.predictedCount) ?? 0;
-        return [{ label, value, display: value.toFixed(0) }];
+        return [
+          {
+            label,
+            value,
+            display: formatNumber(value, { maximumFractionDigits: 0 }),
+          },
+        ];
       })
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
@@ -436,9 +445,12 @@ const trendSpikeBars = computed(() => {
   return Object.entries(record as Record<string, { predicted?: number; spike?: boolean }>)
     .filter(([, value]) => value && value.spike)
     .map(([label, value]) => ({
-      label: `Action ${label}`,
+      label: t('analyticsSection.actionLabelFallback', { label }),
       value: value.predicted ?? 0,
-      display: value.predicted?.toFixed(0) ?? '0',
+      display:
+        value.predicted != null
+          ? formatNumber(value.predicted, { maximumFractionDigits: 0 })
+          : '0',
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
@@ -493,7 +505,10 @@ const averageDuration = computed(() => {
 const averageActionVolume = computed(() => {
   if (!props.sessions.length) return t('common.notAvailable');
   const total = props.sessions.reduce((sum, session) => sum + (session.totalEvents ?? 0), 0);
-  return (total / props.sessions.length).toFixed(1);
+  return formatNumber(total / props.sessions.length, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
 });
 
 const latestAnomalyScore = computed(() =>

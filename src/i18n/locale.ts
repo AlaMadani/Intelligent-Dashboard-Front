@@ -1,6 +1,7 @@
 // Resolve app locale from explicit config or browser region/language hints.
 export const DEFAULT_LOCALE = 'en-US';
 export const DEFAULT_FALLBACK_LOCALE = 'en-US';
+const SUPPORTED_LOCALES = new Set(['en-US', 'ar', 'fr-FR', 'es-ES']);
 
 const LOCALE_ALIASES: Record<string, string> = {
   en: 'en-US',
@@ -99,15 +100,17 @@ const readBrowserCandidates = () => {
   return [...fromList, ...fallback];
 };
 
-const detectLocaleByRegion = () => {
+const detectLocaleFromBrowser = () => {
   const candidates = readBrowserCandidates();
   for (const candidate of candidates) {
     const normalized = normalizeLocale(candidate);
-    if (!normalized) continue;
     try {
-      const locale = new Intl.Locale(normalized);
+      const locale = new Intl.Locale(normalized ?? candidate);
       const regionMatch = localeFromRegion(locale.region?.toUpperCase());
       if (regionMatch) return regionMatch;
+      if (normalized && SUPPORTED_LOCALES.has(normalized)) {
+        return normalized;
+      }
       const languageMatch = LANGUAGE_TO_LOCALE[locale.language];
       if (languageMatch) return languageMatch;
     } catch {
@@ -133,8 +136,7 @@ export const resolveAppLocale = (
   }
 
   return {
-    locale: detectLocaleByRegion() ?? DEFAULT_LOCALE,
+    locale: detectLocaleFromBrowser() ?? DEFAULT_LOCALE,
     fallbackLocale: normalizedFallback,
   };
 };
-

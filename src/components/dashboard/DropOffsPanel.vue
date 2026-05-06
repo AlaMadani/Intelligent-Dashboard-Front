@@ -2,13 +2,13 @@
   <article class="neo-analytics-panel">
     <div class="neo-analytics-head">
       <div>
-        <h3>Session Drop-offs</h3>
-        <p>Where users abandon their journey most frequently</p>
+        <h3>{{ t('dropOffsPanel.title') }}</h3>
+        <p>{{ t('dropOffsPanel.subtitle') }}</p>
       </div>
     </div>
 
     <div v-if="!dropOffPoints.length" class="neo-analytics-empty">
-      No drop-off data available yet.
+      {{ t('dropOffsPanel.empty') }}
     </div>
 
     <div v-else class="neo-dropoffs-container">
@@ -30,7 +30,9 @@
       <div class="neo-dropoffs-legend">
         <div v-for="point in dropOffPoints" :key="point.step" class="neo-dropoff-legend-row">
           <span class="neo-dropoff-legend-label">{{ point.step }}</span>
-          <span class="neo-dropoff-legend-value">{{ point.count }} users</span>
+          <span class="neo-dropoff-legend-value">
+            {{ t('dropOffsPanel.usersLabel', { count: point.count }) }}
+          </span>
         </div>
       </div>
     </div>
@@ -39,6 +41,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { SessionAnalysisDto } from 'src/types/analytics';
 
 const props = defineProps<{
@@ -46,6 +49,8 @@ const props = defineProps<{
   sessions?: SessionAnalysisDto[];
   flat?: boolean;
 }>();
+
+const { t } = useI18n();
 
 const toNumber = (value: unknown) => {
   if (typeof value === 'number') return value;
@@ -75,7 +80,7 @@ const readStepLabel = (item: Record<string, unknown>, index: number) => {
       return candidate;
     }
   }
-  return `Step ${index + 1}`;
+  return t('dropOffsPanel.stepFallback', { index: index + 1 });
 };
 
 const dropOffPoints = computed(() => {
@@ -129,9 +134,9 @@ const buildFallbackDropOffs = (sessions: SessionAnalysisDto[] | undefined): Arra
   const total = sessions.length;
   const abruptEndings = sessions.filter((s) => s.endedAbruptly).length;
   return [
-    { step: 'Session start', count: total },
-    { step: 'Completed normally', count: total - abruptEndings },
-    { step: 'Ended abruptly', count: abruptEndings },
+    { step: t('dropOffsPanel.fallbackSessionStart'), count: total },
+    { step: t('dropOffsPanel.fallbackCompletedNormally'), count: total - abruptEndings },
+    { step: t('dropOffsPanel.fallbackEndedAbruptly'), count: abruptEndings },
   ].filter((item) => item.count > 0);
 };
 </script>

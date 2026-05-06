@@ -1,15 +1,7 @@
 // Axios boot file: configure the shared HTTP clients used across the dashboard.
 import { defineBoot } from '#q-app/wrappers';
-import axios, { type AxiosInstance } from 'axios';
+import axios from 'axios';
 import { environment } from 'src/config/environment';
-
-// Extend Vue component instances so Options API code can access both axios clients.
-declare module 'vue' {
-  interface ComponentCustomProperties {
-    $axios: AxiosInstance;
-    $api: AxiosInstance;
-  }
-}
 
 // Polyfill `global` for browser bundles (some libs expect it).
 try {

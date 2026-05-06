@@ -13,30 +13,23 @@
       </div>
     </div>
 
-    <div v-else class="neo-bar-empty">{{ emptyMessage }}</div>
+    <div v-else class="neo-bar-empty">{{ emptyMessage ?? t('barListChart.empty') }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 // Normalize incoming values into proportional bar rows for a lightweight display-only chart.
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { BarChartRow } from 'src/models/chart';
+import { formatNumber } from 'src/utils/format';
 
-// Each item describes a labeled metric rendered as a horizontal bar.
-interface ChartRow {
-  label: string;
-  value: number;
-  display?: string;
-}
+const props = defineProps<{
+  items: BarChartRow[];
+  emptyMessage?: string;
+}>();
 
-const props = withDefaults(
-  defineProps<{
-    items: ChartRow[];
-    emptyMessage?: string;
-  }>(),
-  {
-    emptyMessage: 'No chart data available.',
-  },
-);
+const { t } = useI18n();
 
 // Scale each value relative to the current maximum so the list reads like a mini chart.
 const rows = computed(() => {
@@ -44,7 +37,7 @@ const rows = computed(() => {
   return props.items.map((item) => ({
     ...item,
     width: max > 0 ? Math.max(10, Math.round((item.value / max) * 100)) : 0,
-    display: item.display ?? item.value.toLocaleString('en-GB'),
+    display: item.display ?? formatNumber(item.value),
   }));
 });
 </script>

@@ -3,17 +3,15 @@
   <section id="anomalies" class="neo-section neo-alerts">
     <div class="neo-section-header">
       <div>
-        <div class="neo-section-title">Anomaly events</div>
-        <div class="neo-section-subtitle">
-          Session-close alerts confirmed by the classifier and rule engine.
-        </div>
+        <div class="neo-section-title">{{ t('anomalyEventsSection.title') }}</div>
+        <div class="neo-section-subtitle">{{ t('anomalyEventsSection.subtitle') }}</div>
       </div>
       <div class="neo-section-actions">
         <q-input
           dense
           outlined
           v-model="searchModel"
-          placeholder="Search anomalies"
+          :placeholder="t('anomalyEventsSection.searchPlaceholder')"
           class="neo-search"
         >
           <template #append>
@@ -22,7 +20,7 @@
         </q-input>
         <div class="neo-live-pill" :class="{ 'is-loading': loading }">
           <span class="neo-live-dot"></span>
-          Live sync
+          {{ t('anomalyEventsSection.liveSync') }}
         </div>
       </div>
     </div>
@@ -43,7 +41,7 @@
       <template #body-cell-anomalyTier="props">
         <q-td :props="props">
           <q-badge :color="tierColor(props.row.anomalyTier)" text-color="white" class="neo-badge">
-            {{ props.row.anomalyTier || 'UNKNOWN' }}
+            {{ props.row.anomalyTier || t('common.unknown') }}
           </q-badge>
         </q-td>
       </template>
@@ -79,6 +77,7 @@
 <script setup lang="ts">
 // This component keeps the anomaly grid presentational while delegating state upward.
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { QTableColumn } from 'quasar';
 import type { AnomalyEventDto } from 'src/types/analytics';
 import { anomalyEventKey } from 'src/utils/dashboard';
@@ -96,6 +95,8 @@ const emit = defineEmits<{
   (event: 'update:search', value: string): void;
   (event: 'select', row: AnomalyEventDto): void;
 }>();
+
+const { t } = useI18n();
 
 // Mirror the search prop through a computed setter so the table updates parent state.
 const searchModel = computed({
@@ -123,20 +124,20 @@ const onRowClick = (_event: Event, row: AnomalyEventDto) => {
 
 // Column metadata defines the anomaly table structure and sorting behavior.
 const columns: QTableColumn<AnomalyEventDto>[] = [
-  { name: 'anomalyTier', label: 'Tier', field: 'anomalyTier', align: 'left', sortable: true },
-  { name: 'anomalyType', label: 'Type', field: 'anomalyType', align: 'left', sortable: true },
+  { name: 'anomalyTier', label: t('anomalyEventsSection.columns.tier'), field: 'anomalyTier', align: 'left', sortable: true },
+  { name: 'anomalyType', label: t('anomalyEventsSection.columns.type'), field: 'anomalyType', align: 'left', sortable: true },
   {
     name: 'typeConfidence',
-    label: 'Type confidence',
+    label: t('anomalyEventsSection.columns.typeConfidence'),
     field: 'typeConfidence',
     align: 'left',
     sortable: true,
   },
-  { name: 'insuredId', label: 'Insured', field: 'insuredId', align: 'left', sortable: true },
-  { name: 'sessionId', label: 'Session', field: 'sessionId', align: 'left' },
-  { name: 'eventId', label: 'Event', field: 'eventId', align: 'left' },
-  { name: 'anomalyScore', label: 'Score', field: 'anomalyScore', align: 'left', sortable: true },
-  { name: 'ruleType', label: 'Rule', field: 'ruleType', align: 'left' },
-  { name: 'detectedAt', label: 'Detected', field: 'detectedAt', align: 'left', sortable: true },
+  { name: 'insuredId', label: t('anomalyEventsSection.columns.insured'), field: 'insuredId', align: 'left', sortable: true },
+  { name: 'sessionId', label: t('anomalyEventsSection.columns.session'), field: 'sessionId', align: 'left' },
+  { name: 'eventId', label: t('anomalyEventsSection.columns.event'), field: 'eventId', align: 'left' },
+  { name: 'anomalyScore', label: t('anomalyEventsSection.columns.score'), field: 'anomalyScore', align: 'left', sortable: true },
+  { name: 'ruleType', label: t('anomalyEventsSection.columns.rule'), field: 'ruleType', align: 'left' },
+  { name: 'detectedAt', label: t('anomalyEventsSection.columns.detected'), field: 'detectedAt', align: 'left', sortable: true },
 ];
 </script>

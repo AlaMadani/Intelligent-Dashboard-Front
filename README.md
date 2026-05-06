@@ -41,17 +41,29 @@ This frontend is not standalone. It expects supporting services to be available 
 
 ### Primary integrations
 
-- **API service** at `http://localhost:8081`
+- **API service** via `VITE_API_BASE_URL` (default: `http://localhost:8081`)
   - REST endpoints for sessions, anomaly events, risk profiles, stats, and explanations
   - **Dashboard snapshots** at `GET /api/analytics/dashboard/{view}` (Redis payloads written by the Data Processor: `alerts`, `risky-sessions`, `cluster-mix`, `drop-offs`, `path-deviations`, `forecasts`, `forecast-series`)
   - **Live session insight** at `GET /api/analytics/sessions/{insuredId}/{sessionId}/insight` when the session is still open (Redis `session:insight:…`)
   - Server-Sent Events streams for live anomalies and live stats
-- **Logstash / logging endpoint** at `http://localhost:5001`
+- **Logstash / logging endpoint** via `VITE_LOGGER_ENDPOINT` (default: `http://localhost:5001`)
   - receives uncaught Vue error payloads from the frontend boot logger
-- **Grafana** shortcut at `http://localhost:3000/dashboards`
-- **Kibana** shortcut at `http://localhost:5601/app/kibana_overview#/`
+- **Grafana** shortcut via `VITE_GRAFANA_DASHBOARDS_URL` (default: `http://localhost:3000/dashboards`)
+- **Kibana** shortcut via `VITE_KIBANA_OVERVIEW_URL` (default: `http://localhost:5601/app/kibana_overview#/`)
 
 If those services are not running, the app will still load, but parts of the UI will show empty states or error banners instead of live data.
+
+### Environment setup
+
+Copy `.env.example` to `.env` and override the values that differ in your environment.
+
+- `VITE_API_BASE_URL`
+- `VITE_LOGGER_ENDPOINT`
+- `VITE_LOGGER_APPLICATION`
+- `VITE_GRAFANA_DASHBOARDS_URL`
+- `VITE_KIBANA_OVERVIEW_URL`
+- `VITE_I18N_LOCALE`
+- `VITE_I18N_FALLBACK_LOCALE`
 
 ---
 

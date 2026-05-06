@@ -2,14 +2,12 @@
   <section class="neo-section">
     <div class="neo-section-header">
       <div>
-        <div class="neo-section-title">Live session radar</div>
-        <div class="neo-section-subtitle">
-          Active Redis-backed sessions with live AI risk, context tags, and predicted next actions.
-        </div>
+        <div class="neo-section-title">{{ t('liveSessionsSection.title') }}</div>
+        <div class="neo-section-subtitle">{{ t('liveSessionsSection.subtitle') }}</div>
       </div>
       <div class="neo-session-radar-summary">
         <div class="neo-session-radar-count">{{ filteredSessions.length }}</div>
-        <div class="neo-session-radar-copy">active windows</div>
+        <div class="neo-session-radar-copy">{{ t('liveSessionsSection.activeWindows') }}</div>
       </div>
     </div>
 
@@ -18,7 +16,7 @@
     </div>
     <q-banner v-else-if="error" class="neo-banner" dense>{{ error }}</q-banner>
     <div v-else-if="!filteredSessions.length" class="neo-placeholder">
-      No active sessions currently match the live stream filters.
+      {{ t('liveSessionsSection.empty') }}
     </div>
 
     <div v-else class="neo-session-radar-grid">
@@ -31,7 +29,9 @@
         <div class="neo-session-card-head">
           <div>
             <div class="neo-session-id">{{ session.sessionId }}</div>
-            <div class="neo-session-meta">{{ session.insuredId }} / {{ session.persona || 'persona n/a' }}</div>
+            <div class="neo-session-meta">
+              {{ session.insuredId }} / {{ session.persona || t('liveSessionsSection.personaUnavailable') }}
+            </div>
           </div>
           <q-knob
             :model-value="safeRisk(session.riskScore)"
@@ -61,31 +61,34 @@
 
         <div class="neo-session-metrics">
           <div class="neo-session-metric">
-            <span>Route</span>
-            <strong>{{ session.firstRoute || 'n/a' }} -> {{ session.lastRoute || 'n/a' }}</strong>
+            <span>{{ t('liveSessionsSection.labels.route') }}</span>
+            <strong>
+              {{ session.firstRoute || t('common.notAvailable') }} ->
+              {{ session.lastRoute || t('common.notAvailable') }}
+            </strong>
           </div>
           <div class="neo-session-metric">
-            <span>Events</span>
+            <span>{{ t('liveSessionsSection.labels.events') }}</span>
             <strong>{{ readableNumber(session.totalEvents) }}</strong>
           </div>
           <div class="neo-session-metric">
-            <span>Risk level</span>
-            <strong>{{ session.riskLevel || 'UNKNOWN' }}</strong>
+            <span>{{ t('liveSessionsSection.labels.riskLevel') }}</span>
+            <strong>{{ session.riskLevel || t('common.unknown') }}</strong>
           </div>
           <div class="neo-session-metric">
-            <span>Next actions</span>
+            <span>{{ t('liveSessionsSection.labels.nextActions') }}</span>
             <strong>{{ nextActionsLabel(session.nextActions) }}</strong>
           </div>
           <div class="neo-session-metric">
-            <span>Started</span>
+            <span>{{ t('liveSessionsSection.labels.started') }}</span>
             <strong>{{ readableDate(session.sessionStart) }}</strong>
           </div>
           <div class="neo-session-metric">
-            <span>Updated</span>
+            <span>{{ t('liveSessionsSection.labels.updated') }}</span>
             <strong>{{ readableDate(session.computedAt) }}</strong>
           </div>
           <div class="neo-session-metric">
-            <span>Anomaly signal</span>
+            <span>{{ t('liveSessionsSection.labels.anomalySignal') }}</span>
             <strong>{{ anomalySignal(session) }}</strong>
           </div>
         </div>
@@ -96,8 +99,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { ActiveSessionDto, NextActionScoreDto } from 'src/types/analytics';
-import { formatDate } from 'src/utils/format';
+import { formatDate, formatNumber } from 'src/utils/format';
 import SkeletonCard from './SkeletonCard.vue';
 
 const props = defineProps<{
@@ -105,6 +109,8 @@ const props = defineProps<{
   loading: boolean;
   error: string;
 }>();
+
+const { t } = useI18n();
 
 const filteredSessions = computed(() =>
   [...props.sessions].sort((left, right) => safeRisk(right.riskScore) - safeRisk(left.riskScore)),
@@ -134,12 +140,13 @@ const tagTone = (tag: string) => {
 };
 
 const readableNumber = (value: number | null | undefined) =>
-  value == null || Number.isNaN(value) ? 'n/a' : value.toLocaleString('en-GB');
+  formatNumber(value);
 
-const readableDate = (value: string | null | undefined) => (value ? formatDate(value) : 'n/a');
+const readableDate = (value: string | null | undefined) =>
+  value ? formatDate(value) : t('common.notAvailable');
 
 const nextActionsLabel = (actions?: NextActionScoreDto[] | null) => {
-  if (!actions?.length) return 'n/a';
+  if (!actions?.length) return t('common.notAvailable');
   return actions
     .slice(0, 3)
     .map((item) => item.action)
@@ -148,9 +155,13 @@ const nextActionsLabel = (actions?: NextActionScoreDto[] | null) => {
 
 const anomalySignal = (session: ActiveSessionDto) => {
   if (session.anomalyType) return session.anomalyType;
-  if (session.pathDeviationFlag || session.pathDeviation?.deviated) return 'Path deviation';
-  if (session.binaryAnomaly) return 'Binary anomaly';
-  return session.anomalyFlag ? 'Rule anomaly' : 'Observed';
+  if (session.pathDeviationFlag || session.pathDeviation?.deviated) {
+    return t('liveSessionsSection.anomalySignals.pathDeviation');
+  }
+  if (session.binaryAnomaly) return t('liveSessionsSection.anomalySignals.binaryAnomaly');
+  return session.anomalyFlag
+    ? t('liveSessionsSection.anomalySignals.ruleAnomaly')
+    : t('common.observed');
 };
 </script>
 
@@ -178,7 +189,9 @@ const anomalySignal = (session: ActiveSessionDto) => {
 .neo-session-card {
   padding: 18px;
   border-radius: 24px;
-  background: rgba(255, 250, 243, 0.9);
+  background: 
+    radial-gradient(circle at top right, rgba(227, 165, 72, 0.08), transparent 40%),
+    rgba(255, 250, 243, 0.9);
   border: var(--neo-border);
   box-shadow: var(--neo-shadow-soft);
   transition:
@@ -194,6 +207,9 @@ const anomalySignal = (session: ActiveSessionDto) => {
 .neo-session-card.is-critical {
   box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.18), 0 14px 30px rgba(220, 38, 38, 0.12);
   animation: neo-session-pulse 1.8s ease-in-out infinite;
+  background: 
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.1), transparent 40%),
+    rgba(255, 250, 243, 0.9);
 }
 
 .neo-session-card-head {

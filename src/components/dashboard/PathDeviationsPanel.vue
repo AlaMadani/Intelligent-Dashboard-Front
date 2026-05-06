@@ -2,16 +2,16 @@
   <article v-if="!flat" class="neo-analytics-panel neo-analytics-panel--wide">
     <div class="neo-analytics-head">
       <div>
-        <h3>Path Deviations</h3>
-        <p>Unusual navigation patterns detected in recent sessions</p>
+        <h3>{{ t('pathDeviationsPanel.title') }}</h3>
+        <p>{{ t('pathDeviationsPanel.subtitle') }}</p>
       </div>
       <div class="neo-analytics-chip">
-        {{ deviations.length }} deviations
+        {{ t('common.deviations', { count: deviations.length }) }}
       </div>
     </div>
 
     <div v-if="!deviations.length" class="neo-analytics-empty">
-      No path deviations detected in the last 24 hours.
+      {{ t('pathDeviationsPanel.empty') }}
     </div>
 
     <div v-else class="neo-path-deviations-feed">
@@ -35,16 +35,16 @@
           <span class="neo-path-score">{{ item.score }}</span>
         </div>
         <div class="neo-path-details">
-          <span>{{ item.sessionCount }} sessions</span>
+          <span>{{ t('pathDeviationsPanel.sessionsLabel', { count: item.sessionCount }) }}</span>
           <span>|</span>
-          <span>Confidence: {{ Math.round((1 - item.probability) * 100) }}%</span>
+          <span>{{ t('pathDeviationsPanel.confidenceLabel', { value: Math.round((1 - item.probability) * 100) }) }}</span>
         </div>
       </div>
     </div>
   </article>
   <template v-else>
     <div v-if="!deviations.length" class="neo-overview-empty">
-      No path deviations detected in the last 24 hours.
+      {{ t('pathDeviationsPanel.empty') }}
     </div>
     <div v-else class="neo-path-deviations-feed">
       <div
@@ -67,9 +67,9 @@
           <span class="neo-path-score">{{ item.score }}</span>
         </div>
         <div class="neo-path-details">
-          <span>{{ item.sessionCount }} sessions</span>
+          <span>{{ t('pathDeviationsPanel.sessionsLabel', { count: item.sessionCount }) }}</span>
           <span>|</span>
-          <span>Confidence: {{ Math.round((1 - item.probability) * 100) }}%</span>
+          <span>{{ t('pathDeviationsPanel.confidenceLabel', { value: Math.round((1 - item.probability) * 100) }) }}</span>
         </div>
       </div>
     </div>
@@ -78,11 +78,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
   data: Array<Record<string, unknown>> | null;
   flat?: boolean;
 }>();
+
+const { t } = useI18n();
 
 const toNumber = (value: unknown) => {
   if (typeof value === 'number') return value;
@@ -113,8 +116,14 @@ const deviations = computed(() => {
       );
       const sessionCount =
         toNumber(item.session_count ?? item.sessionCount ?? item.sessions ?? item.count) ?? 0;
-      const fromAction = readText(item.current_action ?? item.from_action ?? item.fromAction, 'unknown');
-      const toAction = readText(item.actual_next_action ?? item.to_action ?? item.toAction, 'unknown');
+      const fromAction = readText(
+        item.current_action ?? item.from_action ?? item.fromAction,
+        t('pathDeviationsPanel.unknown'),
+      );
+      const toAction = readText(
+        item.actual_next_action ?? item.to_action ?? item.toAction,
+        t('pathDeviationsPanel.unknown'),
+      );
 
       return [
         {
@@ -125,12 +134,12 @@ const deviations = computed(() => {
           sessionCount,
           score:
             probability < 0.01
-              ? 'CRITICAL'
+              ? t('pathDeviationsPanel.severity.critical')
               : probability < 0.05
-                ? 'HIGH'
+                ? t('pathDeviationsPanel.severity.high')
                 : probability < 0.15
-                  ? 'MEDIUM'
-                  : 'LOW',
+                  ? t('pathDeviationsPanel.severity.medium')
+                  : t('pathDeviationsPanel.severity.low'),
         },
       ];
     })

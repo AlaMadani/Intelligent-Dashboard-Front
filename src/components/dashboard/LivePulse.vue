@@ -4,12 +4,12 @@
     <div class="neo-pulse-dot" :class="statusClass"></div>
     <div class="neo-pulse-text q-ml-sm text-caption">
       <span v-if="status === 'connected'" class="text-teal-3 text-weight-medium">
-        LIVE · {{ eventsRate }} evt/min
+        {{ connectedLabel }}
       </span>
       <span v-else-if="status === 'reconnecting'" class="text-amber-4 text-weight-medium">
-        RECONNECTING...
+        {{ t('common.reconnecting') }}
       </span>
-      <span v-else class="text-red-4 text-weight-medium"> DISCONNECTED </span>
+      <span v-else class="text-red-4 text-weight-medium">{{ t('common.disconnected') }}</span>
     </div>
   </div>
 </template>
@@ -17,11 +17,14 @@
 <script setup lang="ts">
 // Compute the color treatment from the connection state passed in by the parent.
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
   status: 'connected' | 'reconnecting' | 'disconnected';
   eventsRate: number | string;
 }>();
+
+const { t } = useI18n();
 
 // CSS classes let the dot switch between connected, reconnecting, and disconnected states.
 const statusClass = computed(() => {
@@ -31,6 +34,10 @@ const statusClass = computed(() => {
     'pulse-red': props.status === 'disconnected',
   };
 });
+
+const connectedLabel = computed(() =>
+  t('common.eventsPerMinute', { rate: props.eventsRate }),
+);
 </script>
 
 <style scoped lang="scss">

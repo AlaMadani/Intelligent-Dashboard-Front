@@ -2,17 +2,15 @@
   <section id="sessions" class="neo-section neo-alerts">
     <div class="neo-section-header">
       <div>
-        <div class="neo-section-title">Session analysis</div>
-        <div class="neo-section-subtitle">
-          ML-enriched session summaries with behavioral statistics.
-        </div>
+        <div class="neo-section-title">{{ t('sessionsSection.title') }}</div>
+        <div class="neo-section-subtitle">{{ t('sessionsSection.subtitle') }}</div>
       </div>
       <div class="neo-section-actions">
         <q-input
           dense
           outlined
           v-model="searchModel"
-          placeholder="Search sessions"
+          :placeholder="t('sessionsSection.searchPlaceholder')"
           class="neo-search"
         >
           <template #append>
@@ -109,6 +107,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { QTableColumn } from 'quasar';
 import type { SessionAnalysisDto } from 'src/types/analytics';
 import { formatDate, formatDurationSeconds, formatScore, formatPercent } from 'src/utils/format';
@@ -124,6 +123,8 @@ const emit = defineEmits<{
   (event: 'update:search', value: string): void;
 }>();
 
+const { t } = useI18n();
+
 const searchModel = computed({
   get: () => props.search,
   set: (value: string) => emit('update:search', value),
@@ -131,18 +132,18 @@ const searchModel = computed({
 
 const columns: QTableColumn<SessionAnalysisDto>[] = [
   { name: 'status', label: '', field: 'isAnomaly', align: 'center' },
-  { name: 'insuredId', label: 'Insured', field: 'insuredId', align: 'left', sortable: true },
-  { name: 'sessionId', label: 'Session', field: 'sessionId', align: 'left' },
-  { name: 'startTime', label: 'Start', field: 'startTime', align: 'left', sortable: true },
-  { name: 'sessionDurationSeconds', label: 'Dur', field: 'sessionDurationSeconds', align: 'right' },
-  { name: 'totalEvents', label: 'Evt', field: 'totalEvents', align: 'right', sortable: true },
-  { name: 'uniqueActions', label: 'Uniq', field: 'uniqueActions', align: 'right' },
-  { name: 'koRate', label: 'KO', field: 'koRate', align: 'right' },
-  { name: 'isoScore', label: 'Score', field: 'isoScore', align: 'right', sortable: true },
-  { name: 'risk', label: 'Risk', field: 'ensembleRiskScore', align: 'left' },
-  { name: 'typeConfidence', label: 'Conf', field: 'typeConfidence', align: 'right' },
-  { name: 'anomalyType', label: 'Type', field: 'anomalyType', align: 'left' },
-  { name: 'tags', label: 'Tags', field: 'sessionId', align: 'left' },
+  { name: 'insuredId', label: t('sessionsSection.columns.insured'), field: 'insuredId', align: 'left', sortable: true },
+  { name: 'sessionId', label: t('sessionsSection.columns.session'), field: 'sessionId', align: 'left' },
+  { name: 'startTime', label: t('sessionsSection.columns.start'), field: 'startTime', align: 'left', sortable: true },
+  { name: 'sessionDurationSeconds', label: t('sessionsSection.columns.duration'), field: 'sessionDurationSeconds', align: 'right' },
+  { name: 'totalEvents', label: t('sessionsSection.columns.events'), field: 'totalEvents', align: 'right', sortable: true },
+  { name: 'uniqueActions', label: t('sessionsSection.columns.unique'), field: 'uniqueActions', align: 'right' },
+  { name: 'koRate', label: t('sessionsSection.columns.ko'), field: 'koRate', align: 'right' },
+  { name: 'isoScore', label: t('sessionsSection.columns.score'), field: 'isoScore', align: 'right', sortable: true },
+  { name: 'risk', label: t('sessionsSection.columns.risk'), field: 'ensembleRiskScore', align: 'left' },
+  { name: 'typeConfidence', label: t('sessionsSection.columns.confidence'), field: 'typeConfidence', align: 'right' },
+  { name: 'anomalyType', label: t('sessionsSection.columns.type'), field: 'anomalyType', align: 'left' },
+  { name: 'tags', label: t('sessionsSection.columns.tags'), field: 'sessionId', align: 'left' },
 ];
 
 const safeRiskScore = (value: number | null | undefined) => {
@@ -163,10 +164,10 @@ const sessionRiskScore = (session: SessionAnalysisDto) =>
 const liveContextTags = (session: SessionAnalysisDto) => {
   if (session.contextTags?.length) return session.contextTags.slice(0, 4);
   const tags: string[] = [];
-  if (session.ipChanged) tags.push('IP Changed');
-  if ((session.koRate ?? 0) >= 0.3) tags.push('High KO');
+  if (session.ipChanged) tags.push(t('sessionsSection.tags.ipChanged'));
+  if ((session.koRate ?? 0) >= 0.3) tags.push(t('sessionsSection.tags.highKo'));
   if (session.anomalyType?.toLowerCase().includes('geo') || session.ruleType?.toLowerCase().includes('geo')) {
-    tags.push('Geo-Jump');
+    tags.push(t('sessionsSection.tags.geoJump'));
   }
   return tags;
 };

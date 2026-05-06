@@ -14,36 +14,11 @@ import type {
   StatsSummaryDto,
   UserRiskProfileDto,
   UserDashboardDto,
+  ListSessionsParams,
+  ListAnomalyEventsParams,
 } from 'src/types/analytics';
 import type { JsonValue } from 'src/types/api';
 import { unwrapEnvelope } from 'src/services/http';
-
-export interface ListSessionsParams {
-  insuredId?: string;
-  from?: string;
-  to?: string;
-  isAnomaly?: boolean;
-  signature?: string;
-  page?: number;
-  size?: number;
-}
-
-export type AnomalyTierFilter =
-  | 'TIER1'
-  | 'TIER2'
-  | 'TIER3'
-  | 'ML_ERROR'
-  | 'SESSION_RUNTIME';
-
-export interface ListAnomalyEventsParams {
-  insuredId?: string;
-  from?: string;
-  to?: string;
-  tier?: AnomalyTierFilter;
-  type?: string;
-  page?: number;
-  size?: number;
-}
 
 export const listSessions = async (
   params: ListSessionsParams = {},

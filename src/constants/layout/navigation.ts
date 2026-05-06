@@ -1,11 +1,5 @@
 // Navigation metadata extracted from layout component implementation.
-export interface NavigationItemConfig {
-  id: string;
-  route: string;
-  icon: string;
-  labelKey: string;
-  captionKey: string;
-}
+import type { NavigationItemConfig } from 'src/types/navigation';
 
 export const LAYOUT_NAVIGATION_ITEMS: NavigationItemConfig[] = [
   {
@@ -51,4 +45,3 @@ export const LAYOUT_NAVIGATION_ITEMS: NavigationItemConfig[] = [
     icon: 'insights',
   },
 ];
-
