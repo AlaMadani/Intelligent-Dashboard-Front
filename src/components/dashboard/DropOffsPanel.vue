@@ -157,8 +157,8 @@ const buildFallbackDropOffs = (sessions: SessionAnalysisDto[] | undefined): Arra
 
 .neo-dropoff-step {
   height: 40px;
-  background: linear-gradient(90deg, var(--neo-accent), var(--neo-accent-soft));
-  border-radius: 4px;
+  background: linear-gradient(90deg, var(--neo-accent), var(--neo-info));
+  border-radius: var(--neo-radius-control);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -183,7 +183,7 @@ const buildFallbackDropOffs = (sessions: SessionAnalysisDto[] | undefined): Arra
   right: -50px;
   font-size: 11px;
   font-weight: 700;
-  color: var(--neo-danger);
+  color: var(--neo-critical-contrast);
 }
 
 .neo-dropoffs-legend {
@@ -198,7 +198,7 @@ const buildFallbackDropOffs = (sessions: SessionAnalysisDto[] | undefined): Arra
   justify-content: space-between;
   font-size: 12px;
   padding: 4px 0;
-  border-bottom: 1px solid var(--neo-shell-line);
+  border-bottom: var(--neo-border);
 }
 
 .neo-dropoff-legend-label {

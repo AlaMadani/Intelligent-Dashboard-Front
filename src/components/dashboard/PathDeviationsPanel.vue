@@ -158,9 +158,9 @@ const deviations = computed(() => {
 
 .neo-path-deviation-row {
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 8px;
-  border: 1px solid rgba(16, 32, 43, 0.06);
+  background: rgba(255, 255, 255, 0.68);
+  border-radius: var(--neo-radius-card);
+  border: var(--neo-border);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -176,14 +176,14 @@ const deviations = computed(() => {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--neo-radius-control);
   background: var(--neo-shell-soft);
   color: white;
 }
 
 .neo-path-step--from {
-  background: var(--neo-accent-soft);
-  color: var(--neo-ink);
+  background: var(--neo-success-bg);
+  color: var(--neo-success-contrast);
 }
 
 .neo-path-arrow {
@@ -207,7 +207,7 @@ const deviations = computed(() => {
 
 .neo-path-probability-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--neo-danger), var(--neo-warm), var(--neo-accent));
+  background: linear-gradient(90deg, var(--neo-critical), var(--neo-warning), var(--neo-success));
   border-radius: 3px;
   transition: width 0.3s ease;
 }

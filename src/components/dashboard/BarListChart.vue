@@ -53,7 +53,7 @@ const rows = computed(() => {
 .neo-bar-list-rows {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .neo-bar-row-head {
@@ -67,6 +67,9 @@ const rows = computed(() => {
 .neo-bar-row-label {
   color: var(--neo-ink-soft);
   font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .neo-bar-row-value {
@@ -75,9 +78,9 @@ const rows = computed(() => {
 }
 
 .neo-bar-track {
-  height: 10px;
+  height: 8px;
   border-radius: 999px;
-  background: rgba(23, 43, 58, 0.08);
+  background: rgba(23, 33, 43, 0.08);
   overflow: hidden;
 }
 
@@ -85,8 +88,9 @@ const rows = computed(() => {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2f8f83 0%, #e3a548 100%);
-  box-shadow: 0 6px 14px rgba(47, 143, 131, 0.2);
+  background: linear-gradient(90deg, var(--neo-accent) 0%, var(--neo-info) 100%);
+  box-shadow: 0 6px 14px rgba(47, 116, 107, 0.16);
+  transition: width var(--neo-transition-med);
 }
 
 .neo-bar-empty {

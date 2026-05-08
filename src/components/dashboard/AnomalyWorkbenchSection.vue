@@ -425,7 +425,7 @@ const tierColor = (tier: string | null | undefined) => {
   if (tier === 'TIER3') return 'negative';
   if (tier === 'TIER2') return 'warning';
   if (tier === 'TIER1') return 'primary';
-  if (tier === 'SESSION_RUNTIME') return 'deep-purple';
+  if (tier === 'SESSION_RUNTIME') return 'secondary';
   return 'grey';
 };
 
@@ -694,8 +694,8 @@ const featureContributionArrayFromUnknown = (value: unknown) =>
 
 .neo-stream-item {
   border: 1px solid rgba(19, 32, 38, 0.08);
-  border-radius: 16px;
-  background: #fffdfa;
+  border-radius: var(--neo-radius-card);
+  background: rgba(255, 255, 255, 0.84);
   padding: 14px 16px;
   text-align: left;
   cursor: pointer;
@@ -741,7 +741,7 @@ const featureContributionArrayFromUnknown = (value: unknown) =>
 
 .neo-context-card {
   border: var(--neo-border);
-  border-radius: 16px;
+  border-radius: var(--neo-radius-card);
   background: rgba(255, 255, 255, 0.7);
   padding: 14px 16px;
 }
@@ -803,9 +803,9 @@ const featureContributionArrayFromUnknown = (value: unknown) =>
 }
 
 .neo-json-block {
-  background: #0f1a2b;
-  color: #d9e2f2;
-  border-radius: 12px;
+  background: #14232d;
+  color: #e6edf0;
+  border-radius: var(--neo-radius-card);
   padding: 12px;
   font-size: 12px;
   line-height: 1.5;

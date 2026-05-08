@@ -1,5 +1,5 @@
 <template>
-  <div class="neo-forecast-card">
+  <div class="neo-forecast-card" :class="{ 'is-expanded': expanded }">
     <div class="neo-forecast-head">
       <div>
         <h3>{{ t('trendForecastChart.title') }}</h3>
@@ -13,11 +13,17 @@
           flat
           size="12px"
           :class="['neo-series-btn', { 'neo-series-btn--active': selectedSeries === s.key }]"
-          @click="selectedSeries = s.key;"
+          @click="selectedSeries = s.key"
         >
           {{ s.label }}
         </q-btn>
       </div>
+      <DashboardCardActions
+        :label="t('trendForecastChart.title')"
+        :expanded="expanded"
+        @expand="expanded = !expanded"
+        @export="exportForecast"
+      />
       <q-icon name="help_outline" class="neo-forecast-hint">
         <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">
           {{ t('trendForecastChart.help') }}
@@ -47,6 +53,7 @@ import {
 import type { StatsResponseDto } from 'src/types/analytics';
 import type { ForecastPoint, ForecastSeries } from 'src/models/chart';
 import { formatNumber } from 'src/utils/format';
+import DashboardCardActions from './DashboardCardActions.vue';
 
 use([
   CanvasRenderer,
@@ -70,6 +77,7 @@ const availableSeries = ref<{ key: string; label: string }[]>([
 ]);
 
 const selectedSeries = ref('total_events');
+const expanded = ref(false);
 
 const isStatsDto = (value: unknown): value is StatsResponseDto => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -202,12 +210,41 @@ const bandRange = computed(() =>
   points.value.map((p) => (p.lower != null && p.upper != null ? p.upper - p.lower : null)),
 );
 
+const zoomRange = computed(() => {
+  const total = points.value.length;
+  if (total <= 30) return { start: 0, end: 100 };
+  const windowPoints = 30;
+  const end = 100;
+  const start = Math.max(0, 100 - (windowPoints / total * 100));
+  return { start, end };
+});
+
 const currentLiveMarker = computed(() => {
   if (!points.value.length || props.liveValue == null) return [];
   const data = new Array(points.value.length).fill(null);
   data[data.length - 1] = props.liveValue;
   return data;
 });
+
+const exportForecast = () => {
+  if (typeof window === 'undefined') return;
+
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    selectedSeries: selectedSeries.value,
+    liveValue: props.liveValue ?? null,
+    points: points.value,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `trend-forecast-${selectedSeries.value}.json`;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+};
 
 const option = computed(() => ({
   backgroundColor: 'transparent',
@@ -219,7 +256,7 @@ const option = computed(() => ({
         : '-',
   },
   legend: {
-    textStyle: { color: '#CBD5E1', fontSize: 11 },
+    textStyle: { color: '#667684', fontSize: 11 },
     top: 0,
     selected: {
       [t('common.lowerBase')]: false,
@@ -232,25 +269,27 @@ const option = computed(() => ({
   xAxis: {
     type: 'category',
     data: dateLabels.value,
-    axisLabel: { color: '#94A3B8', hideOverlap: true, fontSize: 10, rotate: 30 },
-    axisLine: { lineStyle: { color: '#334155' } },
+    axisLabel: { color: '#667684', hideOverlap: true, fontSize: 10, rotate: 30 },
+    axisLine: { lineStyle: { color: '#d8e0dd' } },
     boundaryGap: false,
   },
   yAxis: {
     type: 'value',
-    axisLabel: { color: '#94A3B8', fontSize: 10 },
-    splitLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.15)' } },
+    axisLabel: { color: '#667684', fontSize: 10 },
+    splitLine: { lineStyle: { color: 'rgba(102, 118, 132, 0.14)' } },
   },
   dataZoom: [
     {
       type: 'slider',
       height: 20,
       bottom: 8,
-      borderColor: '#334155',
-      backgroundColor: 'rgba(30, 41, 59, 0.4)',
-      fillerColor: 'rgba(34, 197, 94, 0.15)',
-      handleStyle: { color: '#22C55E' },
-      textStyle: { color: '#94A3B8', fontSize: 10 },
+      start: zoomRange.value.start,
+      end: zoomRange.value.end,
+      borderColor: '#d8e0dd',
+      backgroundColor: 'rgba(232, 236, 233, 0.72)',
+      fillerColor: 'rgba(47, 116, 107, 0.16)',
+      handleStyle: { color: '#2f746b' },
+      textStyle: { color: '#667684', fontSize: 10 },
       labelFormatter: (_: number, value: string) => value,
     },
     {
@@ -279,7 +318,7 @@ const option = computed(() => ({
       symbol: 'none',
       lineStyle: { opacity: 0 },
       itemStyle: { opacity: 0 },
-      areaStyle: { color: 'rgba(100, 116, 139, 0.18)' },
+      areaStyle: { color: 'rgba(95, 127, 120, 0.14)' },
       emphasis: { disabled: true },
     },
     {
@@ -287,16 +326,16 @@ const option = computed(() => ({
       type: 'line',
       data: points.value.map((p) => p.upper),
       symbol: 'none',
-      lineStyle: { width: 1, color: '#94A3B8' },
-      itemStyle: { color: '#94A3B8' },
+      lineStyle: { width: 1, color: '#83909b' },
+      itemStyle: { color: '#83909b' },
     },
     {
       name: t('common.lowerBound'),
       type: 'line',
       data: points.value.map((p) => p.lower),
       symbol: 'none',
-      lineStyle: { width: 1, color: '#64748B' },
-      itemStyle: { color: '#64748B' },
+      lineStyle: { width: 1, color: '#667684' },
+      itemStyle: { color: '#667684' },
     },
     {
       name: t('common.forecast'),
@@ -305,8 +344,8 @@ const option = computed(() => ({
       smooth: true,
       symbol: 'circle',
       symbolSize: 3,
-      lineStyle: { width: 2, color: '#22C55E' },
-      itemStyle: { color: '#22C55E' },
+      lineStyle: { width: 2, color: '#2f746b' },
+      itemStyle: { color: '#2f746b' },
     },
     {
       name: t('common.trend'),
@@ -314,15 +353,15 @@ const option = computed(() => ({
       data: points.value.map((p) => p.trend),
       smooth: true,
       symbol: 'none',
-      lineStyle: { width: 1.5, color: '#F59E0B', type: 'dashed' },
-      itemStyle: { color: '#F59E0B' },
+      lineStyle: { width: 1.5, color: '#a76518', type: 'dashed' },
+      itemStyle: { color: '#a76518' },
     },
     {
       name: t('common.currentLive'),
       type: 'scatter',
       data: currentLiveMarker.value,
       symbolSize: 10,
-      itemStyle: { color: '#38BDF8', borderColor: '#E0F2FE', borderWidth: 2 },
+      itemStyle: { color: '#3d6d8e', borderColor: '#e8f1f5', borderWidth: 2 },
       z: 10,
     },
   ],
@@ -331,63 +370,86 @@ const option = computed(() => ({
 
 <style scoped>
 .neo-forecast-card {
-  padding: 18px;
-  border-radius: 22px;
-  background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  padding: var(--neo-space-5);
   overflow: hidden;
 }
+
+.neo-forecast-card.is-expanded .neo-forecast-chart {
+  height: 420px;
+}
+
 .neo-forecast-head {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: var(--neo-space-3);
   flex-wrap: wrap;
 }
+
+.neo-forecast-head > div:first-child {
+  min-width: min(100%, 260px);
+  flex: 1;
+}
+
 .neo-forecast-head h3 {
   margin: 0;
-  color: #f8fafc;
+  color: var(--neo-ink);
   font-size: 17px;
+  font-weight: 700;
 }
+
 .neo-forecast-head p {
-  margin: 2px 0 0;
-  color: #94a3b8;
+  margin: 5px 0 0;
+  color: var(--neo-ink-muted);
   font-size: 12px;
-  flex: 1;
-  min-width: 120px;
+  line-height: 1.45;
 }
+
 .neo-forecast-controls {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
 }
+
 .neo-series-btn {
   text-transform: none;
-  color: #94a3b8;
-  border-radius: 6px;
-  padding: 2px 8px;
+  color: var(--neo-ink-muted);
+  border-radius: var(--neo-radius-control);
+  padding: 3px 9px;
+  border: 1px solid rgba(23, 33, 43, 0.08);
 }
+
 .neo-series-btn--active {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22C55E;
+  background: var(--neo-success-bg);
+  color: var(--neo-success-contrast);
+  border-color: rgba(46, 125, 99, 0.2);
 }
+
 .neo-forecast-hint {
   font-size: 14px;
-  color: #94a3b8;
+  color: var(--neo-ink-muted);
   cursor: help;
   opacity: 0.6;
+  margin-top: 8px;
 }
-.neo-forecast-hint:hover { opacity: 1; }
+
+.neo-forecast-hint:hover {
+  opacity: 1;
+}
+
 .neo-forecast-chart {
-  margin-top: 10px;
-  height: 300px;
+  margin-top: var(--neo-space-4);
+  height: 320px;
   width: 100%;
+  transition: height var(--neo-transition-med);
 }
+
 .neo-empty {
-  margin-top: 14px;
+  margin-top: var(--neo-space-4);
   padding: 18px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.45);
-  color: #cbd5e1;
+  border: 1px dashed rgba(23, 33, 43, 0.14);
+  border-radius: var(--neo-radius-card);
+  background: rgba(23, 33, 43, 0.035);
+  color: var(--neo-ink-muted);
   font-size: 14px;
 }
 </style>

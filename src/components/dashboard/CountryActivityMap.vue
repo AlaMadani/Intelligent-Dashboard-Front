@@ -98,12 +98,13 @@ const mappedCountries = computed(() =>
 }
 
 .neo-geo-map {
-  border-radius: 22px;
+  border-radius: var(--neo-radius-card);
   background:
-    radial-gradient(circle at 22% 18%, rgba(227, 165, 72, 0.2), transparent 26%),
-    radial-gradient(circle at 76% 72%, rgba(47, 143, 131, 0.18), transparent 24%),
-    linear-gradient(180deg, rgba(7, 24, 33, 0.95), rgba(10, 34, 48, 0.98));
-  border: 1px solid rgba(146, 186, 189, 0.18);
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, #13232d 0%, #1a3542 100%);
+  background-size: 42px 42px, 42px 42px, auto;
+  border: 1px solid rgba(222, 231, 229, 0.16);
   overflow: hidden;
 }
 
@@ -142,12 +143,14 @@ const mappedCountries = computed(() =>
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(8, 25, 34, 0.04);
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: rgba(23, 33, 43, 0.035);
 }
 
 .neo-geo-list-row.is-unmapped {
-  background: rgba(200, 90, 76, 0.06);
+  border-color: rgba(179, 75, 60, 0.18);
+  background: var(--neo-critical-bg);
 }
 
 .neo-geo-country {
@@ -168,6 +171,6 @@ const mappedCountries = computed(() =>
   font-size: 13px;
   color: var(--neo-ink-muted);
   background: rgba(8, 25, 34, 0.04);
-  border-radius: 18px;
+  border-radius: var(--neo-radius-card);
 }
 </style>

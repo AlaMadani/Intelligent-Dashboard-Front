@@ -188,10 +188,9 @@ const anomalySignal = (session: ActiveSessionDto) => {
 
 .neo-session-card {
   padding: 18px;
-  border-radius: 24px;
+  border-radius: var(--neo-radius-card);
   background: 
-    radial-gradient(circle at top right, rgba(227, 165, 72, 0.08), transparent 40%),
-    rgba(255, 250, 243, 0.9);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 249, 0.86));
   border: var(--neo-border);
   box-shadow: var(--neo-shadow-soft);
   transition:
@@ -205,11 +204,11 @@ const anomalySignal = (session: ActiveSessionDto) => {
 }
 
 .neo-session-card.is-critical {
-  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.18), 0 14px 30px rgba(220, 38, 38, 0.12);
+  border-color: rgba(179, 75, 60, 0.3);
+  box-shadow: 0 0 0 1px rgba(179, 75, 60, 0.12), 0 14px 30px rgba(179, 75, 60, 0.1);
   animation: neo-session-pulse 1.8s ease-in-out infinite;
   background: 
-    radial-gradient(circle at top right, rgba(220, 38, 38, 0.1), transparent 40%),
-    rgba(255, 250, 243, 0.9);
+    linear-gradient(180deg, rgba(253, 235, 231, 0.64), rgba(255, 255, 255, 0.9));
 }
 
 .neo-session-card-head {
@@ -261,13 +260,13 @@ const anomalySignal = (session: ActiveSessionDto) => {
 
 @keyframes neo-session-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.18), 0 14px 30px rgba(220, 38, 38, 0.12);
+    box-shadow: 0 0 0 0 rgba(179, 75, 60, 0.18), 0 14px 30px rgba(179, 75, 60, 0.1);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0), 0 14px 30px rgba(220, 38, 38, 0.08);
+    box-shadow: 0 0 0 10px rgba(179, 75, 60, 0), 0 14px 30px rgba(179, 75, 60, 0.08);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0), 0 14px 30px rgba(220, 38, 38, 0.12);
+    box-shadow: 0 0 0 0 rgba(179, 75, 60, 0), 0 14px 30px rgba(179, 75, 60, 0.1);
   }
 }
 </style>

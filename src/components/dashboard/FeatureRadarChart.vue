@@ -45,14 +45,14 @@ const option = computed(() => ({
   radar: {
     radius: '62%',
     splitNumber: 4,
-    axisName: { color: '#475569', fontWeight: 600 },
-    splitLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.25)' } },
+    axisName: { color: '#667684', fontWeight: 600 },
+    splitLine: { lineStyle: { color: 'rgba(102, 118, 132, 0.2)' } },
     splitArea: {
       areaStyle: {
-        color: ['rgba(255,255,255,0.86)', 'rgba(244, 238, 226, 0.8)'],
+        color: ['rgba(255,255,255,0.86)', 'rgba(232, 236, 233, 0.62)'],
       },
     },
-    axisLine: { lineStyle: { color: 'rgba(148, 163, 184, 0.3)' } },
+    axisLine: { lineStyle: { color: 'rgba(102, 118, 132, 0.24)' } },
     indicator: chartItems.value.map((item) => ({
       name: item.feature,
       max: 100,
@@ -65,9 +65,9 @@ const option = computed(() => ({
         {
           value: chartItems.value.map((item) => item.importance),
           name: t('featureRadarChart.contribution'),
-          areaStyle: { color: 'rgba(190, 65, 36, 0.22)' },
-          lineStyle: { color: '#be4124', width: 2 },
-          itemStyle: { color: '#be4124' },
+          areaStyle: { color: 'rgba(179, 75, 60, 0.2)' },
+          lineStyle: { color: '#b34b3c', width: 2 },
+          itemStyle: { color: '#b34b3c' },
           symbolSize: 6,
         },
       ],
@@ -79,8 +79,8 @@ const option = computed(() => ({
 <style scoped>
 .neo-radar-card {
   padding: 20px;
-  border-radius: 24px;
-  background: rgba(255, 250, 243, 0.9);
+  border-radius: var(--neo-radius-card);
+  background: rgba(255, 255, 255, 0.74);
   border: var(--neo-border);
 }
 

@@ -153,9 +153,9 @@ const safeRiskScore = (value: number | null | undefined) => {
 
 const riskTone = (value: number | null | undefined) => {
   const score = safeRiskScore(value);
-  if (score >= 80) return '#dc2626';
-  if (score >= 41) return '#f59e0b';
-  return '#22c55e';
+  if (score >= 80) return 'var(--neo-critical)';
+  if (score >= 41) return 'var(--neo-warning)';
+  return 'var(--neo-success)';
 };
 
 const sessionRiskScore = (session: SessionAnalysisDto) =>
@@ -177,7 +177,7 @@ const liveContextTags = (session: SessionAnalysisDto) => {
 .neo-table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border-radius: 14px;
+  border-radius: var(--neo-radius-card);
 }
 .neo-table {
   width: 100%;
@@ -201,7 +201,7 @@ const liveContextTags = (session: SessionAnalysisDto) => {
 .neo-risk-compact {
   width: 64px;
   height: 6px;
-  background: rgba(16, 32, 43, 0.08);
+  background: rgba(23, 33, 43, 0.08);
   border-radius: 3px;
   overflow: hidden;
 }

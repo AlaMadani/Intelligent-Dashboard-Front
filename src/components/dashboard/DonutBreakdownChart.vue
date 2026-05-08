@@ -42,7 +42,7 @@ const props = withDefaults(
 const { t } = useI18n();
 
 // Provide default colors when callers omit segment styling.
-const fallbackColors = ['#2f8f83', '#e3a548', '#cf5d4a', '#617ca8', '#78b385'];
+const fallbackColors = ['#2f746b', '#a76518', '#b34b3c', '#3d6d8e', '#5f7f78'];
 
 // Normalize legend text and segment colors before generating the donut.
 const normalizedSegments = computed(() =>
@@ -80,15 +80,15 @@ const donutGradient = computed(() => {
 .neo-donut-shell {
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(160px, 190px) minmax(0, 1fr);
+  grid-template-columns: minmax(150px, 176px) minmax(0, 1fr);
   align-items: center;
 }
 
 .neo-donut {
-  width: min(190px, 100%);
+  width: min(176px, 100%);
   aspect-ratio: 1;
   border-radius: 50%;
-  padding: 20px;
+  padding: 18px;
   box-shadow: inset 0 0 0 1px rgba(19, 32, 38, 0.08);
 }
 
@@ -96,7 +96,7 @@ const donutGradient = computed(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: rgba(253, 248, 238, 0.96);
+  background: rgba(255, 255, 255, 0.94);
   display: grid;
   place-items: center;
   text-align: center;
@@ -105,7 +105,8 @@ const donutGradient = computed(() => {
 
 .neo-donut-core-label {
   font-size: 12px;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--neo-ink-muted);
 }

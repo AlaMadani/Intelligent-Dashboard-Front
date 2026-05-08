@@ -2,7 +2,7 @@
   <!-- Global shell: top toolbar, persistent drawer, and routed page content. -->
   <q-layout view="lHh Lpr lFf">
     <!-- Header actions expose navigation, branding, and monitoring shortcuts. -->
-    <q-header class="neo-header" elevated>
+    <q-header class="neo-header">
       <q-toolbar class="neo-toolbar">
         <div class="neo-toolbar-start">
           <q-btn
@@ -41,7 +41,6 @@
             :label="t('layout.grafanaButton')"
             :aria-label="t('layout.aria.openGrafana')"
             class="neo-external-btn"
-            text-color="black"
             @click="openGrafana"
           >
             <q-tooltip anchor="bottom middle">{{ t('layout.grafanaTooltip') }}</q-tooltip>
@@ -54,7 +53,6 @@
             :label="t('layout.kibanaButton')"
             :aria-label="t('layout.aria.openKibana')"
             class="neo-external-btn"
-            text-color="black"
             @click="openKibana"
           >
             <q-tooltip anchor="bottom middle">{{ t('layout.kibanaTooltip') }}</q-tooltip>

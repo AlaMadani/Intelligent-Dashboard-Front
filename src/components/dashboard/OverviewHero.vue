@@ -170,7 +170,7 @@ const lastUpdatedFormatted = computed(() => {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #e3a548;
+  background: var(--neo-warning);
 }
 
 .neo-panel-footnote {
@@ -188,7 +188,7 @@ const lastUpdatedFormatted = computed(() => {
 
 .neo-hero-status-card {
   padding: 12px 14px;
-  border-radius: 18px;
+  border-radius: var(--neo-radius-card);
   background: rgba(14, 26, 34, 0.05);
   border: 1px solid rgba(14, 26, 34, 0.06);
 }

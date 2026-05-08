@@ -126,24 +126,24 @@ const fillId = `neo-trend-fill-${Math.random().toString(36).slice(2, 10)}`;
 // Tone palettes align chart colors with the dashboard design language.
 const palettes = {
   primary: {
-    stroke: '#2f8f83',
-    fill: '#6fd0c2',
-    glow: '#153e5c',
+    stroke: '#2f746b',
+    fill: '#9accc3',
+    glow: '#1d465c',
   },
   warning: {
-    stroke: '#d38718',
-    fill: '#f0b35b',
-    glow: '#7b4200',
+    stroke: '#a76518',
+    fill: '#e5bd79',
+    glow: '#5b3708',
   },
   danger: {
-    stroke: '#cf5d4a',
-    fill: '#e89e86',
-    glow: '#7f1d1d',
+    stroke: '#b34b3c',
+    fill: '#e3a49b',
+    glow: '#6d2118',
   },
   success: {
-    stroke: '#1f9d67',
-    fill: '#76d2a9',
-    glow: '#155e43',
+    stroke: '#2e7d63',
+    fill: '#9dd4bd',
+    glow: '#0f3f2f',
   },
 } as const;
 

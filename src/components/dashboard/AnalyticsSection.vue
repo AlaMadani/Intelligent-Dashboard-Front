@@ -539,18 +539,16 @@ const toNumber = (value: unknown) => {
 /* Analytics section layout, panel styling, and feed presentation. */
 .neo-analytics-dashboard {
   display: grid;
-  gap: 18px;
+  gap: var(--neo-space-4);
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  margin-top: 18px;
+  margin-top: var(--neo-space-5);
 }
 
 .neo-analytics-panel {
   grid-column: span 4;
-  padding: 22px;
-  border-radius: 24px;
-  background: rgba(255, 250, 243, 0.84);
-  border: var(--neo-border);
-  box-shadow: var(--neo-shadow-soft);
+  min-height: 300px;
+  padding: var(--neo-space-5);
+  overflow: hidden;
 }
 
 .neo-analytics-panel--wide {
@@ -561,52 +559,19 @@ const toNumber = (value: unknown) => {
   grid-column: span 4;
 }
 
-.neo-analytics-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.neo-analytics-head h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.neo-analytics-head p {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: var(--neo-ink-muted);
-  line-height: 1.5;
-}
-
-.neo-analytics-chip {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(47, 143, 131, 0.1);
-  color: var(--neo-accent);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.neo-analytics-chip--danger {
-  background: rgba(200, 90, 76, 0.12);
-  color: var(--neo-danger);
-}
-
 .neo-analytics-strip {
-  margin-top: 16px;
+  margin-top: var(--neo-space-4);
   display: grid;
-  gap: 12px;
+  gap: var(--neo-space-3);
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .neo-analytics-strip-card {
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(16, 32, 43, 0.04);
+  min-height: 86px;
+  padding: var(--neo-space-3);
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: rgba(23, 33, 43, 0.035);
 }
 
 .neo-analytics-strip-card span {
@@ -619,22 +584,25 @@ const toNumber = (value: unknown) => {
   display: block;
   margin-top: 8px;
   font-size: 20px;
+  font-weight: 800;
 }
 
 .neo-analytics-feed {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .neo-analytics-feed-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(16, 32, 43, 0.04);
+  gap: var(--neo-space-3);
+  min-height: 58px;
+  padding: 10px 12px;
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: rgba(23, 33, 43, 0.035);
 }
 
 .neo-analytics-feed-title {
@@ -652,17 +620,8 @@ const toNumber = (value: unknown) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 86px;
   text-align: right;
-}
-
-.neo-analytics-empty {
-  min-height: 140px;
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-  color: var(--neo-ink-muted);
-  background: rgba(16, 32, 43, 0.04);
-  border-radius: 18px;
 }
 
 /* Collapse the multi-column dashboard into a single-column stack on smaller screens. */

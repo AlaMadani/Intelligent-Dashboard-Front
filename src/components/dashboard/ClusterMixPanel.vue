@@ -38,14 +38,14 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const CLUSTER_COLORS: Record<number, string> = {
-  0: '#2f8f83',
-  1: '#e3a548',
-  2: '#cf5d4a',
-  3: '#617ca8',
-  4: '#78b385',
-  5: '#9b78c7',
-  6: '#4aa8cf',
-  7: '#c7789f',
+  0: '#2f746b',
+  1: '#a76518',
+  2: '#b34b3c',
+  3: '#3d6d8e',
+  4: '#5f7f78',
+  5: '#735f93',
+  6: '#397b90',
+  7: '#98607d',
 };
 
 const toNumber = (value: unknown) => {
@@ -87,7 +87,7 @@ const normalizedClusters = computed(() => {
       (item.label as string) ||
       clusterName(clusterId) ||
       t('clusterMixPanel.clusterFallback', { id: clusterId });
-    const color = CLUSTER_COLORS[clusterId] ?? '#666';
+    const color = CLUSTER_COLORS[clusterId] ?? '#667684';
     const display = typeof item.display === 'string' ? item.display : formatNumber(value);
     const count = toNumber(item.count) ?? toNumber(item.user_count) ?? toNumber(item.userCount) ?? toNumber(item.session_count) ?? toNumber(item.sessionCount) ?? null;
     return { clusterId, value, label, color, item, count, display };

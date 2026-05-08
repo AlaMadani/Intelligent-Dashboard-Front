@@ -2,8 +2,8 @@
   <svg viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
     <defs>
       <radialGradient id="neo-geo-glow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="rgba(227, 165, 72, 0.95)" />
-        <stop offset="100%" stop-color="rgba(227, 165, 72, 0)" />
+        <stop offset="0%" stop-color="rgba(167, 101, 24, 0.9)" />
+        <stop offset="100%" stop-color="rgba(167, 101, 24, 0)" />
       </radialGradient>
     </defs>
 
@@ -54,9 +54,8 @@ defineProps<{
 }
 
 .neo-geo-marker {
-  fill: #f8c56c;
-  stroke: rgba(255, 248, 235, 0.86);
+  fill: #e5bd79;
+  stroke: rgba(246, 251, 249, 0.86);
   stroke-width: 3;
 }
 </style>
-

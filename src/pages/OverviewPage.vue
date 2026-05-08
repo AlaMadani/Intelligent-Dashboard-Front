@@ -39,14 +39,25 @@
 
     <!-- Overview grid mixes trend charts, maps, and anomaly breakdown cards. -->
     <section class="neo-section neo-overview-grid">
-      <article class="neo-overview-panel neo-overview-panel--wide">
+      <article
+        class="neo-overview-panel neo-overview-panel--wide"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('momentum') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.behaviorMomentumTitle') }}</h3>
             <p>{{ t('overviewPage.behaviorMomentumSubtitle') }}</p>
           </div>
-          <div class="neo-overview-pill">
-            {{ t('overviewPage.recentSessionsLoaded', { count: sessions.length }) }}
+          <div class="neo-overview-head-side">
+            <div class="neo-overview-pill">
+              {{ t('overviewPage.recentSessionsLoaded', { count: sessions.length }) }}
+            </div>
+            <DashboardCardActions
+              :label="t('overviewPage.behaviorMomentumTitle')"
+              :expanded="isExpanded('momentum')"
+              @expand="togglePanel('momentum')"
+              @export="exportPanel('momentum')"
+            />
           </div>
         </div>
 
@@ -103,32 +114,59 @@
         </div>
       </article>
 
-      <article class="neo-overview-panel neo-overview-panel--map">
+      <article
+        class="neo-overview-panel neo-overview-panel--map"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('geolocation') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.geolocationTitle') }}</h3>
             <p>{{ t('overviewPage.geolocationSubtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('overviewPage.geolocationTitle')"
+            :expanded="isExpanded('geolocation')"
+            @expand="togglePanel('geolocation')"
+            @export="exportPanel('geolocation')"
+          />
         </div>
         <CountryActivityMap :countries="topCountries" />
       </article>
 
-      <article class="neo-overview-panel">
+      <article
+        class="neo-overview-panel"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('live-actions') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.liveActionsTitle') }}</h3>
             <p>{{ t('overviewPage.liveActionsSubtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('overviewPage.liveActionsTitle')"
+            :expanded="isExpanded('live-actions')"
+            @expand="togglePanel('live-actions')"
+            @export="exportPanel('live-actions')"
+          />
         </div>
         <BarListChart :items="topActionBars" :empty-message="t('overviewPage.liveActionsEmpty')" />
       </article>
 
-      <article class="neo-overview-panel">
+      <article
+        class="neo-overview-panel"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('tier-mix') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.anomalyTierMixTitle') }}</h3>
             <p>{{ t('overviewPage.anomalyTierMixSubtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('overviewPage.anomalyTierMixTitle')"
+            :expanded="isExpanded('tier-mix')"
+            @expand="togglePanel('tier-mix')"
+            @export="exportPanel('tier-mix')"
+          />
         </div>
         <DonutBreakdownChart
           :segments="tierMixSegments"
@@ -137,12 +175,21 @@
         />
       </article>
 
-      <article class="neo-overview-panel">
+      <article
+        class="neo-overview-panel"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('priority-types') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.priorityAnomalyTypesTitle') }}</h3>
             <p>{{ t('overviewPage.priorityAnomalyTypesSubtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('overviewPage.priorityAnomalyTypesTitle')"
+            :expanded="isExpanded('priority-types')"
+            @expand="togglePanel('priority-types')"
+            @export="exportPanel('priority-types')"
+          />
         </div>
         <BarListChart
           :items="topAnomalyTypeBars"
@@ -150,12 +197,21 @@
         />
       </article>
 
-      <article class="neo-overview-panel">
+      <article
+        class="neo-overview-panel"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('alert-feed') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.liveAlertFeedTitle') }}</h3>
             <p>{{ t('overviewPage.liveAlertFeedSubtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('overviewPage.liveAlertFeedTitle')"
+            :expanded="isExpanded('alert-feed')"
+            @expand="togglePanel('alert-feed')"
+            @export="exportPanel('alert-feed')"
+          />
         </div>
         <div v-if="!alertFeedItems.length" class="neo-overview-empty">
           {{ t('overviewPage.liveAlertFeedEmpty') }}
@@ -178,12 +234,21 @@
         </div>
       </article>
 
-      <article class="neo-overview-panel">
+      <article
+        class="neo-overview-panel"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('hot-sessions') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.hotSessionsTitle') }}</h3>
             <p>{{ t('overviewPage.hotSessionsSubtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('overviewPage.hotSessionsTitle')"
+            :expanded="isExpanded('hot-sessions')"
+            @expand="togglePanel('hot-sessions')"
+            @export="exportPanel('hot-sessions')"
+          />
         </div>
         <div v-if="!riskySessionPreview.length" class="neo-overview-empty">
           {{ t('overviewPage.hotSessionsEmpty') }}
@@ -207,17 +272,28 @@
       </article>
 
       <!-- Stats summary panel: aggregate counts across all sessions, anomalies, and risk tiers. -->
-      <article class="neo-overview-panel neo-overview-panel--wide">
+      <article
+        class="neo-overview-panel neo-overview-panel--wide"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('system-snapshot') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.systemSnapshotTitle') }}</h3>
             <p>{{ t('overviewPage.systemSnapshotSubtitle') }}</p>
           </div>
-          <q-icon name="info" class="neo-hint-icon">
-            <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">
-              {{ t('overviewPage.systemSnapshotTooltip') }}
-            </q-tooltip>
-          </q-icon>
+          <div class="neo-overview-head-side">
+            <DashboardCardActions
+              :label="t('overviewPage.systemSnapshotTitle')"
+              :expanded="isExpanded('system-snapshot')"
+              @expand="togglePanel('system-snapshot')"
+              @export="exportPanel('system-snapshot')"
+            />
+            <q-icon name="info" class="neo-hint-icon">
+              <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">
+                {{ t('overviewPage.systemSnapshotTooltip') }}
+              </q-tooltip>
+            </q-icon>
+          </div>
         </div>
         <div v-if="statsSummaryLoading" class="neo-overview-empty">{{ t('overviewPage.loadingSummary') }}</div>
         <div v-else-if="!statsSummary" class="neo-overview-empty">{{ t('overviewPage.summaryUnavailable') }}</div>
@@ -258,12 +334,21 @@
       </article>
 
       <!-- Health panel: service connectivity status. -->
-      <article class="neo-overview-panel">
+      <article
+        class="neo-overview-panel"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('service-health') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('overviewPage.serviceHealthTitle') }}</h3>
             <p>{{ t('overviewPage.serviceHealthSubtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('overviewPage.serviceHealthTitle')"
+            :expanded="isExpanded('service-health')"
+            @expand="togglePanel('service-health')"
+            @export="exportPanel('service-health')"
+          />
         </div>
         <div v-if="healthLoading" class="neo-overview-empty">{{ t('common.checking') }}</div>
         <div v-else-if="!healthStatus" class="neo-overview-empty">{{ t('overviewPage.healthNotChecked') }}</div>
@@ -282,12 +367,21 @@
       </article>
 
       <!-- Deep-dive section: analytics panels not shown on overview elsewhere. -->
-      <article class="neo-overview-panel neo-overview-panel--wide">
+      <article
+        class="neo-overview-panel neo-overview-panel--wide"
+        :class="{ 'neo-overview-panel--expanded': isExpanded('cluster-mix') }"
+      >
         <div class="neo-overview-head">
           <div>
             <h3>{{ t('clusterMixPanel.title') }}</h3>
             <p>{{ t('clusterMixPanel.subtitle') }}</p>
           </div>
+          <DashboardCardActions
+            :label="t('clusterMixPanel.title')"
+            :expanded="isExpanded('cluster-mix')"
+            @expand="togglePanel('cluster-mix')"
+            @export="exportPanel('cluster-mix')"
+          />
         </div>
         <ClusterMixPanel :data="clusterMixRows" :stats-summary="statsSummary" flat />
       </article>
@@ -303,7 +397,7 @@
 
 <script setup lang="ts">
 // This page derives high-level overview metrics from the shared dashboard store.
-import { computed } from 'vue';
+import { computed, ref, unref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import BarListChart from 'src/components/dashboard/BarListChart.vue';
@@ -314,6 +408,7 @@ import OverviewHero from 'src/components/dashboard/OverviewHero.vue';
 import SparkAreaChart from 'src/components/dashboard/SparkAreaChart.vue';
 import TrendForecastChart from 'src/components/dashboard/TrendForecastChart.vue';
 import ClusterMixPanel from 'src/components/dashboard/ClusterMixPanel.vue';
+import DashboardCardActions from 'src/components/dashboard/DashboardCardActions.vue';
 import DropOffsPanel from 'src/components/dashboard/DropOffsPanel.vue';
 import PathDeviationsPanel from 'src/components/dashboard/PathDeviationsPanel.vue';
 import { useDashboard } from 'src/composables/useDashboard';
@@ -327,6 +422,7 @@ import { formatDate, formatNumber, formatPercent, formatScore } from 'src/utils/
 // Router navigation lets the hero shortcuts jump between dashboard sections.
 const router = useRouter();
 const { t } = useI18n();
+const expandedPanel = ref<string | null>(null);
 const {
   commandCenter,
   totalSessions,
@@ -354,6 +450,40 @@ const {
   healthStatus,
   healthLoading,
 } = useDashboard();
+
+const isExpanded = (panelId: string) => expandedPanel.value === panelId;
+
+const togglePanel = (panelId: string) => {
+  expandedPanel.value = isExpanded(panelId) ? null : panelId;
+};
+
+const exportPanel = (panelId: string) => {
+  if (typeof window === 'undefined') return;
+
+  const payload = {
+    panelId,
+    exportedAt: new Date().toISOString(),
+    posture: {
+      totalSessions: unref(totalSessions),
+      anomalousSessions: unref(anomalousSessions),
+      totalAnomalies: unref(totalAnomalies),
+      anomalyRate: unref(anomalyRate),
+      eventsPerMinute: unref(eventsPerMinute),
+      globalRiskLevel: unref(globalRiskLevel),
+      activeSessions: unref(activeSessions),
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `noveocare-${panelId}-snapshot.json`;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+};
 
 // Normalize raw stats payloads into chart- and card-friendly structures.
 const liveStatsPayload = computed(() => {
@@ -598,111 +728,90 @@ const formatHealthStatus = (value: unknown) => {
 </script>
 
 <style scoped>
-/* Overview page layout and card styling. */
+/* Overview page bento layout and deep-dive card styling. */
 .neo-overview-grid {
   display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--neo-space-4);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .neo-overview-panel {
-  grid-column: span 1;
-  padding: 22px;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at top right, rgba(227, 165, 72, 0.08), transparent 40%),
-    rgba(255, 250, 243, 0.84);
-  border: var(--neo-border);
-  box-shadow: var(--neo-shadow-soft);
-  backdrop-filter: blur(8px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  grid-column: span 4;
+  min-height: 312px;
+  padding: var(--neo-space-5);
+  overflow: hidden;
 }
 
-.neo-overview-panel:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(9, 22, 30, 0.15);
-}
-
-.neo-overview-panel:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(9, 22, 30, 0.15);
+.neo-overview-grid > .neo-analytics-panel {
+  grid-column: span 4;
+  min-height: 312px;
+  padding: var(--neo-space-5);
+  overflow: hidden;
 }
 
 .neo-overview-panel--wide {
-  grid-column: span 2;
-}
-
-@media (max-width: 1200px) {
-  .neo-overview-panel--wide {
-    grid-column: span 1;
-  }
+  grid-column: span 8;
 }
 
 .neo-overview-panel--map {
   grid-column: span 4;
 }
 
-.neo-overview-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+.neo-overview-panel--expanded {
+  grid-column: 1 / -1;
 }
 
-.neo-overview-head h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
+.neo-overview-head-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.neo-overview-head p {
-  margin: 6px 0 0;
-  font-size: 13px;
-  color: var(--neo-ink-muted);
-  line-height: 1.5;
+.neo-overview-panel--expanded .neo-overview-signal-grid {
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
 }
 
-.neo-overview-pill {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(47, 143, 131, 0.1);
-  color: var(--neo-accent);
-  font-size: 12px;
-  font-weight: 700;
+.neo-overview-panel--expanded .neo-overview-feed {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .neo-overview-signal-grid {
   display: grid;
-  gap: 14px;
+  gap: var(--neo-space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .neo-overview-signal-card {
-  padding: 16px;
-  border-radius: 20px;
-  background: rgba(16, 32, 43, 0.04);
+  min-height: 290px;
+  padding: var(--neo-space-4);
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: rgba(23, 33, 43, 0.035);
 }
 
 .neo-overview-signal-label {
   font-size: 12px;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--neo-ink-muted);
 }
 
 .neo-overview-mini-grid {
-  margin-top: 16px;
+  margin-top: var(--neo-space-4);
   display: grid;
-  gap: 12px;
+  gap: var(--neo-space-3);
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .neo-overview-mini-card {
-  padding: 14px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 248, 238, 0.72));
-  border: 1px solid rgba(16, 32, 43, 0.06);
+  padding: var(--neo-space-3);
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .neo-overview-mini-card span {
@@ -714,24 +823,27 @@ const formatHealthStatus = (value: unknown) => {
 .neo-overview-mini-card strong {
   display: block;
   margin-top: 8px;
-  font-size: 22px;
+  font-size: 21px;
+  font-weight: 800;
 }
 
 .neo-overview-feed {
-  margin-top: 16px;
+  margin-top: var(--neo-space-4);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .neo-overview-feed-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(16, 32, 43, 0.04);
+  gap: var(--neo-space-3);
+  min-height: 58px;
+  padding: 10px 12px;
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: rgba(23, 33, 43, 0.035);
 }
 
 .neo-overview-feed-title {
@@ -749,53 +861,36 @@ const formatHealthStatus = (value: unknown) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 86px;
   text-align: right;
 }
 
 .neo-overview-feed-row--alert {
-  border-left: 4px solid rgba(190, 65, 36, 0.5);
-}
-
-.neo-overview-empty {
-  color: var(--neo-ink-muted);
-  font-size: 13px;
+  border-left: 3px solid var(--neo-critical);
 }
 
 /* Responsive stacking keeps the overview grid readable on narrower screens. */
-@media (max-width: 1200px) {
-  .neo-overview-panel,
-  .neo-overview-panel--wide,
-  .neo-overview-panel--map {
-    grid-column: span 12;
-  }
-}
-
-@media (max-width: 820px) {
-  .neo-overview-signal-grid,
-  .neo-overview-mini-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 .neo-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--neo-space-3);
 }
 
 .neo-summary-card {
-  padding: 14px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,248,238,0.72));
-  border: 1px solid rgba(16,32,43,0.06);
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-height: 94px;
+  padding: var(--neo-space-3);
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .neo-summary-card strong {
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 .neo-summary-card span {
@@ -806,8 +901,13 @@ const formatHealthStatus = (value: unknown) => {
   gap: 4px;
 }
 
-.neo-health-ok { color: var(--neo-accent); }
-.neo-health-warn { color: #be4124; }
+.neo-health-ok {
+  color: var(--neo-success-contrast);
+}
+
+.neo-health-warn {
+  color: var(--neo-critical-contrast);
+}
 
 .neo-hint-icon {
   font-size: 14px;
@@ -815,5 +915,49 @@ const formatHealthStatus = (value: unknown) => {
   cursor: help;
   opacity: 0.6;
 }
-.neo-hint-icon:hover { opacity: 1; }
+
+.neo-hint-icon:hover {
+  opacity: 1;
+}
+
+@media (max-width: 1280px) {
+  .neo-overview-panel,
+  .neo-overview-panel--wide,
+  .neo-overview-panel--map,
+  .neo-overview-panel--expanded,
+  .neo-overview-grid > .neo-analytics-panel {
+    grid-column: span 6;
+  }
+
+  .neo-overview-panel--wide,
+  .neo-overview-panel--expanded {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 820px) {
+  .neo-overview-panel,
+  .neo-overview-panel--wide,
+  .neo-overview-panel--map,
+  .neo-overview-panel--expanded,
+  .neo-overview-grid > .neo-analytics-panel {
+    grid-column: 1 / -1;
+    min-height: auto;
+  }
+
+  .neo-overview-head {
+    flex-direction: column;
+  }
+
+  .neo-overview-head-side {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .neo-overview-signal-grid,
+  .neo-overview-mini-grid,
+  .neo-overview-panel--expanded .neo-overview-feed {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

@@ -75,8 +75,8 @@ const linkClass = (fromAction?: string | null, toAction?: string | null) => ({
 <style scoped>
 .neo-journey-card {
   padding: 20px;
-  border-radius: 24px;
-  background: rgba(255, 250, 243, 0.9);
+  border-radius: var(--neo-radius-card);
+  background: rgba(255, 255, 255, 0.74);
   border: var(--neo-border);
 }
 
@@ -108,15 +108,15 @@ const linkClass = (fromAction?: string | null, toAction?: string | null) => ({
 .neo-journey-node {
   padding: 10px 14px;
   border-radius: 999px;
-  background: rgba(47, 143, 131, 0.12);
-  color: var(--neo-accent);
+  background: var(--neo-success-bg);
+  color: var(--neo-success-contrast);
   font-weight: 700;
   font-size: 13px;
 }
 
 .neo-journey-node.is-anomalous {
-  background: rgba(220, 38, 38, 0.14);
-  color: #b91c1c;
+  background: var(--neo-critical-bg);
+  color: var(--neo-critical-contrast);
 }
 
 .neo-journey-link {
@@ -125,13 +125,13 @@ const linkClass = (fromAction?: string | null, toAction?: string | null) => ({
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  color: var(--neo-accent);
-  background: rgba(47, 143, 131, 0.08);
+  color: var(--neo-success-contrast);
+  background: var(--neo-success-bg);
 }
 
 .neo-journey-link.is-anomalous {
-  color: #b91c1c;
-  background: rgba(220, 38, 38, 0.12);
+  color: var(--neo-critical-contrast);
+  background: var(--neo-critical-bg);
 }
 
 .neo-journey-tags {
