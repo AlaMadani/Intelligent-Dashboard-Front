@@ -2,6 +2,13 @@
 import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
+  // Authentication routes use one persistent layout for smooth transitions.
+  {
+    path: '/:authView(login|signup|verify-email|forgot-password|reset-password-code|reset-password)',
+    component: () => import('layouts/AuthLayout.vue'),
+  },
+
+  // Protected dashboard routes (with layout)
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
@@ -13,6 +20,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'sessions', component: () => import('pages/SessionsPage.vue') },
       { path: 'insights', component: () => import('pages/InsightsPage.vue') },
       { path: 'analytics', component: () => import('pages/AnalyticsPage.vue') },
+      { path: 'account', component: () => import('pages/AccountPage.vue') },
     ],
   },
 

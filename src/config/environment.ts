@@ -7,10 +7,7 @@ const readEnv = (value: string | undefined, fallback: string) => {
 export const environment = {
   apiBaseUrl: readEnv(import.meta.env.VITE_API_BASE_URL, 'http://localhost:8081'),
   loggerEndpoint: readEnv(import.meta.env.VITE_LOGGER_ENDPOINT, 'http://localhost:5001'),
-  loggerApplication: readEnv(
-    import.meta.env.VITE_LOGGER_APPLICATION,
-    'dashboard-frontend',
-  ),
+  loggerApplication: readEnv(import.meta.env.VITE_LOGGER_APPLICATION, 'dashboard-frontend'),
   grafanaDashboardsUrl: readEnv(
     import.meta.env.VITE_GRAFANA_DASHBOARDS_URL,
     'http://localhost:3000/dashboards',
@@ -22,4 +19,5 @@ export const environment = {
   // Use "auto" to resolve locale from the browser region/language.
   locale: readEnv(import.meta.env.VITE_I18N_LOCALE, 'auto'),
   fallbackLocale: readEnv(import.meta.env.VITE_I18N_FALLBACK_LOCALE, 'en-US'),
+  authPanelImageUrl: readEnv(import.meta.env.VITE_AUTH_PANEL_IMAGE_URL, '/2.jpg'),
 } as const;

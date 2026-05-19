@@ -194,5 +194,10 @@ export const getLiveStatsStreamUrl = () => {
     typeof api.defaults.baseURL === 'string' && api.defaults.baseURL
       ? api.defaults.baseURL
       : window.location.origin;
-  return new URL('/api/v1/stream/live', baseUrl).toString();
+  const streamUrl = new URL('/api/v1/stream/live', baseUrl);
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    streamUrl.searchParams.set('access_token', token);
+  }
+  return streamUrl.toString();
 };

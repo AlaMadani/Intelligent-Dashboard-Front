@@ -15,12 +15,8 @@
             @click="toggleLeftDrawer"
           />
 
-          <q-toolbar-title>
-            <div class="neo-title">
-              <span class="neo-brand-noveo">Noveo</span>
-              <span class="neo-brand-care">Care</span>
-              <span class="neo-brand-soc">Insights</span>
-            </div>
+          <q-toolbar-title class="neo-toolbar-title">
+            <BrandLogo variant="header" />
             <div class="neo-subtitle">{{ t('layout.subtitle') }}</div>
           </q-toolbar-title>
         </div>
@@ -65,7 +61,34 @@
             icon="account_circle"
             :aria-label="t('layout.aria.profile')"
             class="neo-avatar-btn"
-          />
+          >
+            <q-menu anchor="bottom right" self="top right" class="neo-user-menu">
+              <q-list>
+                <q-item>
+                  <q-item-section>
+                    <q-item-label>{{ userDisplayName }}</q-item-label>
+                    <q-item-label caption>{{ authStore.user?.email }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-separator />
+
+                <q-item clickable @click="openAccountSettings">
+                  <q-item-section avatar>
+                    <q-icon name="manage_accounts" />
+                  </q-item-section>
+                  <q-item-section>{{ t('auth.accountSettings') }}</q-item-section>
+                </q-item>
+
+                <q-item clickable @click="handleSignOut">
+                  <q-item-section avatar>
+                    <q-icon name="logout" />
+                  </q-item-section>
+                  <q-item-section>{{ t('auth.signOut') }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
         </div>
       </q-toolbar>
     </q-header>
@@ -102,26 +125,6 @@
             </q-item-section>
           </q-item>
         </q-list>
-
-        <div class="neo-drawer-footer">
-          <div class="neo-drawer-label">{{ t('layout.operationalNoteLabel') }}</div>
-          <div class="neo-drawer-note">{{ t('layout.operationalNoteBody') }}</div>
-
-          <div class="neo-drawer-metrics">
-            <div class="neo-drawer-metric">
-              <span>{{ t('layout.metricRefreshLabel') }}</span>
-              <strong>{{ t('layout.metricRefreshValue') }}</strong>
-            </div>
-            <div class="neo-drawer-metric">
-              <span>{{ t('layout.metricModeLabel') }}</span>
-              <strong>{{ t('layout.metricModeValue') }}</strong>
-            </div>
-            <div class="neo-drawer-metric">
-              <span>{{ t('layout.metricFocusLabel') }}</span>
-              <strong>{{ t('layout.metricFocusValue') }}</strong>
-            </div>
-          </div>
-        </div>
       </div>
     </q-drawer>
 
@@ -139,12 +142,15 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { environment } from 'src/config/environment';
 import { LAYOUT_NAVIGATION_ITEMS } from 'src/constants/layout/navigation';
+import { useAuthStore } from 'src/stores/auth';
+import BrandLogo from 'src/components/brand/BrandLogo.vue';
 import type { NavigationItem } from 'src/types/navigation';
 
 const { t } = useI18n();
 const leftDrawerOpen = ref(typeof window === 'undefined' ? true : window.innerWidth >= 1100);
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 
 // Sidebar destinations map each dashboard surface to its route, label, and icon.
 const navigation = computed<NavigationItem[]>(() =>
@@ -156,6 +162,8 @@ const navigation = computed<NavigationItem[]>(() =>
     caption: t(item.captionKey),
   })),
 );
+
+const userDisplayName = computed(() => authStore.user?.fullName || authStore.user?.email || '');
 
 // Layout interactions and route helpers keep the shell synchronized with navigation.
 function toggleLeftDrawer() {
@@ -188,5 +196,14 @@ const openGrafana = () => {
 
 const openKibana = () => {
   window.open(environment.kibanaOverviewUrl, '_blank', 'noopener');
+};
+
+const handleSignOut = async () => {
+  authStore.signOut();
+  await router.push('/login');
+};
+
+const openAccountSettings = async () => {
+  await router.push('/account');
 };
 </script>

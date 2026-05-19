@@ -413,6 +413,204 @@ button,
   color: var(--neo-critical-contrast);
 }
 
+/* Authentication forms. */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-field .q-field__control {
+  min-height: 48px;
+  border-radius: var(--neo-radius-control) !important;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.auth-field .q-field__prepend,
+.auth-field .q-field__append {
+  color: var(--neo-ink-muted);
+}
+
+.auth-field .q-field__native,
+.auth-field .q-field__label {
+  color: var(--neo-ink);
+}
+
+.auth-field .q-field__messages {
+  color: var(--neo-ink-muted);
+  font-size: 11px;
+}
+
+.auth-error {
+  padding: 12px 14px;
+  border: 1px solid rgba(179, 75, 60, 0.18);
+  border-radius: var(--neo-radius-control);
+  background: var(--neo-critical-bg);
+  color: var(--neo-critical-contrast);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.auth-notice,
+.auth-verification-summary {
+  padding: 12px 14px;
+  border: 1px solid rgba(47, 116, 107, 0.16);
+  border-radius: var(--neo-radius-control);
+  background: var(--neo-success-bg);
+  color: var(--neo-success-contrast);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.auth-verification-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  background: var(--neo-info-bg);
+  color: var(--neo-info-contrast);
+}
+
+.auth-verification-summary .q-icon {
+  font-size: 22px;
+}
+
+.auth-verification-summary span,
+.auth-verification-summary strong {
+  display: block;
+}
+
+.auth-verification-summary span {
+  font-size: 12px;
+  color: var(--neo-ink-muted);
+}
+
+.auth-verification-summary strong {
+  margin-top: 2px;
+  color: var(--neo-ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.auth-code-field .q-field__native {
+  font-family: 'JetBrains Mono', 'Segoe UI', monospace;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  text-align: center;
+}
+
+.auth-submit {
+  width: 100%;
+  min-height: 48px;
+  border-radius: var(--neo-radius-control);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.auth-switch {
+  margin-top: 18px;
+  color: var(--neo-ink-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.auth-switch--stack {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.auth-link {
+  margin-left: 5px;
+  color: var(--neo-accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  color: var(--neo-info-contrast);
+  text-decoration: underline;
+}
+
+.auth-link--standalone {
+  margin-left: 0;
+}
+
+.auth-resend-btn {
+  min-height: 38px;
+  border-radius: var(--neo-radius-control);
+  color: var(--neo-accent) !important;
+  font-weight: 800;
+}
+
+.auth-inline-action {
+  margin-top: -4px;
+  text-align: right;
+  font-size: 13px;
+}
+
+.neo-account-grid {
+  display: grid;
+  gap: var(--neo-space-5);
+  grid-template-columns: minmax(260px, 0.75fr) minmax(340px, 1fr);
+  align-items: start;
+}
+
+.neo-account-panel {
+  padding: var(--neo-space-6);
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  background: var(--neo-card-bg-solid);
+  box-shadow: var(--neo-shadow-card);
+}
+
+.neo-account-summary {
+  margin-top: var(--neo-space-5);
+  display: grid;
+  gap: 14px;
+}
+
+.neo-account-summary div {
+  padding: 13px;
+  border-radius: var(--neo-radius-card);
+  background: var(--neo-surface-soft);
+}
+
+.neo-account-summary span,
+.neo-account-summary strong {
+  display: block;
+}
+
+.neo-account-summary span {
+  color: var(--neo-ink-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.neo-account-summary strong {
+  margin-top: 5px;
+  color: var(--neo-ink);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.neo-account-form {
+  margin-top: var(--neo-space-5);
+  display: grid;
+  gap: 14px;
+}
+
+.neo-account-submit {
+  min-height: 44px;
+  border-radius: var(--neo-radius-control);
+  font-weight: 800;
+}
+
 /* Header and navigation shell. */
 .neo-header {
   border-bottom: var(--neo-border);
@@ -435,6 +633,12 @@ button,
   align-items: center;
   min-width: 0;
   gap: var(--neo-space-3);
+}
+
+.neo-toolbar-title {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
 }
 
 .neo-title {
@@ -536,6 +740,13 @@ button,
   color: var(--neo-ink) !important;
 }
 
+.neo-user-menu {
+  min-width: 220px;
+  border: var(--neo-border);
+  border-radius: var(--neo-radius-card);
+  box-shadow: var(--neo-shadow-card);
+}
+
 .neo-drawer {
   color: #f6fbf9;
   background:
@@ -561,6 +772,10 @@ button,
 
 .neo-drawer-brand {
   padding: 16px;
+}
+
+.neo-drawer-logo {
+  margin-bottom: 16px;
 }
 
 .neo-drawer-kicker,
@@ -973,6 +1188,10 @@ button,
   .neo-search {
     width: 100%;
     min-width: 0;
+  }
+
+  .neo-account-grid {
+    grid-template-columns: 1fr;
   }
 }
 

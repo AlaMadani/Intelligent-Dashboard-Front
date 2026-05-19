@@ -7,6 +7,7 @@ import {
   createWebHistory,
 } from 'vue-router';
 import routes from './routes';
+import { setupAuthGuard } from './authGuard';
 
 export default defineRouter(function (/* { store, ssrContext } */) {
   // Pick the right history implementation per runtime mode.
@@ -25,6 +26,9 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     // Router history is configured by Quasar build options.
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
+
+  // Setup authentication guard
+  setupAuthGuard(Router);
 
   return Router;
 });
