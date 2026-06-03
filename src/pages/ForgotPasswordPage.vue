@@ -36,7 +36,7 @@
   </q-form>
 
   <div class="auth-switch">
-    <router-link to="/login" class="auth-link auth-link--standalone">
+    <router-link :to="{ name: ROUTE_NAMES.LOGIN }" class="auth-link auth-link--standalone">
       {{ t('auth.verificationBackToSignIn') }}
     </router-link>
   </div>
@@ -47,6 +47,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth';
+import { ROUTE_NAMES } from 'src/router/route-names';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -61,7 +62,7 @@ const handleSubmit = async () => {
   const response = await authStore.forgotPassword({ email: email.value.trim() });
   if (response.passwordResetRequired && response.email) {
     await router.push({
-      path: '/reset-password-code',
+      name: ROUTE_NAMES.RESET_PASSWORD_CODE,
       query: {
         email: response.email,
         cooldown: String(response.resendAvailableInSeconds ?? 0),

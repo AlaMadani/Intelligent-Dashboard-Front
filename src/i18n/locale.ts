@@ -1,7 +1,9 @@
 // Resolve app locale from explicit config or browser region/language hints.
 export const DEFAULT_LOCALE = 'en-US';
 export const DEFAULT_FALLBACK_LOCALE = 'en-US';
-const SUPPORTED_LOCALES = new Set(['en-US', 'ar', 'fr-FR', 'es-ES']);
+export const SUPPORTED_LOCALES = ['en-US', 'ar', 'fr-FR', 'es-ES'] as const;
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
 
 const LOCALE_ALIASES: Record<string, string> = {
   en: 'en-US',
@@ -74,6 +76,7 @@ const normalizeLocale = (value: string | undefined) => {
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
+  if (trimmed.toLowerCase() === 'auto') return 'auto';
   const alias = LOCALE_ALIASES[trimmed.toLowerCase()];
   if (alias) return alias;
   try {
@@ -93,11 +96,17 @@ const localeFromRegion = (region: string | undefined) => {
   return null;
 };
 
+const toSupportedLocale = (locale: string | null) =>
+  locale && SUPPORTED_LOCALE_SET.has(locale) ? locale : null;
+
 const readBrowserCandidates = () => {
   if (typeof navigator === 'undefined') return [] as string[];
   const fromList = Array.isArray(navigator.languages) ? navigator.languages : [];
   const fallback = typeof navigator.language === 'string' ? [navigator.language] : [];
-  return [...fromList, ...fallback];
+  const resolvedLocale =
+    typeof Intl !== 'undefined' ? [Intl.DateTimeFormat().resolvedOptions().locale] : [];
+
+  return [...new Set([...fromList, ...fallback, ...resolvedLocale])].filter(Boolean);
 };
 
 const detectLocaleFromBrowser = () => {
@@ -106,13 +115,15 @@ const detectLocaleFromBrowser = () => {
     const normalized = normalizeLocale(candidate);
     try {
       const locale = new Intl.Locale(normalized ?? candidate);
-      const regionMatch = localeFromRegion(locale.region?.toUpperCase());
-      if (regionMatch) return regionMatch;
-      if (normalized && SUPPORTED_LOCALES.has(normalized)) {
+      if (normalized && SUPPORTED_LOCALE_SET.has(normalized)) {
         return normalized;
       }
+
       const languageMatch = LANGUAGE_TO_LOCALE[locale.language];
       if (languageMatch) return languageMatch;
+
+      const regionMatch = localeFromRegion(locale.region?.toUpperCase());
+      if (regionMatch) return regionMatch;
     } catch {
       continue;
     }
@@ -125,12 +136,12 @@ export const resolveAppLocale = (
   fallbackLocale: string | undefined,
 ) => {
   const normalizedFallback =
-    normalizeLocale(fallbackLocale) ?? DEFAULT_FALLBACK_LOCALE;
+    toSupportedLocale(normalizeLocale(fallbackLocale)) ?? DEFAULT_FALLBACK_LOCALE;
   const normalizedPreferred = normalizeLocale(preferredLocale);
 
   if (normalizedPreferred && normalizedPreferred.toLowerCase() !== 'auto') {
     return {
-      locale: normalizedPreferred,
+      locale: toSupportedLocale(normalizedPreferred) ?? normalizedFallback,
       fallbackLocale: normalizedFallback,
     };
   }
@@ -140,3 +151,5 @@ export const resolveAppLocale = (
     fallbackLocale: normalizedFallback,
   };
 };
+
+export const isRtlLocale = (locale: string) => locale === 'ar';

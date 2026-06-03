@@ -62,7 +62,7 @@
           dense
           round
           :icon="showPassword ? 'visibility_off' : 'visibility'"
-          aria-label="Toggle password visibility"
+          :aria-label="t('auth.togglePasswordVisibility')"
           @click.stop.prevent="togglePasswordVisibility"
         />
       </template>
@@ -91,7 +91,7 @@
           dense
           round
           :icon="showPasswordConfirm ? 'visibility_off' : 'visibility'"
-          aria-label="Toggle password visibility"
+          :aria-label="t('auth.togglePasswordVisibility')"
           @click.stop.prevent="togglePasswordConfirmVisibility"
         />
       </template>
@@ -115,7 +115,7 @@
 
   <div class="auth-switch">
     <span>{{ t('auth.hasAccount') }}</span>
-    <router-link to="/login" class="auth-link">{{ t('auth.signInLink') }}</router-link>
+    <router-link :to="{ name: ROUTE_NAMES.LOGIN }" class="auth-link">{{ t('auth.signInLink') }}</router-link>
   </div>
 </template>
 
@@ -124,6 +124,7 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth';
+import { ROUTE_NAMES } from 'src/router/route-names';
 import type { SignUpRequest } from 'src/types/auth';
 
 const router = useRouter();
@@ -166,7 +167,7 @@ const handleSignUp = async () => {
   const response = await authStore.signUp(formData);
   if (response.emailVerificationRequired && response.email) {
     await router.push({
-      path: '/verify-email',
+      name: ROUTE_NAMES.VERIFY_EMAIL,
       query: {
         email: response.email,
         cooldown: String(response.resendAvailableInSeconds ?? 0),
@@ -177,7 +178,7 @@ const handleSignUp = async () => {
   }
 
   if (response.success && response.accessToken) {
-    await router.push('/overview');
+    await router.push({ name: ROUTE_NAMES.SECURITY_OVERVIEW });
   }
 };
 </script>

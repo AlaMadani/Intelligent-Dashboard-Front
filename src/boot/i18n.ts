@@ -5,7 +5,7 @@ import ar from 'src/i18n/messages/ar';
 import enUS from 'src/i18n/messages/en-US';
 import esES from 'src/i18n/messages/es-ES';
 import frFR from 'src/i18n/messages/fr-FR';
-import { resolveAppLocale } from 'src/i18n/locale';
+import { isRtlLocale, resolveAppLocale } from 'src/i18n/locale';
 
 const messages = {
   en: enUS,
@@ -30,5 +30,10 @@ export const i18n = createI18n({
 });
 
 export default defineBoot(({ app }) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = isRtlLocale(locale) ? 'rtl' : 'ltr';
+  }
+
   app.use(i18n);
 });

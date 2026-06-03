@@ -1,34 +1,14 @@
 // Axios boot file: configure the shared HTTP clients used across the dashboard.
 import { defineBoot } from '#q-app/wrappers';
 import axios, { type InternalAxiosRequestConfig } from 'axios';
-import { environment } from 'src/config/environment';
-import { SESSION_EXPIRED_NOTICE_KEY, SESSION_EXPIRED_QUERY_VALUE } from 'src/constants/auth';
-import type { AuthResponse } from 'src/types/auth';
+import { api, isAuthEndpoint } from 'src/services/api-client';
+import { useAuthStore } from 'src/stores/auth';
+import { markSessionExpired } from 'src/services/session';
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 const asError = (error: unknown, fallbackMessage: string) =>
   error instanceof Error ? error : new Error(fallbackMessage);
-
-const isAuthEndpoint = (url: string | undefined) => url?.startsWith('/api/auth/') ?? false;
-
-const clearStoredAuth = () => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
-};
-
-const redirectToExpiredSessionLogin = () => {
-  localStorage.setItem(SESSION_EXPIRED_NOTICE_KEY, 'true');
-
-  const target = `/login?session=${SESSION_EXPIRED_QUERY_VALUE}`;
-  if (
-    window.location.pathname !== '/login' ||
-    window.location.search !== `?session=${SESSION_EXPIRED_QUERY_VALUE}`
-  ) {
-    window.location.assign(target);
-  }
-};
 
 // Polyfill `global` for browser bundles (some libs expect it).
 try {
@@ -40,12 +20,10 @@ try {
   // ignore
 }
 
-// Shared API client for the api-service backend.
-const api = axios.create({ baseURL: environment.apiBaseUrl });
-
 // Add JWT token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
+  const authStore = useAuthStore();
+  const token = authStore.accessToken;
   if (token && !isAuthEndpoint(config.url)) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -73,36 +51,17 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          clearStoredAuth();
-          redirectToExpiredSessionLogin();
+        const authStore = useAuthStore();
+        const tokens = await authStore.refreshAccessTokenAction();
+        if (!tokens?.accessToken) {
+          markSessionExpired('refresh_failed');
           return Promise.reject(new Error('Session expired'));
         }
 
-        const response = await axios.post<AuthResponse>(
-          `${environment.apiBaseUrl}/api/auth/refresh`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-            },
-          },
-        );
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-        if (!accessToken || !newRefreshToken) {
-          throw new Error('Refresh response did not include tokens');
-        }
-
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        clearStoredAuth();
-        redirectToExpiredSessionLogin();
+        markSessionExpired('refresh_failed');
         return Promise.reject(asError(refreshError, 'Token refresh failed'));
       }
     }

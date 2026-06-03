@@ -1,31 +1,104 @@
 // Route table: mount each dashboard surface under the shared main layout shell.
 import type { RouteRecordRaw } from 'vue-router';
+import { ROUTE_NAMES } from 'src/router/route-names';
+
+const authLayout = () => import('layouts/AuthLayout.vue');
+const mainLayout = () => import('layouts/MainLayout.vue');
 
 const routes: RouteRecordRaw[] = [
-  // Authentication routes use one persistent layout for smooth transitions.
   {
-    path: '/:authView(login|signup|verify-email|forgot-password|reset-password-code|reset-password)',
-    component: () => import('layouts/AuthLayout.vue'),
+    path: '/login',
+    name: ROUTE_NAMES.LOGIN,
+    component: authLayout,
+    meta: { public: true, authView: 'login' },
+  },
+  {
+    path: '/signup',
+    name: ROUTE_NAMES.SIGN_UP,
+    component: authLayout,
+    meta: { public: true, authView: 'signup' },
+  },
+  {
+    path: '/verify-email',
+    name: ROUTE_NAMES.VERIFY_EMAIL,
+    component: authLayout,
+    meta: { public: true, authView: 'verify-email' },
+  },
+  {
+    path: '/forgot-password',
+    name: ROUTE_NAMES.FORGOT_PASSWORD,
+    component: authLayout,
+    meta: { public: true, authView: 'forgot-password' },
+  },
+  {
+    path: '/reset-password-code',
+    name: ROUTE_NAMES.RESET_PASSWORD_CODE,
+    component: authLayout,
+    meta: { public: true, authView: 'reset-password-code' },
+  },
+  {
+    path: '/reset-password',
+    name: ROUTE_NAMES.RESET_PASSWORD,
+    component: authLayout,
+    meta: { public: true, authView: 'reset-password' },
   },
 
-  // Protected dashboard routes (with layout)
+  // Protected dashboard routes.
   {
     path: '/',
-    component: () => import('layouts/MainLayout.vue'),
+    component: mainLayout,
     children: [
-      { path: '', component: () => import('pages/OverviewPage.vue') },
-      { path: 'overview', component: () => import('pages/OverviewPage.vue') },
-      { path: 'anomalies', component: () => import('pages/AnomaliesPage.vue') },
-      { path: 'workbench', component: () => import('pages/WorkbenchPage.vue') },
-      { path: 'sessions', component: () => import('pages/SessionsPage.vue') },
-      { path: 'insights', component: () => import('pages/InsightsPage.vue') },
-      { path: 'analytics', component: () => import('pages/AnalyticsPage.vue') },
-      { path: 'account', component: () => import('pages/AccountPage.vue') },
+      { path: '', redirect: { name: ROUTE_NAMES.SECURITY_OVERVIEW } },
+      { path: 'overview', redirect: { name: ROUTE_NAMES.SECURITY_OVERVIEW } },
+      {
+        path: 'security-overview',
+        name: ROUTE_NAMES.SECURITY_OVERVIEW,
+        component: () => import('pages/SecurityOverviewPage.vue'),
+      },
+      {
+        path: 'alerts',
+        name: ROUTE_NAMES.ALERTS,
+        component: () => import('pages/AlertsPage.vue'),
+      },
+      {
+        path: 'alerts/:eventId',
+        name: ROUTE_NAMES.ALERT_INVESTIGATION,
+        component: () => import('pages/AlertInvestigationPage.vue'),
+      },
+      {
+        path: 'users',
+        name: ROUTE_NAMES.USER_360,
+        component: () => import('pages/User360Page.vue'),
+      },
+      {
+        path: 'users/:insuredId/360',
+        name: ROUTE_NAMES.USER_360_DETAIL,
+        component: () => import('pages/User360Page.vue'),
+      },
+      {
+        path: 'churn',
+        name: ROUTE_NAMES.CHURN,
+        component: () => import('pages/ChurnPage.vue'),
+      },
+      {
+        path: 'forecast',
+        name: ROUTE_NAMES.FORECAST,
+        component: () => import('pages/ForecastPage.vue'),
+      },
+      {
+        path: 'runtime',
+        name: ROUTE_NAMES.RUNTIME_HEALTH,
+        component: () => import('pages/RuntimeHealthPage.vue'),
+      },
+      {
+        path: 'account',
+        name: ROUTE_NAMES.ACCOUNT,
+        component: () => import('pages/AccountPage.vue'),
+      },
     ],
   },
 
   // Unknown URLs fall back to the dedicated 404 page.
-  // Catch-all for unknown routes.
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),

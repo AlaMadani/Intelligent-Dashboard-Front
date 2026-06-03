@@ -10,10 +10,8 @@ import type {
   SignInRequest,
   SignUpRequest,
   AuthTokens,
-  User,
 } from 'src/types/auth';
-import { api } from 'src/boot/axios';
-import { SESSION_EXPIRED_NOTICE_KEY } from 'src/constants/auth';
+import { api } from 'src/services/api-client';
 
 const authErrorResponse = (error: unknown, fallbackMessage: string): AuthResponse => {
   const data = axios.isAxiosError<AuthResponse>(error) ? error.response?.data : undefined;
@@ -28,9 +26,6 @@ class AuthService {
   async signUp(request: SignUpRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>('/api/auth/signup', request);
-      if (response.data.success && response.data.accessToken && response.data.refreshToken) {
-        this.storeTokens(response.data.accessToken, response.data.refreshToken, response.data.user);
-      }
       return response.data;
     } catch (error: unknown) {
       return authErrorResponse(error, 'Sign up failed');
@@ -40,9 +35,6 @@ class AuthService {
   async signIn(request: SignInRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>('/api/auth/signin', request);
-      if (response.data.success && response.data.accessToken && response.data.refreshToken) {
-        this.storeTokens(response.data.accessToken, response.data.refreshToken, response.data.user);
-      }
       return response.data;
     } catch (error: unknown) {
       return authErrorResponse(error, 'Sign in failed');
@@ -52,9 +44,6 @@ class AuthService {
   async verifyEmail(request: EmailVerificationRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>('/api/auth/verify-email', request);
-      if (response.data.success && response.data.accessToken && response.data.refreshToken) {
-        this.storeTokens(response.data.accessToken, response.data.refreshToken, response.data.user);
-      }
       return response.data;
     } catch (error: unknown) {
       return authErrorResponse(error, 'Email verification failed');
@@ -106,9 +95,8 @@ class AuthService {
     }
   }
 
-  async refreshAccessToken(): Promise<AuthTokens | null> {
+  async refreshAccessToken(refreshToken: string | null): Promise<AuthTokens | null> {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
         return null;
       }
@@ -120,7 +108,6 @@ class AuthService {
       });
 
       if (response.data.success && response.data.accessToken && response.data.refreshToken) {
-        this.storeTokens(response.data.accessToken, response.data.refreshToken, response.data.user);
         return {
           accessToken: response.data.accessToken,
           refreshToken: response.data.refreshToken,
@@ -130,29 +117,6 @@ class AuthService {
     } catch (error: unknown) {
       console.error('Token refresh failed:', error);
       return null;
-    }
-  }
-
-  signOut(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem(SESSION_EXPIRED_NOTICE_KEY);
-  }
-
-  getAccessToken(): string | null {
-    return localStorage.getItem('accessToken');
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem('refreshToken');
-  }
-
-  private storeTokens(accessToken: string, refreshToken: string, user?: User): void {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
     }
   }
 }

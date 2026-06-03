@@ -11,7 +11,7 @@
         color="white"
         text-color="blue"
         unelevated
-        to="/"
+        :to="{ name: ROUTE_NAMES.SECURITY_OVERVIEW }"
         :label="t('errorNotFound.goHome')"
         no-caps
       />
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { ROUTE_NAMES } from 'src/router/route-names';
 
 const { t } = useI18n();
 </script>

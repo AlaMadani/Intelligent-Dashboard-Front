@@ -4,6 +4,11 @@ const readEnv = (value: string | undefined, fallback: string) => {
   return trimmed && trimmed.length > 0 ? trimmed : fallback;
 };
 
+const readEnvNumber = (value: string | undefined, fallback: number) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 export const environment = {
   apiBaseUrl: readEnv(import.meta.env.VITE_API_BASE_URL, 'http://localhost:8081'),
   loggerEndpoint: readEnv(import.meta.env.VITE_LOGGER_ENDPOINT, 'http://localhost:5001'),
@@ -20,4 +25,5 @@ export const environment = {
   locale: readEnv(import.meta.env.VITE_I18N_LOCALE, 'auto'),
   fallbackLocale: readEnv(import.meta.env.VITE_I18N_FALLBACK_LOCALE, 'en-US'),
   authPanelImageUrl: readEnv(import.meta.env.VITE_AUTH_PANEL_IMAGE_URL, '/2.jpg'),
+  sessionIdleTimeoutMs: readEnvNumber(import.meta.env.VITE_SESSION_IDLE_TIMEOUT_MS, 15 * 60 * 1000),
 } as const;

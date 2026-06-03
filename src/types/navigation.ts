@@ -1,6 +1,8 @@
+import type { RouteName } from 'src/router/route-names';
+
 export interface NavigationItemConfig {
   id: string;
-  route: string;
+  routeName: RouteName;
   icon: string;
   labelKey: string;
   captionKey: string;
@@ -8,7 +10,7 @@ export interface NavigationItemConfig {
 
 export interface NavigationItem {
   id: string;
-  route: string;
+  routeName: RouteName;
   label: string;
   caption: string;
   icon: string;

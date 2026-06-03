@@ -13,7 +13,7 @@
       <main class="auth-form-panel">
         <section class="auth-card">
           <div class="auth-card-fixed">
-            <BrandLogo variant="card" :show-product="false" />
+            <brand-logo variant="card" :show-product="false" />
 
             <div class="auth-header">
               <Transition name="auth-copy" mode="out-in">
@@ -66,7 +66,7 @@ import { environment } from 'src/config/environment';
 defineProps<{
   title: string;
   subtitle: string;
-  notice: string | undefined;
+  notice?: string;
 }>();
 
 defineEmits<{

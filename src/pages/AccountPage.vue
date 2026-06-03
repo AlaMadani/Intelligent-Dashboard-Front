@@ -44,7 +44,14 @@
                 <q-icon name="lock" />
               </template>
               <template #append>
-                <q-btn flat dense round :icon="showCurrent ? 'visibility_off' : 'visibility'" @click.stop.prevent="showCurrent = !showCurrent" />
+                <q-btn
+                  flat
+                  dense
+                  round
+                  :icon="showCurrent ? 'visibility_off' : 'visibility'"
+                  :aria-label="t('auth.togglePasswordVisibility')"
+                  @click.stop.prevent="showCurrent = !showCurrent"
+                />
               </template>
             </q-input>
 
@@ -65,7 +72,14 @@
                 <q-icon name="vpn_key" />
               </template>
               <template #append>
-                <q-btn flat dense round :icon="showNew ? 'visibility_off' : 'visibility'" @click.stop.prevent="showNew = !showNew" />
+                <q-btn
+                  flat
+                  dense
+                  round
+                  :icon="showNew ? 'visibility_off' : 'visibility'"
+                  :aria-label="t('auth.togglePasswordVisibility')"
+                  @click.stop.prevent="showNew = !showNew"
+                />
               </template>
             </q-input>
 
@@ -86,7 +100,14 @@
                 <q-icon name="verified_user" />
               </template>
               <template #append>
-                <q-btn flat dense round :icon="showConfirm ? 'visibility_off' : 'visibility'" @click.stop.prevent="showConfirm = !showConfirm" />
+                <q-btn
+                  flat
+                  dense
+                  round
+                  :icon="showConfirm ? 'visibility_off' : 'visibility'"
+                  :aria-label="t('auth.togglePasswordVisibility')"
+                  @click.stop.prevent="showConfirm = !showConfirm"
+                />
               </template>
             </q-input>
 

@@ -25,7 +25,7 @@
           dense
           round
           :icon="showPassword ? 'visibility_off' : 'visibility'"
-          aria-label="Toggle password visibility"
+          :aria-label="t('auth.togglePasswordVisibility')"
           @click.stop.prevent="togglePasswordVisibility"
         />
       </template>
@@ -54,7 +54,7 @@
           dense
           round
           :icon="showPasswordConfirm ? 'visibility_off' : 'visibility'"
-          aria-label="Toggle password visibility"
+          :aria-label="t('auth.togglePasswordVisibility')"
           @click.stop.prevent="togglePasswordConfirmVisibility"
         />
       </template>
@@ -77,7 +77,7 @@
   </q-form>
 
   <div class="auth-switch">
-    <router-link to="/login" class="auth-link auth-link--standalone">
+    <router-link :to="{ name: ROUTE_NAMES.LOGIN }" class="auth-link auth-link--standalone">
       {{ t('auth.verificationBackToSignIn') }}
     </router-link>
   </div>
@@ -88,6 +88,7 @@ import { reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth';
+import { ROUTE_NAMES } from 'src/router/route-names';
 
 const route = useRoute();
 const router = useRouter();
@@ -117,7 +118,7 @@ const handleReset = async () => {
   authStore.clearError();
 
   if (!email.value || !authStore.passwordResetToken) {
-    await router.push('/forgot-password');
+    await router.push({ name: ROUTE_NAMES.FORGOT_PASSWORD });
     return;
   }
 
@@ -129,7 +130,7 @@ const handleReset = async () => {
   });
 
   if (response.success) {
-    await router.push('/login');
+    await router.push({ name: ROUTE_NAMES.LOGIN });
   }
 };
 </script>

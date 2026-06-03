@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import type { SessionExpiredReason } from 'src/constants/auth';
+import authService from 'src/services/auth';
 import type {
+  AuthResponse,
   AuthState,
   AuthTokens,
   ChangePasswordRequest,
@@ -13,19 +16,42 @@ import type {
   SignUpRequest,
   User,
 } from 'src/types/auth';
-import authService from 'src/services/auth';
+
+export interface AuthPersistedState {
+  user: User | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  pendingVerificationEmail: string | null;
+  pendingPasswordResetEmail: string | null;
+  passwordResetToken: string | null;
+  lastActivityAt: number | null;
+  sessionExpiredReason: SessionExpiredReason | null;
+}
+
+const emptyPersistedState = (): AuthPersistedState => ({
+  user: null,
+  accessToken: null,
+  refreshToken: null,
+  pendingVerificationEmail: null,
+  pendingPasswordResetEmail: null,
+  passwordResetToken: null,
+  lastActivityAt: null,
+  sessionExpiredReason: null,
+});
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
   const accessToken = ref<string | null>(null);
   const refreshToken = ref<string | null>(null);
-  const pendingVerificationEmail = ref<string | null>(localStorage.getItem('pendingVerificationEmail'));
-  const pendingPasswordResetEmail = ref<string | null>(localStorage.getItem('pendingPasswordResetEmail'));
-  const passwordResetToken = ref<string | null>(localStorage.getItem('passwordResetToken'));
+  const pendingVerificationEmail = ref<string | null>(null);
+  const pendingPasswordResetEmail = ref<string | null>(null);
+  const passwordResetToken = ref<string | null>(null);
+  const lastActivityAt = ref<number | null>(null);
+  const sessionExpiredReason = ref<SessionExpiredReason | null>(null);
+  const hasHydrated = ref(false);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
-  // Computed properties
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value);
 
   const authState = computed<AuthState>(() => ({
@@ -38,26 +64,114 @@ export const useAuthStore = defineStore('auth', () => {
     pendingVerificationEmail: pendingVerificationEmail.value,
     pendingPasswordResetEmail: pendingPasswordResetEmail.value,
     passwordResetToken: passwordResetToken.value,
+    lastActivityAt: lastActivityAt.value,
+    sessionExpiredReason: sessionExpiredReason.value,
   }));
 
-  // Actions
-  const initialize = () => {
-    const storedAccessToken = localStorage.getItem('accessToken');
-    const storedRefreshToken = localStorage.getItem('refreshToken');
-    const storedUser = localStorage.getItem('user');
+  const persistedState = computed<AuthPersistedState>(() => ({
+    user: user.value,
+    accessToken: accessToken.value,
+    refreshToken: refreshToken.value,
+    pendingVerificationEmail: pendingVerificationEmail.value,
+    pendingPasswordResetEmail: pendingPasswordResetEmail.value,
+    passwordResetToken: passwordResetToken.value,
+    lastActivityAt: lastActivityAt.value,
+    sessionExpiredReason: sessionExpiredReason.value,
+  }));
 
-    if (storedAccessToken && storedUser) {
-      try {
-        accessToken.value = storedAccessToken;
-        refreshToken.value = storedRefreshToken;
-        user.value = JSON.parse(storedUser) as User;
-      } catch {
-        authService.signOut();
-        accessToken.value = null;
-        refreshToken.value = null;
-        user.value = null;
-      }
+  const hydratePersistedState = (state: Partial<AuthPersistedState> | null) => {
+    const persisted = { ...emptyPersistedState(), ...(state ?? {}) };
+
+    user.value = persisted.user;
+    accessToken.value = persisted.accessToken;
+    refreshToken.value = persisted.refreshToken;
+    pendingVerificationEmail.value = persisted.pendingVerificationEmail;
+    pendingPasswordResetEmail.value = persisted.pendingPasswordResetEmail;
+    passwordResetToken.value = persisted.passwordResetToken;
+    lastActivityAt.value = persisted.lastActivityAt;
+    sessionExpiredReason.value = persisted.sessionExpiredReason;
+    isLoading.value = false;
+    error.value = null;
+    hasHydrated.value = true;
+  };
+
+  const initialize = () => {
+    hasHydrated.value = true;
+  };
+
+  const markSessionActivity = () => {
+    lastActivityAt.value = Date.now();
+  };
+
+  const setLastActivityAt = (value: number | null) => {
+    lastActivityAt.value = value;
+  };
+
+  const clearSessionActivity = () => {
+    lastActivityAt.value = null;
+  };
+
+  const clearSessionExpiredNotice = () => {
+    sessionExpiredReason.value = null;
+  };
+
+  const clearAuthenticatedState = () => {
+    user.value = null;
+    accessToken.value = null;
+    refreshToken.value = null;
+    error.value = null;
+  };
+
+  const setAuthenticatedState = (tokens: AuthTokens, authenticatedUser?: User | null) => {
+    accessToken.value = tokens.accessToken;
+    refreshToken.value = tokens.refreshToken;
+    user.value = authenticatedUser ?? user.value;
+    error.value = null;
+    clearSessionExpiredNotice();
+    markSessionActivity();
+  };
+
+  const markSessionExpired = (reason: SessionExpiredReason) => {
+    clearAuthenticatedState();
+    clearSessionActivity();
+    sessionExpiredReason.value = reason;
+  };
+
+  const persistAuthenticatedResponse = (response: AuthResponse) => {
+    if (response.success && response.user && response.accessToken && response.refreshToken) {
+      setAuthenticatedState(
+        { accessToken: response.accessToken, refreshToken: response.refreshToken },
+        response.user,
+      );
+      return true;
     }
+
+    return false;
+  };
+
+  const setPendingVerificationEmail = (email: string) => {
+    pendingVerificationEmail.value = email;
+  };
+
+  const clearPendingVerificationEmail = () => {
+    pendingVerificationEmail.value = null;
+  };
+
+  const setPendingPasswordResetEmail = (email: string) => {
+    pendingPasswordResetEmail.value = email;
+  };
+
+  const setPasswordResetToken = (token: string) => {
+    passwordResetToken.value = token;
+  };
+
+  const clearPasswordResetToken = () => {
+    passwordResetToken.value = null;
+  };
+
+  const clearPasswordResetState = () => {
+    pendingPasswordResetEmail.value = null;
+    passwordResetToken.value = null;
   };
 
   const signUp = async (request: SignUpRequest) => {
@@ -66,10 +180,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authService.signUp(request);
-      if (response.success && response.user && response.accessToken && response.refreshToken) {
-        user.value = response.user;
-        accessToken.value = response.accessToken;
-        refreshToken.value = response.refreshToken;
+      if (persistAuthenticatedResponse(response)) {
         clearPendingVerificationEmail();
       } else if (response.emailVerificationRequired && response.email) {
         setPendingVerificationEmail(response.email);
@@ -94,10 +205,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authService.signIn(request);
-      if (response.success && response.user && response.accessToken && response.refreshToken) {
-        user.value = response.user;
-        accessToken.value = response.accessToken;
-        refreshToken.value = response.refreshToken;
+      if (persistAuthenticatedResponse(response)) {
         clearPendingVerificationEmail();
       } else if (response.emailVerificationRequired && response.email) {
         setPendingVerificationEmail(response.email);
@@ -122,10 +230,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authService.verifyEmail(request);
-      if (response.success && response.user && response.accessToken && response.refreshToken) {
-        user.value = response.user;
-        accessToken.value = response.accessToken;
-        refreshToken.value = response.refreshToken;
+      if (persistAuthenticatedResponse(response)) {
         clearPendingVerificationEmail();
       } else {
         error.value = response.message || 'Email verification failed';
@@ -260,53 +365,18 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const signOut = () => {
-    authService.signOut();
-    user.value = null;
-    accessToken.value = null;
-    refreshToken.value = null;
+    clearAuthenticatedState();
     clearPendingVerificationEmail();
     clearPasswordResetState();
-    error.value = null;
-  };
-
-  const setPendingVerificationEmail = (email: string) => {
-    pendingVerificationEmail.value = email;
-    localStorage.setItem('pendingVerificationEmail', email);
-  };
-
-  const clearPendingVerificationEmail = () => {
-    pendingVerificationEmail.value = null;
-    localStorage.removeItem('pendingVerificationEmail');
-  };
-
-  const setPendingPasswordResetEmail = (email: string) => {
-    pendingPasswordResetEmail.value = email;
-    localStorage.setItem('pendingPasswordResetEmail', email);
-  };
-
-  const setPasswordResetToken = (token: string) => {
-    passwordResetToken.value = token;
-    localStorage.setItem('passwordResetToken', token);
-  };
-
-  const clearPasswordResetToken = () => {
-    passwordResetToken.value = null;
-    localStorage.removeItem('passwordResetToken');
-  };
-
-  const clearPasswordResetState = () => {
-    pendingPasswordResetEmail.value = null;
-    passwordResetToken.value = null;
-    localStorage.removeItem('pendingPasswordResetEmail');
-    localStorage.removeItem('passwordResetToken');
+    clearSessionActivity();
+    clearSessionExpiredNotice();
   };
 
   const refreshAccessTokenAction = async (): Promise<AuthTokens | null> => {
     try {
-      const tokens = await authService.refreshAccessToken();
+      const tokens = await authService.refreshAccessToken(refreshToken.value);
       if (tokens) {
-        accessToken.value = tokens.accessToken;
-        refreshToken.value = tokens.refreshToken;
+        setAuthenticatedState(tokens);
       }
       return tokens;
     } catch (err) {
@@ -321,21 +391,21 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   return {
-    // State
     user,
     accessToken,
     refreshToken,
     pendingVerificationEmail,
     pendingPasswordResetEmail,
     passwordResetToken,
+    lastActivityAt,
+    sessionExpiredReason,
+    hasHydrated,
     isLoading,
     error,
-
-    // Computed
     isAuthenticated,
     authState,
-
-    // Actions
+    persistedState,
+    hydratePersistedState,
     initialize,
     signUp,
     signIn,
@@ -347,11 +417,18 @@ export const useAuthStore = defineStore('auth', () => {
     changePassword,
     signOut,
     refreshAccessTokenAction,
+    setAuthenticatedState,
     setPendingVerificationEmail,
     clearPendingVerificationEmail,
     setPendingPasswordResetEmail,
     setPasswordResetToken,
     clearPasswordResetState,
+    setLastActivityAt,
+    markSessionActivity,
+    clearSessionActivity,
+    markSessionExpired,
+    clearSessionExpiredNotice,
+    clearAuthenticatedState,
     clearError,
   };
 });

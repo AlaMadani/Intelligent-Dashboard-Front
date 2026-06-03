@@ -61,7 +61,7 @@
       @click="handleResend"
     />
 
-    <router-link to="/login" class="auth-link auth-link--standalone">
+    <router-link :to="{ name: ROUTE_NAMES.LOGIN }" class="auth-link auth-link--standalone">
       {{ t('auth.verificationBackToSignIn') }}
     </router-link>
   </div>
@@ -72,6 +72,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth';
+import { ROUTE_NAMES } from 'src/router/route-names';
 
 const route = useRoute();
 const router = useRouter();
@@ -120,7 +121,7 @@ const routeCooldown = () => {
 
 onMounted(() => {
   if (!email.value) {
-    void router.replace('/forgot-password');
+    void router.replace({ name: ROUTE_NAMES.FORGOT_PASSWORD });
     return;
   }
 
@@ -144,7 +145,10 @@ const handleVerify = async () => {
   });
 
   if (response.success && response.resetToken) {
-    await router.push({ path: '/reset-password', query: { email: response.email || email.value } });
+    await router.push({
+      name: ROUTE_NAMES.RESET_PASSWORD,
+      query: { email: response.email || email.value },
+    });
   }
 };
 

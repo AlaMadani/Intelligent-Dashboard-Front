@@ -37,6 +37,7 @@ export const formatScore = (value: number | null | undefined) =>
 export const formatDate = (value: string | null | undefined) => {
   if (!value) return i18n.global.t('common.notAvailable');
   const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return i18n.global.t('common.notAvailable');
   return new Intl.DateTimeFormat(getCurrentLocale(), {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -62,3 +63,37 @@ export const formatDurationSeconds = (value: number | null | undefined) => {
   if (minutes > 0) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
 };
+
+export const formatNullableScore = (value: number | null | undefined, digits = 2) => {
+  if (value == null || Number.isNaN(value)) return i18n.global.t('common.notAvailable');
+  return formatNumber(value, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+};
+
+export const safeArray = <T = unknown>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : [];
+
+export const safeRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+export const riskTone = (riskLevel: string | null | undefined) => {
+  switch (riskLevel?.trim().toUpperCase()) {
+    case 'CRITICAL':
+      return 'negative';
+    case 'HIGH':
+      return 'warning';
+    case 'MEDIUM':
+      return 'orange';
+    case 'LOW':
+      return 'positive';
+    default:
+      return 'grey';
+  }
+};
+
+export const normalizeRiskLevel = (riskLevel: string | null | undefined) =>
+  riskLevel?.trim() ? riskLevel.trim().toUpperCase() : i18n.global.t('common.unknown');

@@ -1,14 +1,17 @@
 <template>
   <div class="brand-logo" :class="`brand-logo--${variant}`">
     <span class="brand-logo__frame">
-      <img class="brand-logo__image" :src="logoUrl" alt="NoveoCare" />
+      <img class="brand-logo__image" :src="logoUrl" :alt="t('brand.alt')" />
     </span>
-    <span v-if="showProduct" class="brand-logo__product">Insights</span>
+    <span v-if="showProduct" class="brand-logo__product">{{ t('brand.product') }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import logoUrl from 'src/assets/logo_noveocare.jpg';
+
+const { t } = useI18n();
 
 withDefaults(
   defineProps<{

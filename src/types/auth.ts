@@ -1,4 +1,6 @@
 // Authentication types and interfaces
+import type { SessionExpiredReason } from 'src/constants/auth';
+
 export interface User {
   id: number;
   email: string;
@@ -75,6 +77,8 @@ export interface AuthState {
   pendingVerificationEmail: string | null;
   pendingPasswordResetEmail: string | null;
   passwordResetToken: string | null;
+  lastActivityAt: number | null;
+  sessionExpiredReason: SessionExpiredReason | null;
 }
 
 export interface AuthTokens {

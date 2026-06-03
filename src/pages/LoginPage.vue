@@ -39,14 +39,14 @@
           dense
           round
           :icon="showPassword ? 'visibility_off' : 'visibility'"
-          aria-label="Toggle password visibility"
+          :aria-label="t('auth.togglePasswordVisibility')"
           @click.stop.prevent="togglePasswordVisibility"
         />
       </template>
     </q-input>
 
     <div class="auth-inline-action">
-      <router-link to="/forgot-password" class="auth-link auth-link--standalone">
+      <router-link :to="{ name: ROUTE_NAMES.FORGOT_PASSWORD }" class="auth-link auth-link--standalone">
         {{ t('auth.forgotPassword') }}
       </router-link>
     </div>
@@ -69,7 +69,7 @@
 
   <div class="auth-switch">
     <span>{{ t('auth.noAccount') }}</span>
-    <router-link to="/signup" class="auth-link">{{ t('auth.signUpLink') }}</router-link>
+    <router-link :to="{ name: ROUTE_NAMES.SIGN_UP }" class="auth-link">{{ t('auth.signUpLink') }}</router-link>
   </div>
 </template>
 
@@ -78,6 +78,7 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth';
+import { ROUTE_NAMES } from 'src/router/route-names';
 import type { SignInRequest } from 'src/types/auth';
 
 const router = useRouter();
@@ -109,7 +110,7 @@ const handleSignIn = async () => {
   const response = await authStore.signIn(formData);
   if (response.emailVerificationRequired && response.email) {
     await router.push({
-      path: '/verify-email',
+      name: ROUTE_NAMES.VERIFY_EMAIL,
       query: {
         email: response.email,
         cooldown: String(response.resendAvailableInSeconds ?? 0),
@@ -120,7 +121,7 @@ const handleSignIn = async () => {
   }
 
   if (response.success && response.accessToken) {
-    await router.push('/overview');
+    await router.push({ name: ROUTE_NAMES.SECURITY_OVERVIEW });
   }
 };
 </script>
