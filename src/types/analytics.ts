@@ -53,6 +53,127 @@ export interface V36ModelRuntimeState {
   raw?: V36UnknownMap;
 }
 
+export interface V36KafkaPerformance {
+  eventProcessingMsAvg?: number | null;
+  eventProcessingMsP95?: number | null;
+  performanceSummaryRunCount?: number | null;
+  performanceSummaryLastRunAt?: string | null;
+  kafka_listener_hot_path_blocked?: boolean | null;
+  redisWriteMsAvg?: number | null;
+  redisWriteMsP95?: number | null;
+  modelInferenceMsAvg?: number | null;
+  modelInferenceMsP95?: number | null;
+  sqlWriteMsAvg?: number | null;
+  sqlWriteMsP95?: number | null;
+  dashboardRefreshMsAvg?: number | null;
+  dashboardRefreshMsP95?: number | null;
+  recordsProcessedPerSecond?: number | null;
+  dashboardLastRefreshAt?: string | null;
+  dashboardRefreshSkippedDueToRateLimit?: number | null;
+  kafkaLagCached?: number | null;
+  loadSheddingMode?: string | null;
+  sequenceMsAvg?: number | null;
+  sequenceMsP95?: number | null;
+  tabularMsAvg?: number | null;
+  tabularMsP95?: number | null;
+  historyFetchMsAvg?: number | null;
+  historyFetchMsP95?: number | null;
+  rulesMsAvg?: number | null;
+  rulesMsP95?: number | null;
+  finalizationMsAvg?: number | null;
+  finalizationMsP95?: number | null;
+  alertPublishMsAvg?: number | null;
+  alertPublishMsP95?: number | null;
+  kafkaEventAgeReceiveMsAvg?: number | null;
+  kafkaEventAgeReceiveMsP95?: number | null;
+  sequenceMode?: string | null;
+}
+
+export interface V36KafkaDiagnostics {
+  consumerGroupId?: string | null;
+  topic?: string | null;
+  configuredConcurrency?: number | null;
+  assignedPartitions?: string | number | number[] | null;
+  topicPartitionCount?: number | null;
+  autoOffsetReset?: string | null;
+  maxPollRecords?: number | null;
+  maxPollIntervalMs?: number | null;
+  lastConsumedAt?: string | null;
+  lastAckAt?: string | null;
+  lastProcessingError?: string | null;
+  recordsProcessedTotal?: number | null;
+  processingFailuresTotal?: number | null;
+  assignedPartitionCount?: number | null;
+  effectiveConsumerParallelism?: number | null;
+  performance?: V36KafkaPerformance | null;
+}
+
+export interface V36IdempotencyDiagnostics {
+  duplicateEventsSkipped?: number | null;
+  duplicateSequenceAppendsSkipped?: number | null;
+  duplicateAlertsSkipped?: number | null;
+  duplicateSqlWritesSkipped?: number | null;
+}
+
+export interface V36PerformanceDiagnostics {
+  eventProcessingMsAvg?: number | null;
+  eventProcessingMsP95?: number | null;
+  redisWriteMsAvg?: number | null;
+  redisWriteMsP95?: number | null;
+  modelInferenceMsAvg?: number | null;
+  modelInferenceMsP95?: number | null;
+  sqlWriteMsAvg?: number | null;
+  sqlWriteMsP95?: number | null;
+  dashboardRefreshMsAvg?: number | null;
+  dashboardRefreshMsP95?: number | null;
+  recordsProcessedPerSecond?: number | null;
+  dashboardLastRefreshAt?: string | null;
+  dashboardRefreshSkippedDueToRateLimit?: number | null;
+  kafkaLagCached?: number | null;
+  loadSheddingMode?: string | null;
+  performanceSummaryRunCount?: number | null;
+  performanceSummaryLastRunAt?: string | null;
+  kafka_listener_hot_path_blocked?: boolean | null;
+  sequenceMsAvg?: number | null;
+  sequenceMsP95?: number | null;
+  tabularMsAvg?: number | null;
+  tabularMsP95?: number | null;
+  historyFetchMsAvg?: number | null;
+  historyFetchMsP95?: number | null;
+  rulesMsAvg?: number | null;
+  rulesMsP95?: number | null;
+  finalizationMsAvg?: number | null;
+  finalizationMsP95?: number | null;
+  alertPublishMsAvg?: number | null;
+  alertPublishMsP95?: number | null;
+  kafkaEventAgeReceiveMsAvg?: number | null;
+  kafkaEventAgeReceiveMsP95?: number | null;
+  sequenceMode?: string | null;
+}
+
+export interface V36StatsDiagnostics {
+  liveTimeBasis?: string | null;
+}
+
+export interface V36NextActionPredictionDiagnostics {
+  enabled?: boolean | null;
+  mode?: string | null;
+  lastSkipReason?: string | null;
+  predictionsGeneratedTotal?: number | null;
+  predictionsSkippedTotal?: number | null;
+}
+
+export interface V36SessionFinalizationDiagnostics {
+  openSessionCount?: number | null;
+  sessionsFinalizedByExplicitEnd?: number | null;
+  sessionsFinalizedByInactivityTimeout?: number | null;
+  sessionsFinalizedByMaxDuration?: number | null;
+  expiredSessionFlushLastRunAt?: string | null;
+  expiredSessionFlushLastFinalizedCount?: number | null;
+  lateEventsForFinalizedSessions?: number | null;
+  duplicateFinalizationSkipped?: number | null;
+}
+
 export interface V36RuntimeHealthResponse {
   schemaVersion?: V36SchemaVersion;
   runtimeVersion?: string;
@@ -64,6 +185,12 @@ export interface V36RuntimeHealthResponse {
   status?: string;
   message?: string;
   modelHealth?: Record<string, V36ModelRuntimeState>;
+  sessionFinalization?: V36SessionFinalizationDiagnostics | null;
+  kafka?: V36KafkaDiagnostics | null;
+  idempotency?: V36IdempotencyDiagnostics | null;
+  performance?: V36PerformanceDiagnostics | null;
+  stats?: V36StatsDiagnostics | null;
+  nextActionPrediction?: V36NextActionPredictionDiagnostics | null;
   warnings?: string[];
   source?: V36Source;
   raw?: V36UnknownMap;
@@ -93,6 +220,11 @@ export interface V36SecurityOverviewResponse {
 export interface V36DiagnosticsResponse {
   schemaVersion?: V36SchemaVersion;
   runtimeHealth?: V36RuntimeHealthResponse | V36UnknownMap;
+  sessionFinalization?: V36SessionFinalizationDiagnostics | null;
+  kafka?: V36KafkaDiagnostics | null;
+  idempotency?: V36IdempotencyDiagnostics | null;
+  performance?: V36PerformanceDiagnostics | null;
+  stats?: V36StatsDiagnostics | null;
   fieldCoverage?: V36UnknownMap;
   modelLatency?: V36UnknownMap;
   fallbackMode?: string;
@@ -134,6 +266,8 @@ export interface V36LiveAlertItem {
   httpMethod?: string;
   status?: string;
   riskLevel?: V36RiskLevel;
+  riskTier?: V36RiskLevel;
+  riskScale?: string;
   finalRiskScore?: number;
   anomalyType?: string;
   anomalyTypeConfidence?: number;
@@ -141,8 +275,8 @@ export interface V36LiveAlertItem {
   xgboostAnomalyScore100?: number;
   lightgbmAlertScore?: number;
   lightgbmAlertScore100?: number;
-  transformerRiskScore100?: number;
-  tcnRiskScore100?: number;
+  transformerRiskScore100?: number | null;
+  tcnRiskScore100?: number | null;
   ruleRiskScore?: number;
   modelContributions?: V36ModelContributions;
   triggeredRuleCodes?: string[];
@@ -153,6 +287,8 @@ export interface V36LiveAlertItem {
   llmEvidenceRedisKey?: string;
   alertStatus?: string;
   createdAt?: string;
+  sessionEndReason?: string | null;
+  sessionEndedExplicitly?: boolean | null;
   source?: V36Source;
   warnings?: string[];
   rawPayload?: V36UnknownMap;
@@ -182,12 +318,16 @@ export interface V36ModelScores {
   lightgbmAlertScore?: number;
   lightgbmAlertScore100?: number;
   transformerSurpriseScore?: number;
-  transformerRiskScore100?: number;
-  tcnRiskScore100?: number;
+  transformerRiskScore100?: number | null;
+  tcnRiskScore100?: number | null;
   businessContextScore?: number;
   aggregationBoost?: number;
   finalRiskScore?: number;
   ruleRiskScore?: number;
+  sequenceRunBoth?: boolean;
+  sequenceActuallyRanModels?: string[];
+  transformerUsedInFusion?: boolean;
+  tcnUsedInFusion?: boolean;
   [key: string]: unknown;
 }
 
@@ -202,9 +342,16 @@ export interface V36SequenceEvidence {
   sequenceModelArtifact?: string;
   contextAvailable?: boolean;
   windowSize?: number;
+  sequenceRunBoth?: boolean;
+  sequenceActuallyRanModels?: string[];
+  transformerUsedInFusion?: boolean;
+  tcnUsedInFusion?: boolean;
+  transformerRiskScore100?: number | null;
+  tcnRiskScore100?: number | null;
   sequenceCatScore?: number;
   sequenceContScore?: number;
   sequenceCtxScore?: number;
+  topSurpriseFields?: string[];
   topSequenceSurpriseFields?: V36SequenceSurpriseField[];
   raw?: V36UnknownMap;
 }
@@ -265,6 +412,14 @@ export interface V36LlmLinkInfo {
   generateExplanationEndpoint?: string;
 }
 
+export interface V36SessionLifecycle {
+  sessionEndReason?: string | null;
+  sessionEndedExplicitly?: boolean | null;
+  sessionEndedAt?: string | null;
+  sessionDurationMs?: number | null;
+  sessionEventCount?: number | null;
+}
+
 export interface V36AlertInvestigationDetail {
   schemaVersion?: V36SchemaVersion;
   id?: number | null;
@@ -274,17 +429,19 @@ export interface V36AlertInvestigationDetail {
   insuredId?: string;
   sessionId?: string;
   timestamp?: string;
-  eventMetadata?: V36EventMetadata;
+  eventMetadata?: V36EventMetadata | null;
   riskLevel?: V36RiskLevel;
+  riskTier?: V36RiskLevel;
+  riskScale?: string;
   finalRiskScore?: number;
   anomalyType?: string;
   anomalyTypeConfidence?: number;
   triggeredRules?: string[];
   modelScores?: V36ModelScores;
   modelContributions?: V36ModelContributions;
-  sequenceEvidence?: V36SequenceEvidence;
-  tabularEvidence?: V36TabularEvidence;
-  ruleEvidence?: V36RuleEvidence;
+  sequenceEvidence?: V36SequenceEvidence | null;
+  tabularEvidence?: V36TabularEvidence | null;
+  ruleEvidence?: V36RuleEvidence | null;
   anomalyTypeAttribution?: V36AnomalyTypeAttribution;
   churnContext?: V36ChurnContext;
   forecastContext?: V36ForecastContext;
@@ -293,6 +450,12 @@ export interface V36AlertInvestigationDetail {
   llmEvidencePayloadAvailable?: boolean;
   llmEvidenceRedisKey?: string;
   llm?: V36LlmLinkInfo;
+  sessionEndReason?: string | null;
+  sessionEndedExplicitly?: boolean | null;
+  sessionEndedAt?: string | null;
+  sessionDurationMs?: number | null;
+  sessionEventCount?: number | null;
+  sessionLifecycle?: V36SessionLifecycle | null;
   source?: V36Source;
   warnings?: string[];
   rawPayload?: V36UnknownMap;
@@ -303,14 +466,24 @@ export interface V36LlmEvidencePayload {
   eventId?: string;
   insuredId?: string;
   sessionId?: string;
+  evidenceHash?: string;
+  evidenceVersion?: string;
+  evidenceCreatedAt?: string;
+  eventMetadata?: V36EventMetadata | null;
+  userMetadata?: V36UnknownMap | null;
+  sessionMetadata?: V36UnknownMap | null;
   risk?: V36UnknownMap;
   modelScores?: V36ModelScores | V36UnknownMap;
+  modelContributions?: V36ModelContributions;
+  triggeredRules?: string[];
   sequenceEvidence?: V36SequenceEvidence | V36UnknownMap;
   tabularEvidence?: V36TabularEvidence | V36UnknownMap;
   ruleEvidence?: V36RuleEvidence | V36UnknownMap;
   anomalyTypeAttribution?: V36AnomalyTypeAttribution | V36UnknownMap;
   churnContext?: V36ChurnContext | V36UnknownMap;
   forecastContext?: V36ForecastContext | V36UnknownMap;
+  runtimeWarnings?: string[];
+  evidenceSummary?: string;
   llmInstruction?: V36UnknownMap;
   llmExplanationInDataprocessor?: boolean;
   rawPayload?: V36UnknownMap;
@@ -333,14 +506,23 @@ export interface V36LlmExplanationResponse {
   provider?: string;
   model?: string;
   cached?: boolean;
+  forceRefresh?: boolean;
   evidenceHash?: string;
   style?: string;
   language?: string;
   summary?: string;
+  riskNarrative?: string;
+  behaviorNarrative?: string;
+  modelNarrative?: string;
+  rulesNarrative?: string;
+  sequenceNarrative?: string;
+  keyEvidenceBullets?: string[];
   evidenceBullets?: string[];
   possibleInterpretation?: string;
   recommendedActions?: string[];
+  limitations?: string;
   modelScoreExplanation?: V36UnknownMap;
+  triggeredRulesExplanation?: Array<Record<string, unknown>>;
   disclaimer?: string;
   fallback?: boolean;
   source?: V36Source;
@@ -348,11 +530,54 @@ export interface V36LlmExplanationResponse {
   rawPayload?: V36UnknownMap;
 }
 
+export interface NormalizedLlmExplanation {
+  schemaVersion?: string | null;
+  eventId?: string | null;
+  generatedAt?: string | null;
+  provider?: string | null;
+  model?: string | null;
+  cached?: boolean | null;
+  source?: string | null;
+  forceRefresh?: boolean | null;
+  fallback?: boolean | null;
+  evidenceHash?: string | null;
+
+  summary?: string | null;
+  riskNarrative?: string | null;
+  behaviorNarrative?: string | null;
+  modelNarrative?: string | null;
+  rulesNarrative?: string | null;
+  sequenceNarrative?: string | null;
+  possibleInterpretation?: string | null;
+  limitations?: string | null;
+
+  keyEvidenceBullets?: string[] | null;
+  evidenceBullets?: string[] | null;
+  recommendedActions?: string[] | null;
+  triggeredRulesExplanation?: Array<Record<string, unknown>> | null;
+  modelScoreExplanation?: Record<string, unknown> | null;
+
+  disclaimer?: string | null;
+  raw?: unknown;
+}
+
 export interface V36UserRiskSummary {
   averageRiskScoreLast30d?: number;
   alertCountLast30d?: number;
   criticalAlertCountLast30d?: number;
   [key: string]: unknown;
+}
+
+export interface V36UserRecentSession {
+  sessionId?: string;
+  finalRiskScore?: number | null;
+  riskLevel?: string | null;
+}
+
+export interface V36UserRiskTimelinePoint {
+  timestamp?: string | null;
+  finalRiskScore?: number | null;
+  riskLevel?: string | null;
 }
 
 export interface V36UserBaseline {
@@ -369,8 +594,8 @@ export interface V36User360Response {
   churn?: V36ChurnContext;
   risk?: V36UserRiskSummary;
   baseline?: V36UserBaseline;
-  recentSessions?: V36UnknownMap[];
-  riskTimeline?: V36UnknownMap[];
+  recentSessions?: V36UserRecentSession[];
+  riskTimeline?: V36UserRiskTimelinePoint[];
   source?: V36Source;
   warnings?: string[];
   rawPayload?: V36UnknownMap;
@@ -433,6 +658,11 @@ export interface V36ForecastDashboardResponse {
 }
 
 export interface V36FinalWinnerItem {
+  use_case?: string;
+  recommended_approach?: string;
+  family?: string;
+  selection_metric?: string;
+  metric_value?: number;
   useCase?: string;
   winner?: string;
   model?: string;

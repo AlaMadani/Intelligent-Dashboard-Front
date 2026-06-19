@@ -1,5 +1,6 @@
 <template>
-  <q-page class="neo-page">
+  <q-page class="neo-page neo-loading-scope">
+    <loading-overlay :show="loading" context="fetch" />
     <section class="neo-section">
       <div class="neo-section-header">
         <div>
@@ -8,21 +9,34 @@
           <p class="neo-section-subtitle">{{ t('v36.alerts.subtitle') }}</p>
         </div>
         <div class="neo-section-actions">
+          <LiveConnectionBadge
+            :connected="sseConnected"
+            :connecting="sseConnecting"
+            :last-event-at="sseLastEventAt"
+          />
           <div v-if="source" class="neo-analytics-chip">{{ t('v36.common.source') }}: {{ source }}</div>
+          <ai-explain-button context-key="alerts-feed" variant="prominent" />
           <q-btn
             unelevated
             color="primary"
             icon="refresh"
-            :loading="loading"
+            :disable="loading"
             :label="t('v36.common.refresh')"
-            @click="refresh"
-          />
+            @click="() => refresh()"
+          >
+            <q-tooltip>{{ t('live.manualRefreshTooltip') }}</q-tooltip>
+          </q-btn>
         </div>
       </div>
 
       <q-banner v-if="error" class="neo-banner">
         <template #avatar><q-icon name="error_outline" /></template>
         {{ error }}
+      </q-banner>
+
+      <q-banner v-if="sourceBanner" :class="sourceBannerClass">
+        <template #avatar><q-icon :name="sourceBannerIcon" /></template>
+        {{ sourceBanner }}
       </q-banner>
 
       <q-banner v-if="warnings.length" class="neo-v36-alert-warning">
@@ -72,43 +86,23 @@
         <table class="neo-table neo-v36-alert-table">
           <thead>
             <tr>
-              <th>{{ t('v36.common.riskLevel') }}</th>
-              <th>{{ t('v36.common.finalRiskScore') }}</th>
-              <th>{{ t('v36.common.timestamp') }}</th>
-              <th>{{ t('v36.common.eventAction') }}</th>
-              <th>{{ t('v36.common.apiTemplate') }}</th>
-              <th>{{ t('v36.common.apiFamily') }}</th>
+              <th>{{ t('v36.common.riskLevel') }} <InfoTooltip :text="t('v36.help.alerts.riskLevel')" /></th>
+              <th>{{ t('v36.common.eventId') }}</th>
               <th>{{ t('v36.common.insuredId') }}</th>
-              <th>{{ t('v36.common.sessionId') }}</th>
-              <th>{{ t('v36.common.country') }}</th>
-              <th>{{ t('v36.common.device') }}</th>
               <th>{{ t('v36.common.anomalyType') }}</th>
-              <th>{{ t('v36.common.xgboostScore') }}</th>
-              <th>{{ t('v36.common.lightgbmScore') }}</th>
-              <th>{{ t('v36.common.transformerRisk') }}</th>
-              <th>{{ t('v36.common.tcnRisk') }}</th>
-              <th>{{ t('v36.common.ruleRisk') }}</th>
-              <th>{{ t('v36.common.triggeredRules') }}</th>
-              <th>{{ t('v36.common.churnRisk') }}</th>
-              <th>{{ t('v36.common.source') }}</th>
-              <th>{{ t('v36.common.warnings') }}</th>
+              <th>{{ t('v36.common.sessionId') }}</th>
+              <th>{{ t('v36.common.finalRiskScore') }} <InfoTooltip :text="t('v36.help.alerts.finalRiskScore')" /></th>
+              <th>{{ t('v36.common.timestamp') }}</th>
               <th>{{ t('v36.common.action') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="loading">
-              <td colspan="21">{{ t('v36.common.loading') }}</td>
-            </tr>
-            <tr v-else-if="!items.length">
-              <td colspan="21">{{ t('v36.common.noData') }}</td>
+            <tr v-if="!items.length">
+              <td colspan="8">{{ t('v36.common.noData') }}</td>
             </tr>
             <tr v-for="alert in items" :key="alert.eventId ?? alert.recordId">
-              <td><q-badge :color="riskTone(alert.riskLevel)" rounded>{{ alert.riskLevel ?? t('common.unknown') }}</q-badge></td>
-              <td>{{ formatNullableScore(alert.finalRiskScore) }}</td>
-              <td>{{ formatDate(alert.timestamp) }}</td>
-              <td>{{ alert.eventAction ?? t('common.notAvailable') }}</td>
-              <td class="neo-mono">{{ alert.apiTemplate ?? t('common.notAvailable') }}</td>
-              <td>{{ alert.apiFamily ?? t('common.notAvailable') }}</td>
+              <td><q-badge :color="riskTone(riskLevelDisplay(alert.riskTier, alert.riskLevel))" rounded>{{ riskLevelDisplay(alert.riskTier, alert.riskLevel) ?? t('common.unknown') }}</q-badge></td>
+              <td class="neo-mono">{{ alert.eventId ?? t('common.notAvailable') }}</td>
               <td>
                 <q-btn
                   v-if="alert.insuredId"
@@ -121,29 +115,34 @@
                 />
                 <span v-else>{{ t('common.notAvailable') }}</span>
               </td>
-              <td class="neo-mono">{{ alert.sessionId ?? t('common.notAvailable') }}</td>
-              <td>{{ alert.country ?? t('common.notAvailable') }}</td>
-              <td>{{ alert.device ?? t('common.notAvailable') }}</td>
               <td>{{ alert.anomalyType ?? t('common.unknown') }}</td>
-              <td>{{ formatNullableScore(alert.xgboostAnomalyScore100 ?? score100(alert.xgboostAnomalyScore)) }}</td>
-              <td>{{ formatNullableScore(alert.lightgbmAlertScore100 ?? score100(alert.lightgbmAlertScore)) }}</td>
-              <td>{{ formatNullableScore(alert.transformerRiskScore100) }}</td>
-              <td>{{ formatNullableScore(alert.tcnRiskScore100) }}</td>
-              <td>{{ formatNullableScore(alert.ruleRiskScore) }}</td>
-              <td>{{ rulesLabel(alert.triggeredRuleCodes) }}</td>
-              <td>{{ churnLabel(alert) }}</td>
-              <td>{{ alert.source ?? t('common.notAvailable') }}</td>
-              <td>{{ rulesLabel(alert.warnings) }}</td>
+              <td class="neo-mono">{{ alert.sessionId ?? t('common.notAvailable') }}</td>
+              <td>{{ formatNullableScore(alert.finalRiskScore) }}</td>
+              <td>{{ formatDate(alert.timestamp) }}</td>
               <td>
-                <q-btn
-                  dense
-                  unelevated
-                  color="primary"
-                  icon="manage_search"
-                  :disable="!alert.eventId"
-                  :label="t('v36.common.investigate')"
-                  @click="openInvestigation(alert.eventId)"
-                />
+                <div class="neo-v36-row-actions">
+                  <ai-explain-button
+                    v-if="alert.eventId"
+                    context-key="alert-row"
+                    variant="compact"
+                    :event-id="alert.eventId"
+                    :params="{
+                      eventId: alert.eventId,
+                      riskLevel: alert.riskLevel,
+                      anomalyType: alert.anomalyType,
+                      finalRiskScore: formatNullableScore(alert.finalRiskScore),
+                    }"
+                  />
+                  <q-btn
+                    dense
+                    unelevated
+                    color="primary"
+                    icon="manage_search"
+                    :disable="!alert.eventId"
+                    :label="t('v36.common.investigate')"
+                    @click="openInvestigation(alert.eventId)"
+                  />
+                </div>
               </td>
             </tr>
           </tbody>
@@ -160,21 +159,29 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import InfoTooltip from 'src/components/common/InfoTooltip.vue';
+import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
+import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
+import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
 import { useLiveAlerts } from 'src/composables/v36/useLiveAlerts';
+import { useV36SseState } from 'src/composables/v36/useV36SseRefresh';
 import { ROUTE_NAMES } from 'src/router/route-names';
-import type { V36LiveAlertItem } from 'src/types/analytics';
+
 import {
   formatDate,
   formatNullableScore,
   formatNumber,
-  formatPercent,
+  riskLevelDisplay,
   riskTone,
+  sourceInfoBanner,
 } from 'src/utils/format';
 
 const router = useRouter();
 const { t } = useI18n();
+const { connected: sseConnected, connecting: sseConnecting, lastEventAt: sseLastEventAt } = useV36SseState();
 const {
   params,
   items,
@@ -191,6 +198,21 @@ const {
   hasMore,
 } = useLiveAlerts();
 
+const sourceBannerInfo = computed(() => sourceInfoBanner(source.value));
+const sourceBanner = computed(() => sourceBannerInfo.value?.message ?? '');
+const sourceBannerClass = computed(() => {
+  const type = sourceBannerInfo.value?.type;
+  if (type === 'warning') return 'neo-v36-alert-warning';
+  if (type === 'info') return 'neo-v36-info';
+  return '';
+});
+const sourceBannerIcon = computed(() => {
+  const type = sourceBannerInfo.value?.type;
+  if (type === 'warning') return 'warning';
+  if (type === 'info') return 'info';
+  return '';
+});
+
 const riskOptions = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((value) => ({
   label: value,
   value,
@@ -202,17 +224,6 @@ const applyFilters = () => {
     offset: 0,
   };
   void refresh();
-};
-
-const score100 = (value: number | undefined) =>
-  value == null ? undefined : value <= 1 ? value * 100 : value;
-
-const rulesLabel = (value: string[] | undefined) =>
-  value?.length ? value.join(', ') : t('common.none');
-
-const churnLabel = (alert: V36LiveAlertItem) => {
-  if (alert.churnProbability == null && !alert.churnRiskLevel) return t('common.notAvailable');
-  return `${alert.churnRiskLevel ?? t('common.unknown')} / ${formatPercent(alert.churnProbability, 1)}`;
 };
 
 const openInvestigation = async (eventId: string | undefined) => {
@@ -261,7 +272,7 @@ const openUser = async (insuredId: string) => {
 
 .neo-v36-alert-warning {
   margin-top: var(--neo-space-4);
-  border: 1px solid rgba(167, 101, 24, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.28);
   border-radius: var(--neo-radius-card);
   background: var(--neo-warning-bg);
   color: var(--neo-warning-contrast);
@@ -275,6 +286,13 @@ const openUser = async (insuredId: string) => {
   margin-top: var(--neo-space-4);
   color: var(--neo-ink-muted);
   font-size: 13px;
+}
+
+.neo-v36-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 @media (max-width: 720px) {

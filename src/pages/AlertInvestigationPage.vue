@@ -9,13 +9,20 @@
         </div>
         <div class="neo-section-actions">
           <div v-if="source" class="neo-analytics-chip">{{ t('v36.common.source') }}: {{ source }}</div>
+          <ai-explain-button
+            v-if="eventId"
+            context-key="investigation-overview"
+            variant="prominent"
+            :event-id="eventId"
+            :params="{ eventId, riskLevel: alert?.riskLevel, anomalyType: alert?.anomalyType }"
+          />
           <q-btn
             flat
             icon="arrow_back"
             :label="t('v36.common.backToAlerts')"
             @click="router.push({ name: ROUTE_NAMES.ALERTS })"
           />
-          <q-btn unelevated color="primary" icon="refresh" :loading="loading" :label="t('v36.common.refresh')" @click="refresh" />
+          <q-btn unelevated color="primary" icon="refresh" :disable="loading" :label="t('v36.common.refresh')" @click="() => refresh()" />
         </div>
       </div>
 
@@ -24,22 +31,26 @@
         {{ error }}
       </q-banner>
 
+      <q-banner v-if="sourceBanner" :class="sourceBannerClass">
+        <template #avatar><q-icon :name="sourceBannerIcon" /></template>
+        {{ sourceBanner }}
+      </q-banner>
+
       <q-banner v-if="warnings.length" class="neo-v36-warning">
         <template #avatar><q-icon name="warning" /></template>
         {{ warnings.join(' | ') }}
       </q-banner>
     </section>
 
-    <section v-if="loading && !alert" class="neo-section neo-v36-grid">
-      <skeleton-card v-for="i in 4" :key="i" />
-    </section>
+    <div class="neo-loading-scope neo-investigation-body">
+      <loading-overlay :show="loading" context="fetch" />
 
-    <template v-else-if="alert">
+    <template v-if="alert">
       <section class="neo-section neo-panel neo-v36-alert-header">
         <div>
           <div class="neo-v36-header-row">
-            <q-badge :color="riskTone(alert.riskLevel)" rounded>
-              {{ alert.riskLevel ?? t('common.unknown') }}
+            <q-badge :color="riskTone(riskLevelDisplay(alert.riskTier, alert.riskLevel))" rounded>
+              {{ riskLevelDisplay(alert.riskTier, alert.riskLevel) ?? t('common.unknown') }}
             </q-badge>
             <span class="neo-mono">{{ alert.eventId }}</span>
           </div>
@@ -49,6 +60,7 @@
         <div class="neo-v36-score">
           <span>{{ t('v36.common.finalRiskScore') }}</span>
           <strong>{{ formatNullableScore(alert.finalRiskScore) }}</strong>
+          <InfoTooltip :text="t('v36.help.investigation.finalRiskScore')" />
           <q-linear-progress
             rounded
             size="10px"
@@ -77,9 +89,10 @@
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.common.modelScores') }}</h3>
+              <h3>{{ t('v36.common.modelScores') }} <InfoTooltip :text="t('v36.help.investigation.modelScores')" /></h3>
               <p>{{ t('v36.investigation.modelScoresSubtitle') }}</p>
             </div>
+            
           </div>
           <div class="neo-v36-fact-grid">
             <div v-for="score in modelScoreFields" :key="score.label" class="neo-v36-fact">
@@ -92,7 +105,7 @@
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.common.modelContributions') }}</h3>
+              <h3>{{ t('v36.common.modelContributions') }} <InfoTooltip :text="t('v36.help.investigation.modelContributions')" /></h3>
               <p>{{ t('v36.investigation.modelContributionsSubtitle') }}</p>
             </div>
           </div>
@@ -102,9 +115,10 @@
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.common.sequenceEvidence') }}</h3>
+              <h3>{{ t('v36.common.sequenceEvidence') }} <InfoTooltip :text="t('v36.help.investigation.sequenceEvidence')" /></h3>
               <p>{{ alert.sequenceEvidence?.selectedSequenceModel ?? t('common.notAvailable') }}</p>
             </div>
+            
           </div>
           <div class="neo-v36-fact-grid">
             <div v-for="field in sequenceFields" :key="field.label" class="neo-v36-fact">
@@ -112,14 +126,14 @@
               <strong>{{ field.value }}</strong>
             </div>
           </div>
-          <div class="neo-v36-list q-mt-md">
+          <div v-if="topSurpriseFieldsItems.length" class="neo-v36-list q-mt-md">
             <div
-              v-for="item in alert.sequenceEvidence?.topSequenceSurpriseFields ?? []"
-              :key="`${item.field}-${String(item.value)}`"
+              v-for="item in topSurpriseFieldsItems"
+              :key="item.key"
               class="neo-v36-list-row"
             >
-              <span>{{ item.field }}</span>
-              <strong>{{ String(item.value ?? '') }} / {{ formatNullableScore(item.score) }}</strong>
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
             </div>
           </div>
         </article>
@@ -127,7 +141,7 @@
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.common.tabularEvidence') }}</h3>
+              <h3>{{ t('v36.common.tabularEvidence') }} <InfoTooltip :text="t('v36.help.investigation.tabularEvidence')" /></h3>
               <p>{{ alert.tabularEvidence?.featureContract ?? t('common.notAvailable') }}</p>
             </div>
           </div>
@@ -150,17 +164,30 @@
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.common.ruleEvidence') }}</h3>
-              <p>{{ listLabel(alert.triggeredRules) }}</p>
+              <h3>{{ t('v36.common.ruleEvidence') }} <InfoTooltip :text="t('v36.help.investigation.ruleEvidence')" /></h3>
             </div>
           </div>
-          <bar-list-chart :items="ruleRows" :empty-message="t('v36.common.noData')" />
+          <template v-if="hasTriggeredRules">
+            <div class="neo-v36-section-label">{{ t('v36.investigation.triggeredRules') }}</div>
+            <div class="neo-v36-chip-row">
+              <q-chip v-for="rule in triggeredRuleCodes" :key="rule" dense outline color="warning" class="neo-v36-rule-chip">
+                {{ rule }}
+              </q-chip>
+            </div>
+            <bar-list-chart v-if="hasRuleContributionDetails" :items="ruleRows" />
+            <q-banner v-else dense rounded class="neo-v36-missing-banner q-mt-sm">
+              {{ t('v36.investigation.ruleDetailsUnavailable') }}
+            </q-banner>
+          </template>
+          <div v-else class="neo-v36-empty-rules">
+            {{ t('v36.investigation.noTriggeredRules') }}
+          </div>
         </article>
 
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.investigation.anomalyAttribution') }}</h3>
+              <h3>{{ t('v36.investigation.anomalyAttribution') }} <InfoTooltip :text="t('v36.help.investigation.anomalyAttribution')" /></h3>
               <p>{{ alert.anomalyTypeAttribution?.source ?? t('common.notAvailable') }}</p>
             </div>
           </div>
@@ -179,9 +206,10 @@
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.common.churnRisk') }}</h3>
+              <h3>{{ t('v36.common.churnRisk') }} <InfoTooltip :text="t('v36.help.investigation.churnContext')" /></h3>
               <p>{{ alert.churnContext?.modelName ?? 'ExtraTrees' }}</p>
             </div>
+            
           </div>
           <div class="neo-v36-fact-grid">
             <div class="neo-v36-fact">
@@ -202,9 +230,10 @@
         <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.common.forecastContext') }}</h3>
+              <h3>{{ t('v36.common.forecastContext') }} <InfoTooltip :text="t('v36.help.investigation.forecastContext')" /></h3>
               <p>{{ forecastModelNames }}</p>
             </div>
+            
           </div>
           <div class="neo-v36-fact-grid">
             <div class="neo-v36-fact">
@@ -235,129 +264,144 @@
           </div>
         </article>
 
-        <article class="neo-analytics-panel neo-v36-wide">
+        <article class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
-              <h3>{{ t('v36.llm.title') }}</h3>
-              <p>{{ t('v36.llm.disclaimer') }}</p>
-            </div>
-            <div class="neo-section-actions">
-              <q-btn flat icon="data_object" :label="t('v36.llm.evidencePayload')" :loading="evidenceLoading" @click="openEvidence" />
-              <q-btn unelevated color="primary" icon="auto_awesome" :label="t('v36.llm.generateExplanation')" :loading="generating" @click="() => generate()" />
+              <h3>{{ t('v36.sessionLifecycle.title') }}</h3>
+              <p>{{ alert.sessionId }}</p>
             </div>
           </div>
-
-          <q-banner v-if="llmError" class="neo-banner">{{ llmError }}</q-banner>
-          <q-banner v-if="fallback" class="neo-v36-warning">{{ t('v36.llm.fallbackNotice') }}</q-banner>
-
-          <div v-if="llmLoading" class="neo-analytics-empty">{{ t('v36.llm.loadingCached') }}</div>
-          <div v-else-if="!explanation" class="neo-analytics-empty">{{ t('v36.llm.noCachedExplanation') }}</div>
-          <div v-else class="neo-v36-explanation">
-            <h4>{{ explanation.summary }}</h4>
-            <p v-if="explanation.possibleInterpretation">{{ explanation.possibleInterpretation }}</p>
-            <ul v-if="explanation.evidenceBullets?.length">
-              <li v-for="bullet in explanation.evidenceBullets" :key="bullet">{{ bullet }}</li>
-            </ul>
-            <div v-if="explanation.recommendedActions?.length">
-              <strong>{{ t('v36.llm.recommendedActions') }}</strong>
-              <ul>
-                <li v-for="action in explanation.recommendedActions" :key="action">{{ action }}</li>
-              </ul>
+          <div v-if="hasSessionLifecycle" class="neo-v36-fact-grid">
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.sessionLifecycle.endReason') }}</span>
+              <q-badge :color="sessionEndReasonTone(sessionLifecycleData.sessionEndReason)" rounded>
+                {{ formatSessionEndReason(sessionLifecycleData.sessionEndReason) }}
+              </q-badge>
             </div>
-            <small>{{ explanation.disclaimer ?? t('v36.llm.disclaimer') }}</small>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.sessionLifecycle.endedExplicitly') }}</span>
+              <strong>{{ formatBooleanYesNo(sessionLifecycleData.sessionEndedExplicitly) }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.sessionLifecycle.endedAt') }}</span>
+              <strong>{{ formatDate(sessionLifecycleData.sessionEndedAt) }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.sessionLifecycle.duration') }}</span>
+              <strong>{{ formatDurationMs(sessionLifecycleData.sessionDurationMs) }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.sessionLifecycle.eventCount') }}</span>
+              <strong>{{ formatNumber(sessionLifecycleData.sessionEventCount) }}</strong>
+            </div>
+          </div>
+          <div v-else class="neo-analytics-empty">
+            {{ t('v36.sessionLifecycle.notAvailable') }}
           </div>
         </article>
       </section>
     </template>
 
-    <section v-else class="neo-section neo-analytics-empty">
+    <section v-else-if="!loading" class="neo-section neo-analytics-empty">
       {{ t('v36.investigation.notFound') }}
     </section>
-
-    <q-dialog v-model="evidenceDialog" maximized>
-      <q-card class="neo-v36-evidence-card">
-        <q-card-section class="row items-center justify-between">
-          <div>
-            <div class="text-h6">{{ t('v36.llm.evidencePayload') }}</div>
-            <div class="text-caption">{{ eventId }}</div>
-          </div>
-          <q-btn flat round icon="close" v-close-popup />
-        </q-card-section>
-        <q-separator />
-        <q-card-section>
-          <q-banner v-if="evidenceError" class="neo-banner">{{ evidenceError }}</q-banner>
-          <pre class="neo-v36-json">{{ evidenceJson }}</pre>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import InfoTooltip from 'src/components/common/InfoTooltip.vue';
 import BarListChart from 'src/components/dashboard/BarListChart.vue';
-import SkeletonCard from 'src/components/dashboard/SkeletonCard.vue';
+import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
 import { useAlertInvestigation } from 'src/composables/v36/useAlertInvestigation';
-import { useLlmExplanation } from 'src/composables/v36/useLlmExplanation';
 import { ROUTE_NAMES } from 'src/router/route-names';
 import {
+  formatBooleanYesNo,
   formatDate,
+  formatDurationMs,
   formatNullableScore,
   formatNumber,
   formatPercent,
+  formatSessionEndReason,
+  riskLevelDisplay,
   riskTone,
   safeRecord,
+  sessionEndReasonTone,
+  sourceInfoBanner,
 } from 'src/utils/format';
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-const evidenceDialog = ref(false);
 
 const eventId = computed(() => String(route.params.eventId ?? ''));
 const { data: alert, loading, error, refresh, source, warnings } = useAlertInvestigation(eventId);
-const {
-  explanation,
-  evidence,
-  loading: llmLoading,
-  evidenceLoading,
-  generating,
-  error: llmError,
-  evidenceError,
-  fallback,
-  loadEvidence,
-  generate,
-} = useLlmExplanation(eventId);
 
-const stringValue = (value: unknown) => {
-  if (value == null || value === '') return t('common.notAvailable');
+const sourceBannerInfo = computed(() => sourceInfoBanner(source.value));
+const sourceBanner = computed(() => sourceBannerInfo.value?.message ?? '');
+const sourceBannerClass = computed(() => {
+  const type = sourceBannerInfo.value?.type;
+  if (type === 'warning') return 'neo-v36-warning';
+  if (type === 'info') return 'neo-v36-info';
+  return '';
+});
+const sourceBannerIcon = computed(() => {
+  const type = sourceBannerInfo.value?.type;
+  if (type === 'warning') return 'warning';
+  if (type === 'info') return 'info';
+  return '';
+});
+
+const stringValue = (value: unknown, fallback = t('common.notAvailable')): string => {
+  if (value == null || value === '') return fallback;
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  return t('common.notAvailable');
+  if (typeof value === 'object') return JSON.stringify(value);
+  return fallback;
 };
 
 const metadataFields = computed(() => {
-  const metadata = alert.value?.eventMetadata ?? {};
+  const metadata = alert.value?.eventMetadata;
+  if (!metadata) return [{ label: t('v36.common.eventMetadata'), value: t('v36.investigation.metadataNotAvailable') }];
   return [
-    ['Event action', metadata.eventAction],
-    ['API template', metadata.apiTemplate],
-    ['API family', metadata.apiFamily],
-    ['Country', metadata.country],
-    ['Device', metadata.device],
-    ['Browser', metadata.browser],
-    ['OS', metadata.os],
-    ['HTTP method', metadata.httpMethod],
-    ['Status', metadata.status],
+    [t('v36.common.eventAction'), metadata.eventAction],
+    [t('v36.common.apiTemplate'), metadata.apiTemplate],
+    [t('v36.common.apiFamily'), metadata.apiFamily],
+    [t('v36.common.country'), metadata.country],
+    [t('v36.common.device'), metadata.device],
+    [t('v36.common.browser'), metadata.browser],
+    [t('v36.common.os'), metadata.os],
+    [t('v36.common.httpMethod'), metadata.httpMethod],
+    [t('v36.common.status'), metadata.status],
   ].map(([label, value]) => ({ label: String(label), value: stringValue(value) }));
 });
 
-const modelScoreFields = computed(() =>
-  Object.entries(alert.value?.modelScores ?? {})
-    .filter(([, value]) => typeof value === 'number')
-    .map(([label, value]) => ({ label, value: formatNullableScore(value as number) })),
-);
+const modelScoreFields = computed(() => {
+  const scores = alert.value?.modelScores;
+  if (!scores) return [];
+  const fields: { label: string; value: string }[] = [];
+  const scoreFields = [
+    { label: t('v36.investigation.xgboostAnomalyScore'), key: 'xgboostAnomalyScore100' as const },
+    { label: t('v36.investigation.lightgbmAlertScore'), key: 'lightgbmAlertScore100' as const },
+    { label: t('v36.investigation.transformerRiskScore'), key: 'transformerRiskScore100' as const },
+    { label: t('v36.investigation.tcnRiskScore'), key: 'tcnRiskScore100' as const },
+    { label: t('v36.investigation.ruleRiskScore'), key: 'ruleRiskScore' as const },
+  ];
+  for (const field of scoreFields) {
+    const value = scores[field.key];
+    if (typeof value === 'number') {
+      fields.push({ label: field.label, value: formatNullableScore(value) });
+    } else if (field.key === 'tcnRiskScore100') {
+      fields.push({ label: field.label, value: t('common.notRun') });
+    } else {
+      fields.push({ label: field.label, value: t('common.notAvailable') });
+    }
+  }
+  return fields;
+});
 
 const contributionRows = computed(() =>
   Object.entries(alert.value?.modelContributions ?? {})
@@ -366,19 +410,85 @@ const contributionRows = computed(() =>
 );
 
 const sequenceFields = computed(() => {
-  const sequence = alert.value?.sequenceEvidence;
-  return [
-    ['Artifact', sequence?.sequenceModelArtifact],
-    ['Context available', sequence?.contextAvailable ? t('common.yes') : t('common.no')],
-    ['Window size', sequence?.windowSize],
-    ['Sequence cat score', formatNullableScore(sequence?.sequenceCatScore)],
-    ['Sequence cont score', formatNullableScore(sequence?.sequenceContScore)],
-    ['Sequence ctx score', formatNullableScore(sequence?.sequenceCtxScore)],
-  ].map(([label, value]) => ({ label: String(label), value: stringValue(value) }));
+  const s = alert.value?.sequenceEvidence;
+  if (!s) return [];
+  const fields: { label: string; value: string }[] = [];
+  if (s.selectedSequenceModel) {
+    fields.push({ label: t('v36.investigation.selectedSequenceModel'), value: s.selectedSequenceModel });
+  }
+  if (s.sequenceModelArtifact) {
+    fields.push({ label: t('v36.investigation.sequenceModelArtifact'), value: s.sequenceModelArtifact });
+  }
+  fields.push({ label: t('v36.investigation.contextAvailable'), value: s.contextAvailable ? t('common.yes') : t('common.no') });
+  fields.push({ label: t('v36.investigation.windowSize'), value: s.windowSize != null ? String(s.windowSize) : t('common.notAvailable') });
+  if (s.sequenceCatScore != null) {
+    fields.push({ label: t('v36.investigation.sequenceCatScore'), value: String(s.sequenceCatScore) });
+  }
+  if (s.sequenceContScore != null) {
+    fields.push({ label: t('v36.investigation.sequenceContScore'), value: String(s.sequenceContScore) });
+  }
+  if (s.sequenceCtxScore != null) {
+    fields.push({ label: t('v36.investigation.sequenceCtxScore'), value: String(s.sequenceCtxScore) });
+  }
+  if (s.sequenceActuallyRanModels?.length) {
+    fields.push({ label: t('v36.investigation.sequenceActuallyRanModels'), value: s.sequenceActuallyRanModels.join(', ') });
+  }
+  if (s.sequenceRunBoth != null) {
+    fields.push({ label: t('v36.investigation.sequenceRunBoth'), value: s.sequenceRunBoth ? t('common.yes') : t('common.no') });
+  }
+  if (s.transformerUsedInFusion != null) {
+    fields.push({ label: t('v36.investigation.transformerUsedInFusion'), value: s.transformerUsedInFusion ? t('common.yes') : t('common.no') });
+  }
+  if (s.tcnUsedInFusion != null) {
+    fields.push({ label: t('v36.investigation.tcnUsedInFusion'), value: s.tcnUsedInFusion ? t('common.yes') : t('common.no') });
+  }
+  if (s.transformerRiskScore100 != null) {
+    fields.push({ label: t('v36.investigation.transformerRiskScore'), value: formatNullableScore(s.transformerRiskScore100) });
+  }
+  if (s.tcnRiskScore100 != null) {
+    fields.push({ label: t('v36.investigation.tcnRiskScore'), value: formatNullableScore(s.tcnRiskScore100) });
+  } else if (s.transformerRiskScore100 != null) {
+    fields.push({ label: t('v36.investigation.tcnRiskScore'), value: t('common.notRun') });
+  }
+  return fields;
 });
 
+const topSurpriseFieldsItems = computed(() => {
+  const s = alert.value?.sequenceEvidence;
+  if (!s) return [];
+  if (s.topSurpriseFields?.length) {
+    return s.topSurpriseFields.map((item, idx) => ({
+      key: `topSurpriseFields-${idx}`,
+      label: t('v36.investigation.surpriseField'),
+      value: item,
+    }));
+  }
+  if (s.topSequenceSurpriseFields?.length) {
+    return s.topSequenceSurpriseFields.map((item, idx) => ({
+      key: `topSequenceSurpriseFields-${idx}`,
+      label: stringValue(item.field, t('v36.investigation.surpriseField')),
+      value: `${stringValue(item.value, '')} (${item.score != null ? formatNullableScore(item.score) : t('common.notAvailable')})`,
+    }));
+  }
+  return [];
+});
+
+const triggeredRuleCodes = computed(() =>
+  alert.value?.triggeredRules
+    ?? alert.value?.ruleEvidence?.triggeredRules
+    ?? [],
+);
+
+const ruleContributions = computed(() => alert.value?.ruleEvidence?.ruleContributions ?? null);
+
+const hasTriggeredRules = computed(() => triggeredRuleCodes.value.length > 0);
+
+const hasRuleContributionDetails = computed(() =>
+  !!ruleContributions.value && Object.keys(ruleContributions.value).length > 0,
+);
+
 const ruleRows = computed(() =>
-  Object.entries(alert.value?.ruleEvidence?.ruleContributions ?? {}).map(([label, value]) => ({
+  Object.entries(ruleContributions.value ?? {}).map(([label, value]) => ({
     label,
     value,
   })),
@@ -396,14 +506,26 @@ const listLabel = (items: string[] | undefined) => (items?.length ? items.join('
 const objectCount = (value: unknown) => formatNumber(Object.keys(safeRecord(value)).length);
 const scoreProgress = (score: number | undefined) => Math.max(0, Math.min(1, (score ?? 0) / 100));
 
-const openEvidence = async () => {
-  evidenceDialog.value = true;
-  if (!evidence.value) {
-    await loadEvidence();
-  }
-};
+const sessionLifecycleData = computed(() => {
+  const detail = alert.value;
+  if (detail?.sessionLifecycle) return detail.sessionLifecycle;
+  return {
+    sessionEndReason: detail?.sessionEndReason ?? null,
+    sessionEndedExplicitly: detail?.sessionEndedExplicitly ?? null,
+    sessionEndedAt: detail?.sessionEndedAt ?? null,
+    sessionDurationMs: detail?.sessionDurationMs ?? null,
+    sessionEventCount: detail?.sessionEventCount ?? null,
+  };
+});
 
-const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2));
+const hasSessionLifecycle = computed(() =>
+  sessionLifecycleData.value.sessionEndReason != null ||
+  sessionLifecycleData.value.sessionEndedExplicitly != null ||
+  sessionLifecycleData.value.sessionEndedAt != null ||
+  sessionLifecycleData.value.sessionDurationMs != null ||
+  sessionLifecycleData.value.sessionEventCount != null,
+);
+
 </script>
 
 <style scoped>
@@ -433,6 +555,8 @@ const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2
 .neo-v36-alert-header h2 {
   margin: 10px 0 4px;
   font-size: 28px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .neo-v36-alert-header p {
@@ -478,7 +602,7 @@ const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2
   padding: var(--neo-space-3);
   border: var(--neo-border);
   border-radius: var(--neo-radius-card);
-  background: rgba(255, 255, 255, 0.66);
+  background: var(--neo-card-bg-tint);
 }
 
 .neo-v36-fact span,
@@ -493,6 +617,8 @@ const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2
   color: var(--neo-ink-muted);
   font-size: 11px;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .neo-v36-fact strong,
@@ -510,14 +636,14 @@ const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2
   min-height: 100px;
   display: grid;
   place-items: center;
-  border: 1px dashed rgba(23, 33, 43, 0.14);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
   border-radius: var(--neo-radius-card);
   color: var(--neo-ink-muted);
 }
 
 .neo-v36-warning {
   margin-top: var(--neo-space-4);
-  border: 1px solid rgba(167, 101, 24, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.28);
   border-radius: var(--neo-radius-card);
   background: var(--neo-warning-bg);
   color: var(--neo-warning-contrast);
@@ -527,7 +653,7 @@ const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2
   padding: var(--neo-space-4);
   border: var(--neo-border);
   border-radius: var(--neo-radius-card);
-  background: rgba(255, 255, 255, 0.68);
+  background: var(--neo-card-bg-tint);
   line-height: 1.6;
 }
 
@@ -536,6 +662,7 @@ const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2
 }
 
 .neo-v36-evidence-card {
+  color: var(--neo-ink);
   background: var(--neo-surface);
 }
 
@@ -549,6 +676,36 @@ const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2
   background: #101820;
   color: #e8f1f5;
   font-size: 12px;
+}
+
+.neo-v36-section-label {
+  color: var(--neo-ink-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.neo-v36-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.neo-v36-rule-chip {
+  font-size: 12px;
+}
+
+.neo-v36-missing-banner {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--neo-ink-muted);
+  font-size: 13px;
+}
+
+.neo-v36-empty-rules {
+  color: var(--neo-ink-muted);
+  font-size: 13px;
+  padding: 4px 0;
 }
 
 @media (max-width: 900px) {

@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html class="dark" data-theme="dark">
   <head>
     <!-- Document metadata and favicon declarations consumed by the Quasar shell. -->
     <title><%= productName %></title>
@@ -18,6 +18,16 @@
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
     <link rel="icon" type="image/ico" href="favicon.ico" />
+    <script>
+      try {
+        const theme = localStorage.getItem('noveo-care-theme') === 'light' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.classList.toggle('light', theme === 'light');
+      } catch {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
   </head>
   <!-- The body stays minimal because Quasar mounts the full application at runtime. -->
   <body>

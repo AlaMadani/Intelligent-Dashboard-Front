@@ -80,7 +80,7 @@ const rows = computed(() => {
 .neo-bar-track {
   height: 8px;
   border-radius: 999px;
-  background: rgba(23, 33, 43, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
@@ -88,8 +88,8 @@ const rows = computed(() => {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--neo-accent) 0%, var(--neo-info) 100%);
-  box-shadow: 0 6px 14px rgba(47, 116, 107, 0.16);
+  background: linear-gradient(90deg, var(--neo-accent) 0%, var(--neo-accent-hover) 52%, var(--neo-warning) 100%);
+  box-shadow: 0 8px 18px rgba(229, 77, 86, 0.2);
   transition: width var(--neo-transition-med);
 }
 

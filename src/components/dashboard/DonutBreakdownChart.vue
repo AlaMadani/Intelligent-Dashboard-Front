@@ -42,7 +42,7 @@ const props = withDefaults(
 const { t } = useI18n();
 
 // Provide default colors when callers omit segment styling.
-const fallbackColors = ['#2f746b', '#a76518', '#b34b3c', '#3d6d8e', '#5f7f78'];
+const fallbackColors = ['#e54d56', '#fbbf24', '#ef4444', '#34d399', '#4a413f'];
 
 // Normalize legend text and segment colors before generating the donut.
 const normalizedSegments = computed(() =>
@@ -58,7 +58,7 @@ const resolvedCenterLabel = computed(() => props.centerLabel ?? t('donutBreakdow
 // Build the CSS conic-gradient string that paints the donut slices.
 const donutGradient = computed(() => {
   if (!normalizedSegments.value.length) {
-    return 'conic-gradient(rgba(19, 32, 38, 0.12) 0deg 360deg)';
+    return 'conic-gradient(rgba(255, 255, 255, 0.12) 0deg 360deg)';
   }
 
   const total = normalizedSegments.value.reduce((sum, segment) => sum + segment.value, 0) || 1;
@@ -89,18 +89,20 @@ const donutGradient = computed(() => {
   aspect-ratio: 1;
   border-radius: 50%;
   padding: 18px;
-  box-shadow: inset 0 0 0 1px rgba(19, 32, 38, 0.08);
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .neo-donut-core {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--neo-card-bg-solid);
   display: grid;
   place-items: center;
   text-align: center;
-  box-shadow: inset 0 0 0 1px rgba(19, 32, 38, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .neo-donut-core-label {

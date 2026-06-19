@@ -17,11 +17,11 @@ export const useAlertInvestigation = (eventId: Ref<string>) => {
     ...safeArray<string>(data.value?.forecastContext?.forecastWarnings),
   ]);
 
-  const refresh = async () => {
+  const refresh = async (silent = false) => {
     const currentEventId = eventId.value.trim();
     if (!currentEventId) return;
 
-    loading.value = true;
+    if (!silent) loading.value = true;
     error.value = '';
 
     try {
@@ -45,7 +45,7 @@ export const useAlertInvestigation = (eventId: Ref<string>) => {
   );
 
   useV36SseRefresh(['alerts'], () => {
-    void refresh();
+    void refresh(true);
   });
 
   return {

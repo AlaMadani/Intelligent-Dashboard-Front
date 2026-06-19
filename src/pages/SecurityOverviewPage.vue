@@ -1,5 +1,6 @@
 <template>
-  <q-page class="neo-page">
+  <q-page class="neo-page neo-loading-scope">
+    <loading-overlay :show="loading" context="fetch" />
     <section class="neo-section">
       <div class="neo-section-header">
         <div>
@@ -8,21 +9,33 @@
           <p class="neo-section-subtitle">{{ t('v36.securityOverview.subtitle') }}</p>
         </div>
         <div class="neo-section-actions">
+          <LiveConnectionBadge
+            :connected="sseConnected"
+            :connecting="sseConnecting"
+            :last-event-at="sseLastEventAt"
+          />
           <div v-if="source" class="neo-analytics-chip">{{ t('v36.common.source') }}: {{ source }}</div>
           <q-btn
             unelevated
             color="primary"
             icon="refresh"
-            :loading="loading"
+            :disable="loading"
             :label="t('v36.common.refresh')"
-            @click="refresh"
-          />
+            @click="() => refresh()"
+          >
+            <q-tooltip>{{ t('live.manualRefreshTooltip') }}</q-tooltip>
+          </q-btn>
         </div>
       </div>
 
       <q-banner v-if="error" class="neo-banner">
         <template #avatar><q-icon name="error_outline" /></template>
         {{ error }}
+      </q-banner>
+
+      <q-banner v-if="sourceBanner" :class="sourceBannerClass">
+        <template #avatar><q-icon :name="sourceBannerIcon" /></template>
+        {{ sourceBanner }}
       </q-banner>
 
       <q-banner v-if="warnings.length" class="neo-v36-warning">
@@ -34,11 +47,12 @@
     </section>
 
     <section class="neo-section neo-v36-kpis">
-      <article v-for="metric in metrics" :key="metric.key" class="neo-kpi-card">
+      <article v-for="metric in metrics" :key="metric.key" class="neo-kpi-card neo-kpi-card--explainable">
+        
         <div class="neo-kpi-head">
           <div class="neo-kpi-icon"><q-icon :name="metric.icon" /></div>
           <div class="neo-kpi-copy">
-            <div class="neo-kpi-label">{{ metric.label }}</div>
+            <div class="neo-kpi-label">{{ metric.label }} <InfoTooltip v-if="metric.help" :text="metric.help" /></div>
             <div class="neo-kpi-state">{{ metric.meta }}</div>
           </div>
         </div>
@@ -52,9 +66,10 @@
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>{{ t('v36.securityOverview.topAnomalyTypes') }}</h3>
+            <h3>{{ t('v36.securityOverview.topAnomalyTypes') }} <InfoTooltip :text="t('v36.help.securityOverview.topAnomalyTypes')" /></h3>
             <p>{{ t('v36.securityOverview.topAnomalyTypesSubtitle') }}</p>
           </div>
+          <ai-explain-button context-key="security-overview-top-anomalies" variant="prominent" />
         </div>
         <bar-list-chart :items="topAnomalyRows" :empty-message="t('v36.common.noData')" />
       </article>
@@ -62,9 +77,10 @@
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>{{ t('v36.securityOverview.topTriggeredRules') }}</h3>
+            <h3>{{ t('v36.securityOverview.topTriggeredRules') }} <InfoTooltip :text="t('v36.help.securityOverview.topTriggeredRules')" /></h3>
             <p>{{ t('v36.securityOverview.topTriggeredRulesSubtitle') }}</p>
           </div>
+          <ai-explain-button context-key="security-overview-top-rules" variant="prominent" />
         </div>
         <bar-list-chart :items="topRuleRows" :empty-message="t('v36.common.noData')" />
       </article>
@@ -75,7 +91,10 @@
             <h3>{{ t('v36.securityOverview.modelHealth') }}</h3>
             <p>{{ runtimeHealth?.status ?? t('common.unknown') }}</p>
           </div>
-          <q-badge :color="runtimeTone" rounded>{{ runtimeHealth?.status ?? t('common.unknown') }}</q-badge>
+          <div class="neo-section-actions">
+            
+            <q-badge :color="runtimeTone" rounded>{{ runtimeHealth?.status ?? t('common.unknown') }}</q-badge>
+          </div>
         </div>
         <div class="neo-v36-model-grid">
           <div v-for="model in modelHealthRows" :key="model.name" class="neo-v36-mini-card">
@@ -88,9 +107,10 @@
       <article class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
-            <h3>{{ t('v36.securityOverview.fieldCoverage') }}</h3>
+            <h3>{{ t('v36.securityOverview.fieldCoverage') }} <InfoTooltip :text="t('v36.help.securityOverview.fieldCoverage')" /></h3>
             <p>{{ t('v36.securityOverview.fieldCoverageSubtitle') }}</p>
           </div>
+            
         </div>
         <div v-if="!fieldWarnings.length" class="neo-analytics-empty">
           {{ t('v36.securityOverview.noFieldWarnings') }}
@@ -103,12 +123,37 @@
         </div>
       </article>
 
+      <article v-if="sessionFinalizationSummary" class="neo-analytics-panel">
+        <div class="neo-analytics-head">
+          <div>
+            <h3>{{ t('v36.sessionFinalization.title') }}</h3>
+            <p>{{ runtimeHealth?.status ?? t('common.unknown') }}</p>
+          </div>
+            
+        </div>
+        <div class="neo-v36-model-grid">
+          <div class="neo-v36-mini-card">
+            <strong>{{ formatNumber(sessionFinalizationSummary.openSessions) }}</strong>
+            <span>{{ t('v36.sessionFinalization.openSessions') }}</span>
+          </div>
+          <div class="neo-v36-mini-card">
+            <strong>{{ formatNumber(sessionFinalizationSummary.explicitFinalized) }}</strong>
+            <span>{{ t('v36.sessionFinalization.finalizedByExplicitEnd') }}</span>
+          </div>
+          <div class="neo-v36-mini-card">
+            <strong>{{ formatNumber(sessionFinalizationSummary.timeoutFinalized) }}</strong>
+            <span>{{ t('v36.sessionFinalization.finalizedByInactivityTimeout') }}</span>
+          </div>
+        </div>
+      </article>
+
       <article class="neo-analytics-panel neo-v36-wide">
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.securityOverview.criticalPreview') }}</h3>
             <p>{{ t('v36.securityOverview.criticalPreviewSubtitle') }}</p>
           </div>
+          <ai-explain-button context-key="security-overview-critical-preview" variant="prominent" />
         </div>
         <div class="neo-table-wrapper">
           <table class="neo-table">
@@ -120,11 +165,12 @@
                 <th>{{ t('v36.common.anomalyType') }}</th>
                 <th>{{ t('v36.common.finalRiskScore') }}</th>
                 <th>{{ t('v36.common.timestamp') }}</th>
+                <th>{{ t('v36.common.action') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="!criticalAlerts.length">
-                <td colspan="6">{{ t('v36.common.noData') }}</td>
+                <td colspan="7">{{ t('v36.common.noData') }}</td>
               </tr>
               <tr v-for="alert in criticalAlerts" :key="alert.eventId ?? alert.recordId">
                 <td><q-badge :color="riskTone(alert.riskLevel)" rounded>{{ alert.riskLevel }}</q-badge></td>
@@ -133,6 +179,20 @@
                 <td>{{ alert.anomalyType ?? t('common.unknown') }}</td>
                 <td>{{ formatNullableScore(alert.finalRiskScore) }}</td>
                 <td>{{ formatDate(alert.timestamp) }}</td>
+                <td>
+                  <ai-explain-button
+                    v-if="alert.eventId"
+                    context-key="alert-row"
+                    variant="compact"
+                    :event-id="alert.eventId"
+                    :params="{
+                      eventId: alert.eventId,
+                      riskLevel: alert.riskLevel,
+                      anomalyType: alert.anomalyType,
+                      finalRiskScore: formatNullableScore(alert.finalRiskScore),
+                    }"
+                  />
+                </td>
               </tr>
             </tbody>
           </table>
@@ -145,8 +205,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import InfoTooltip from 'src/components/common/InfoTooltip.vue';
 import BarListChart from 'src/components/dashboard/BarListChart.vue';
+import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
+import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
+import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import { useSecurityOverview } from 'src/composables/v36/useSecurityOverview';
+import { useV36SseState } from 'src/composables/v36/useV36SseRefresh';
 import {
   formatDate,
   formatNullableScore,
@@ -154,8 +219,10 @@ import {
   formatPercent,
   riskTone,
   safeArray,
+  sourceInfoBanner,
 } from 'src/utils/format';
 
+const { connected: sseConnected, connecting: sseConnecting, lastEventAt: sseLastEventAt } = useV36SseState();
 const { t } = useI18n();
 const {
   data,
@@ -179,6 +246,8 @@ const metrics = computed(() => [
     meta: t('v36.common.today'),
     description: t('v36.securityOverview.totalEventsMeta'),
     icon: 'dataset',
+    explainContextKey: 'security-overview-total-events',
+    help: t('v36.help.securityOverview.totalEventsToday'),
   },
   {
     key: 'active-users',
@@ -187,6 +256,8 @@ const metrics = computed(() => [
     meta: t('v36.common.today'),
     description: t('v36.securityOverview.activeUsersMeta'),
     icon: 'groups',
+    explainContextKey: 'security-overview-active-users',
+    help: t('v36.help.securityOverview.activeUsersToday'),
   },
   {
     key: 'anomaly-rate',
@@ -195,6 +266,8 @@ const metrics = computed(() => [
     meta: t('v36.common.today'),
     description: t('v36.securityOverview.anomalyRateMeta'),
     icon: 'warning',
+    explainContextKey: 'security-overview-anomaly-rate',
+    help: t('v36.help.securityOverview.anomalyRateToday'),
   },
   {
     key: 'critical-alerts',
@@ -203,6 +276,8 @@ const metrics = computed(() => [
     meta: t('v36.common.today'),
     description: t('v36.securityOverview.criticalAlertsMeta'),
     icon: 'notification_important',
+    explainContextKey: 'security-overview-critical-alerts',
+    help: t('v36.help.securityOverview.criticalAlertsToday'),
   },
   {
     key: 'high-risk-alerts',
@@ -211,6 +286,8 @@ const metrics = computed(() => [
     meta: t('v36.common.today'),
     description: t('v36.securityOverview.highRiskMeta'),
     icon: 'shield',
+    explainContextKey: 'security-overview-high-risk-alerts',
+    help: t('v36.help.securityOverview.highRiskAlertsToday'),
   },
   {
     key: 'average-risk',
@@ -219,6 +296,8 @@ const metrics = computed(() => [
     meta: t('v36.common.today'),
     description: t('v36.securityOverview.averageRiskMeta'),
     icon: 'speed',
+    explainContextKey: 'security-overview-average-risk',
+    help: t('v36.help.securityOverview.averageRiskScore'),
   },
   {
     key: 'predicted-anomaly-rate',
@@ -227,6 +306,8 @@ const metrics = computed(() => [
     meta: 'Ridge',
     description: t('v36.securityOverview.ridgeForecastMeta'),
     icon: 'show_chart',
+    explainContextKey: 'security-overview-predicted-anomaly',
+    help: t('v36.help.securityOverview.predictedAnomalyRate'),
   },
   {
     key: 'predicted-events',
@@ -235,6 +316,8 @@ const metrics = computed(() => [
     meta: 'XGBoost',
     description: t('v36.securityOverview.xgboostForecastMeta'),
     icon: 'query_stats',
+    explainContextKey: 'security-overview-predicted-events',
+    help: t('v36.help.securityOverview.predictedTotalEvents'),
   },
   {
     key: 'expected-alert-volume',
@@ -243,6 +326,8 @@ const metrics = computed(() => [
     meta: t('v36.forecast.expectedAlertVolume'),
     description: t('v36.securityOverview.expectedAlertsMeta'),
     icon: 'campaign',
+    explainContextKey: 'security-overview-expected-alerts',
+    help: t('v36.help.securityOverview.expectedAlertVolume'),
   },
 ]);
 
@@ -266,11 +351,38 @@ const runtimeTone = computed(() => {
 const modelHealthRows = computed(() =>
   Object.entries(runtimeHealth.value?.modelHealth ?? {}).map(([name, state]) => ({
     name,
-    status: state.lastInferenceSucceeded
+    status: state.lastInferenceSucceeded === true
       ? t('v36.runtime.inferenceSucceeded')
-      : state.unavailableReason || state.lastInferenceError || t('common.unknown'),
+      : state.lastInferenceSucceeded === false
+        ? state.unavailableReason || state.lastInferenceError || t('v36.runtime.inferenceFailed')
+        : t('v36.runtime.noInferenceRecorded'),
   })),
 );
+
+const sourceBannerInfo = computed(() => sourceInfoBanner(source.value));
+const sourceBanner = computed(() => sourceBannerInfo.value?.message ?? '');
+const sourceBannerClass = computed(() => {
+  const type = sourceBannerInfo.value?.type;
+  if (type === 'warning') return 'neo-v36-warning';
+  if (type === 'info') return 'neo-v36-info';
+  return '';
+});
+const sourceBannerIcon = computed(() => {
+  const type = sourceBannerInfo.value?.type;
+  if (type === 'warning') return 'warning';
+  if (type === 'info') return 'info';
+  return '';
+});
+
+const sessionFinalizationSummary = computed(() => {
+  const sf = runtimeHealth.value?.sessionFinalization;
+  if (!sf) return null;
+  return {
+    openSessions: sf.openSessionCount,
+    explicitFinalized: sf.sessionsFinalizedByExplicitEnd,
+    timeoutFinalized: sf.sessionsFinalizedByInactivityTimeout,
+  };
+});
 </script>
 
 <style scoped>
@@ -296,7 +408,7 @@ const modelHealthRows = computed(() =>
 
 .neo-v36-warning {
   margin-top: var(--neo-space-4);
-  border: 1px solid rgba(167, 101, 24, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.28);
   border-radius: var(--neo-radius-card);
   background: var(--neo-warning-bg);
   color: var(--neo-warning-contrast);
@@ -315,26 +427,44 @@ const modelHealthRows = computed(() =>
   padding: 10px 12px;
   border: var(--neo-border);
   border-radius: var(--neo-radius-card);
-  background: rgba(255, 255, 255, 0.66);
+  background: var(--neo-card-bg-tint);
 }
 
 .neo-v36-model-grid {
   display: grid;
   gap: var(--neo-space-3);
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  align-items: stretch;
 }
 
 .neo-v36-mini-card {
-  min-height: 82px;
+  min-width: 0;
+  min-height: 98px;
   padding: var(--neo-space-3);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   border: var(--neo-border);
   border-radius: var(--neo-radius-card);
-  background: rgba(23, 33, 43, 0.035);
+  background: var(--neo-card-bg-tint);
+  overflow: hidden;
 }
 
 .neo-v36-mini-card strong,
 .neo-v36-mini-card span {
   display: block;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  line-height: 1.35;
+}
+
+.neo-v36-mini-card strong {
+  color: var(--neo-ink);
+  font-size: 13px;
 }
 
 .neo-v36-mini-card span {
@@ -343,9 +473,26 @@ const modelHealthRows = computed(() =>
   font-size: 12px;
 }
 
+@media (max-width: 520px) {
+  .neo-v36-model-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .neo-v36-grid > .neo-analytics-panel {
     grid-column: 1 / -1;
   }
+}
+
+.neo-kpi-card--explainable {
+  position: relative;
+}
+
+.neo-kpi-explain {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
 }
 </style>

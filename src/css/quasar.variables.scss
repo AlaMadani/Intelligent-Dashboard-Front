@@ -1,16 +1,13 @@
-// Theme tokens overriding Quasar defaults.
+// Noveo Care Quasar palette.
 
-// Brand palette used across the custom dashboard shell.
-$primary: #2f746b;
-$secondary: #3d6d8e;
-$accent: #5f7f78;
+$primary: #e54d56;
+$secondary: #4a413f;
+$accent: #f0626b;
 
-// Dark surfaces are reserved for hero and navigation-shell treatments.
-$dark: #14232d;
-$dark-page: #eef3f5;
+$dark: #1e1918;
+$dark-page: #141010;
 
-// Semantic colors align Quasar states with the dashboard visual identity.
-$positive: #2e7d63;
-$negative: #b34b3c;
-$info: #3d6d8e;
-$warning: #a76518;
+$positive: #34d399;
+$negative: #ef4444;
+$info: #f7b267;
+$warning: #fbbf24;

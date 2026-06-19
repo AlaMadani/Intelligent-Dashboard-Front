@@ -2,6 +2,7 @@ import { computed, onMounted, ref, shallowRef } from 'vue';
 import { getV36ForecastDashboard, normalizeApiError } from 'src/services/analytics';
 import type { V36ForecastDashboardResponse } from 'src/types/analytics';
 import { safeArray } from 'src/utils/format';
+import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useForecastDashboard = () => {
@@ -16,8 +17,8 @@ export const useForecastDashboard = () => {
     ...safeArray<string>(data.value?.forecastWarnings),
   ]);
 
-  const refresh = async () => {
-    loading.value = true;
+  const refresh = async (silent = false) => {
+    if (!silent) loading.value = true;
     error.value = '';
 
     try {
@@ -35,8 +36,9 @@ export const useForecastDashboard = () => {
     void refresh();
   });
 
+  const throttledRefresh = throttle(() => { void refresh(true); }, 10000);
   useV36SseRefresh(['forecast'], () => {
-    void refresh();
+    throttledRefresh();
   });
 
   return {

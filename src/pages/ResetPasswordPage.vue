@@ -71,7 +71,7 @@
       color="primary"
       size="lg"
       class="auth-submit"
-      :loading="authStore.isLoading"
+      :disable="authStore.isLoading"
       unelevated
     />
   </q-form>

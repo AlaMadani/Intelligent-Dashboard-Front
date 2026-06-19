@@ -13,7 +13,7 @@ export default defineConfig((/* ctx */) => {
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     // Boot files initialize the shared HTTP client and global error logging pipeline.
-    boot: ['i18n', 'axios', 'logger'],
+    boot: ['theme', 'i18n', 'axios', 'logger'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: ['app.scss'],
@@ -104,7 +104,10 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: [],
+      plugins: [
+        'Dialog',
+        'Notify',
+      ],
     },
 
     // animations: 'all', // --- includes all animations

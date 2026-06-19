@@ -27,7 +27,8 @@
           </div>
         </div>
 
-        <div class="neo-account-panel">
+        <div class="neo-account-panel neo-loading-scope">
+          <loading-overlay :show="authStore.isLoading" context="auth" placement="panel" />
           <div class="neo-panel-title">{{ t('auth.changePasswordTitle') }}</div>
           <q-form class="neo-account-form" @submit="handleChangePassword">
             <q-input
@@ -124,7 +125,7 @@
               color="primary"
               icon="save"
               :label="t('auth.changePassword')"
-              :loading="authStore.isLoading"
+              :disable="authStore.isLoading"
               unelevated
               class="neo-account-submit"
             />
@@ -138,6 +139,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import { useAuthStore } from 'src/stores/auth';
 
 const { t } = useI18n();

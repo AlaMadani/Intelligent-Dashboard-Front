@@ -13,6 +13,7 @@ import type {
   V36RuntimeHealthResponse,
 } from 'src/types/analytics';
 import { safeArray } from 'src/utils/format';
+import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useRuntimeHealth = () => {
@@ -32,8 +33,8 @@ export const useRuntimeHealth = () => {
     ...safeArray<string>(reports.value?.warnings),
   ]);
 
-  const refresh = async () => {
-    loading.value = true;
+  const refresh = async (silent = false) => {
+    if (!silent) loading.value = true;
     error.value = '';
 
     try {
@@ -61,8 +62,9 @@ export const useRuntimeHealth = () => {
     void refresh();
   });
 
+  const throttledRefresh = throttle(() => { void refresh(true); }, 5000);
   useV36SseRefresh(['runtime-health'], () => {
-    void refresh();
+    throttledRefresh();
   });
 
   return {

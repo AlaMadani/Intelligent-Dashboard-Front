@@ -1,6 +1,6 @@
 <template>
   <!-- Global shell: top toolbar, persistent drawer, and routed page content. -->
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="Hhh Lpr lFf">
     <!-- Header actions expose navigation, branding, and monitoring shortcuts. -->
     <q-header class="neo-header">
       <q-toolbar class="neo-toolbar">
@@ -9,7 +9,7 @@
             flat
             dense
             round
-            icon="menu"
+            :icon="leftDrawerOpen ? 'chevron_left' : 'menu'"
             :aria-label="t('layout.aria.toggleNavigation')"
             class="neo-menu-btn"
             @click="toggleLeftDrawer"
@@ -21,20 +21,15 @@
           </q-toolbar-title>
         </div>
 
-        <div class="neo-toolbar-status">
-          <div class="neo-top-pill">
-            <span class="neo-top-pill-dot"></span>
-            {{ t('layout.topPillLiveTelemetry') }}
-          </div>
-          <div class="neo-top-pill neo-top-pill--soft">{{ t('layout.topPillStack') }}</div>
-        </div>
-
         <div class="neo-toolbar-meta">
+          <theme-toggle />
+
           <q-btn
             flat
             dense
+            :round="compactHeaderActions"
             icon="timeline"
-            :label="t('layout.grafanaButton')"
+            :label="compactHeaderActions ? undefined : t('layout.grafanaButton')"
             :aria-label="t('layout.aria.openGrafana')"
             class="neo-external-btn"
             @click="openGrafana"
@@ -45,8 +40,9 @@
           <q-btn
             flat
             dense
+            :round="compactHeaderActions"
             icon="search"
-            :label="t('layout.kibanaButton')"
+            :label="compactHeaderActions ? undefined : t('layout.kibanaButton')"
             :aria-label="t('layout.aria.openKibana')"
             class="neo-external-btn"
             @click="openKibana"
@@ -91,10 +87,44 @@
           </q-btn>
         </div>
       </q-toolbar>
+
+      <Transition name="neo-session-expired">
+        <div
+          v-if="sessionExpiredVisible"
+          class="neo-session-expired"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div class="neo-session-expired__icon" aria-hidden="true">
+            <q-icon name="schedule" />
+          </div>
+
+          <div class="neo-session-expired__copy">
+            <strong>{{ t('auth.sessionExpiredTitle') }}</strong>
+            <span>{{ t('auth.sessionExpiredNotice') }}</span>
+          </div>
+
+          <q-btn
+            unelevated
+            no-caps
+            class="neo-session-expired__action"
+            icon-right="login"
+            :label="t('auth.sessionExpiredAction')"
+            @click="goToLogin"
+          />
+        </div>
+      </Transition>
     </q-header>
 
     <!-- Drawer keeps section links and operating context visible while switching pages. -->
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered :width="300" class="neo-drawer">
+    <q-drawer
+      v-model="leftDrawerOpen"
+      show-if-above
+      bordered
+      :breakpoint="drawerBreakpoint"
+      :width="drawerWidth"
+      class="neo-drawer"
+    >
       <div class="neo-drawer-shell">
         <div class="neo-drawer-brand">
           <div class="neo-drawer-kicker">{{ t('layout.drawerKicker') }}</div>
@@ -130,36 +160,11 @@
 
     <!-- Routed page components render inside the shared layout container. -->
     <q-page-container class="neo-page-container">
-      <Transition name="neo-session-expired">
-        <q-banner
-          v-if="sessionExpiredVisible"
-          dense
-          class="neo-session-expired-banner"
-          role="alert"
-        >
-          <template #avatar>
-            <q-icon name="schedule" />
-          </template>
-
-          <div class="neo-session-expired-copy">
-            <strong>{{ t('auth.sessionExpiredTitle') }}</strong>
-            <span>{{ t('auth.sessionExpiredNotice') }}</span>
-          </div>
-
-          <template #action>
-            <q-btn
-              unelevated
-              color="primary"
-              icon-right="login"
-              :label="t('auth.sessionExpiredAction')"
-              @click="goToLogin"
-            />
-          </template>
-        </q-banner>
-      </Transition>
-
       <router-view />
     </q-page-container>
+
+    <ai-explainer-modal />
+    <noveo-companion-chat />
   </q-layout>
 </template>
 
@@ -168,6 +173,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import { environment } from 'src/config/environment';
 import { SESSION_EXPIRED_EVENT } from 'src/constants/auth';
 import { LAYOUT_NAVIGATION_ITEMS } from 'src/constants/layout/navigation';
@@ -182,10 +188,17 @@ import {
   millisecondsUntilIdleExpiration,
 } from 'src/services/session';
 import BrandLogo from 'src/components/brand/BrandLogo.vue';
+import ThemeToggle from 'src/components/theme/ThemeToggle.vue';
+import AiExplainerModal from 'src/components/ai/AiExplainerModal.vue';
+import NoveoCompanionChat from 'src/components/ai/NoveoCompanionChat.vue';
 import type { NavigationItem } from 'src/types/navigation';
 
 const { t } = useI18n();
-const leftDrawerOpen = ref(typeof window === 'undefined' ? true : window.innerWidth >= 1100);
+const $q = useQuasar();
+const drawerBreakpoint = 1024;
+const leftDrawerOpen = ref(
+  typeof window === 'undefined' ? true : window.innerWidth >= drawerBreakpoint,
+);
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -204,6 +217,21 @@ const navigation = computed<NavigationItem[]>(() =>
 );
 
 const userDisplayName = computed(() => authStore.user?.fullName || authStore.user?.email || '');
+
+const compactHeaderActions = computed(() => $q.screen.width < 640);
+
+const drawerWidth = computed(() => {
+  const viewportWidth = $q.screen.width;
+  if (viewportWidth < 360) {
+    return Math.max(248, viewportWidth - 20);
+  }
+
+  if (viewportWidth < 480) {
+    return Math.min(280, viewportWidth - 24);
+  }
+
+  return 300;
+});
 
 // Layout interactions and route helpers keep the shell synchronized with navigation.
 function toggleLeftDrawer() {
@@ -226,6 +254,10 @@ const navigateTo = async (id: string) => {
   const targetRouteName = routeNameFor(id);
   if (!isActive(id)) {
     await router.push({ name: targetRouteName });
+  }
+
+  if ($q.screen.width < drawerBreakpoint) {
+    leftDrawerOpen.value = false;
   }
 };
 
@@ -374,34 +406,6 @@ watch(
 </script>
 
 <style scoped>
-.neo-session-expired-banner {
-  position: sticky;
-  top: 0;
-  z-index: 12;
-  margin: 0;
-  padding: 12px clamp(18px, 3vw, 34px);
-  border-bottom: 1px solid rgba(233, 75, 88, 0.24);
-  color: #2f3337;
-  background: #fff7f8;
-  box-shadow: 0 8px 26px rgba(47, 51, 55, 0.1);
-}
-
-.neo-session-expired-banner :deep(.q-icon) {
-  color: #e94b58;
-}
-
-.neo-session-expired-copy {
-  display: grid;
-  gap: 2px;
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.neo-session-expired-copy strong {
-  font-size: 14px;
-  color: var(--neo-ink);
-}
-
 .neo-session-expired-enter-active,
 .neo-session-expired-leave-active {
   transition:
@@ -413,11 +417,5 @@ watch(
 .neo-session-expired-leave-to {
   opacity: 0;
   transform: translateY(-8px);
-}
-
-@media (max-width: 640px) {
-  .neo-session-expired-banner {
-    padding: 12px 16px;
-  }
 }
 </style>

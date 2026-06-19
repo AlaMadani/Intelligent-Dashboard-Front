@@ -13,6 +13,7 @@ import type {
   V36SecurityOverviewResponse,
 } from 'src/types/analytics';
 import { safeArray } from 'src/utils/format';
+import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useSecurityOverview = () => {
@@ -37,8 +38,8 @@ export const useSecurityOverview = () => {
     criticalAlerts.value = response.data.items ?? [];
   };
 
-  const refresh = async () => {
-    loading.value = true;
+  const refresh = async (silent = false) => {
+    if (!silent) loading.value = true;
     error.value = '';
 
     try {
@@ -66,8 +67,9 @@ export const useSecurityOverview = () => {
     void refresh();
   });
 
+  const throttledRefresh = throttle(() => { void refresh(true); }, 5000);
   useV36SseRefresh(['security-overview', 'runtime-health'], () => {
-    void refresh();
+    throttledRefresh();
   });
 
   return {

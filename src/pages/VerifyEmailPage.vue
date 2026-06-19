@@ -44,7 +44,7 @@
       color="primary"
       size="lg"
       class="auth-submit"
-      :loading="authStore.isLoading && !isResending"
+      :disable="authStore.isLoading"
       unelevated
     />
   </q-form>
@@ -57,7 +57,6 @@
       icon="refresh"
       :label="resendLabel"
       :disable="resendSeconds > 0 || authStore.isLoading"
-      :loading="isResending"
       @click="handleResend"
     />
 

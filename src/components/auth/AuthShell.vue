@@ -1,5 +1,9 @@
 <template>
   <div class="auth-page">
+    <div class="auth-page__controls">
+      <theme-toggle />
+    </div>
+
     <div class="auth-shell">
       <aside class="auth-brand-panel" :style="brandPanelStyle">
         <div class="auth-panel-copy">
@@ -11,7 +15,8 @@
       </aside>
 
       <main class="auth-form-panel">
-        <section class="auth-card">
+        <section class="auth-card neo-loading-scope">
+          <loading-overlay :show="authStore.isLoading" context="auth" placement="panel" />
           <div class="auth-card-fixed">
             <brand-logo variant="card" :show-product="false" />
 
@@ -61,7 +66,10 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BrandLogo from 'src/components/brand/BrandLogo.vue';
+import ThemeToggle from 'src/components/theme/ThemeToggle.vue';
+import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import { environment } from 'src/config/environment';
+import { useAuthStore } from 'src/stores/auth';
 
 defineProps<{
   title: string;
@@ -74,6 +82,7 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+const authStore = useAuthStore();
 
 const brandPanelStyle = computed(() =>
   environment.authPanelImageUrl
@@ -84,14 +93,22 @@ const brandPanelStyle = computed(() =>
 
 <style scoped>
 .auth-page {
+  position: relative;
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: clamp(18px, 3vw, 34px);
   background:
-    linear-gradient(140deg, rgba(47, 116, 107, 0.08), transparent 34%),
-    linear-gradient(220deg, rgba(234, 42, 118, 0.06), transparent 36%),
-    linear-gradient(180deg, #f8faf9 0%, var(--neo-page-bg) 100%);
+    radial-gradient(circle at 16% 10%, var(--neo-bg-coral-glow), transparent 34%),
+    radial-gradient(circle at 86% 6%, var(--neo-bg-amber-glow), transparent 32%),
+    linear-gradient(180deg, var(--neo-body-bg-start) 0%, var(--neo-page-bg) 100%);
+}
+
+.auth-page__controls {
+  position: fixed;
+  top: clamp(18px, 3vw, 34px);
+  right: clamp(18px, 3vw, 34px);
+  z-index: 20;
 }
 
 .auth-shell {
@@ -101,9 +118,11 @@ const brandPanelStyle = computed(() =>
   grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1fr);
   overflow: hidden;
   border: var(--neo-border);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 20px 55px rgba(18, 30, 40, 0.13);
+  border-radius: 24px;
+  background: var(--neo-card-bg);
+  box-shadow: var(--neo-shadow-hover);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .auth-brand-panel {
@@ -113,11 +132,11 @@ const brandPanelStyle = computed(() =>
   flex-direction: column;
   justify-content: flex-end;
   padding: clamp(28px, 4vw, 46px);
-  color: #f6fbf9;
+  color: #fff7f7;
   background:
-    linear-gradient(180deg, rgba(20, 25, 30, 0.18) 0%, rgba(20, 25, 30, 0.8) 100%),
-    linear-gradient(145deg, rgba(233, 75, 88, 0.34), rgba(47, 51, 55, 0.54)),
-    var(--auth-panel-image, linear-gradient(135deg, #2f3337 0%, #17191c 100%));
+    linear-gradient(180deg, rgba(20, 16, 16, 0.1) 0%, rgba(20, 16, 16, 0.86) 100%),
+    linear-gradient(145deg, rgba(229, 77, 86, 0.36), rgba(74, 65, 63, 0.64)),
+    var(--auth-panel-image, linear-gradient(135deg, #4a413f 0%, #1e1918 52%, #141010 100%));
   background-size: cover;
   background-position: center;
 }
@@ -138,7 +157,7 @@ const brandPanelStyle = computed(() =>
 }
 
 .auth-kicker {
-  color: rgba(246, 251, 249, 0.58);
+  color: rgba(255, 247, 247, 0.62);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -155,7 +174,7 @@ const brandPanelStyle = computed(() =>
 
 .auth-panel-copy p {
   margin: 16px 0 0;
-  color: rgba(246, 251, 249, 0.84);
+  color: rgba(255, 247, 247, 0.84);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -164,7 +183,9 @@ const brandPanelStyle = computed(() =>
   display: grid;
   place-items: stretch center;
   padding: clamp(24px, 4vw, 48px);
-  background: #ffffff;
+  background:
+    linear-gradient(145deg, rgba(229, 77, 86, 0.08), transparent 34%),
+    var(--neo-card-bg-solid);
 }
 
 .auth-card {
@@ -173,6 +194,8 @@ const brandPanelStyle = computed(() =>
   padding: 0;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
+  border-radius: 18px;
+  overflow: hidden;
 }
 
 .auth-card-fixed {
@@ -193,9 +216,10 @@ const brandPanelStyle = computed(() =>
 .auth-header h1 {
   margin: 0;
   color: var(--neo-ink);
-  font-size: 29px;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 31px;
   font-weight: 800;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
@@ -215,15 +239,15 @@ const brandPanelStyle = computed(() =>
 
 .auth-session-notice {
   margin: 0 0 18px;
-  border: 1px solid rgba(233, 75, 88, 0.22);
-  color: #2f3337;
-  background: rgba(233, 75, 88, 0.08);
+  border: 1px solid rgba(229, 77, 86, 0.28);
+  color: var(--neo-ink);
+  background: rgba(229, 77, 86, 0.12);
   font-size: 13px;
   line-height: 1.45;
 }
 
 .auth-session-notice :deep(.q-icon) {
-  color: #e94b58;
+  color: var(--neo-accent);
 }
 
 .auth-copy-enter-active,
@@ -273,6 +297,11 @@ const brandPanelStyle = computed(() =>
 @media (max-width: 560px) {
   .auth-page {
     padding: 0;
+  }
+
+  .auth-page__controls {
+    top: 16px;
+    right: 16px;
   }
 
   .auth-shell {

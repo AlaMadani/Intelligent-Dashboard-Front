@@ -39,6 +39,10 @@ const esES: AppMessages = {
     upperBound: 'Límite superior',
     users: 'usuarios',
     yes: 'Sí',
+    notRun: 'No ejecutado',
+    cancel: 'Cancelar',
+    close: 'Cerrar',
+    lessThan1ms: '<1 ms',
   },
   dashboardState: {
     errors: {
@@ -99,7 +103,19 @@ const esES: AppMessages = {
       openGrafana: 'Abrir el panel de Grafana en una pestaña nueva',
       openKibana: 'Abrir el resumen de Kibana en una pestaña nueva',
       profile: 'Perfil',
+      themeMode: 'Modo de tema',
+      useLightTheme: 'Usar tema claro',
+      useDarkTheme: 'Usar tema oscuro',
     },
+  },
+  live: {
+    connected: 'En vivo',
+    connecting: 'Conectando…',
+    disconnected: 'Desconectado',
+    lastUpdate: 'Última actualización:',
+    manualRefresh: 'Actualización manual',
+    manualRefreshTooltip: 'Actualización manual. Las actualizaciones en vivo son normalmente automáticas.',
+    reconnect: 'Reconectar al flujo en vivo',
   },
   donutBreakdownChart: {
     noAnomalyMix: 'No hay datos de mezcla de anomalías disponibles',
@@ -116,6 +132,8 @@ const esES: AppMessages = {
     goHome: 'Ir al inicio',
   },
   v36: enUS.v36,
+  aiExplainer: enUS.aiExplainer,
+  companion: enUS.companion,
   auth: {
     loginTitle: 'Bienvenido de vuelta',
     loginSubtitle: 'Inicia sesión en tu cuenta',
@@ -182,6 +200,7 @@ const esES: AppMessages = {
     dismissSessionNotice: 'Cerrar aviso de sesión expirada',
     togglePasswordVisibility: 'Mostrar u ocultar contraseña',
   },
+  loader: enUS.loader,
 };
 
 export default esES;

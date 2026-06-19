@@ -1,4 +1,5 @@
 import { computed, type Ref, ref, shallowRef, watch } from 'vue';
+import { i18n } from 'src/boot/i18n';
 import {
   generateV36Explanation,
   getV36CachedExplanation,
@@ -22,7 +23,9 @@ export const useLlmExplanation = (eventId: Ref<string>) => {
   const evidenceError = ref('');
   const lastUpdated = ref<Date | null>(null);
 
-  const fallback = computed(() => Boolean(explanation.value?.fallback));
+  const fallback = computed(
+    () => Boolean(explanation.value?.fallback) || explanation.value?.source === 'provider_error_fallback',
+  );
 
   const loadCached = async () => {
     const currentEventId = eventId.value.trim();
@@ -75,14 +78,21 @@ export const useLlmExplanation = (eventId: Ref<string>) => {
       const response = await generateV36Explanation(currentEventId, {
         forceRefresh: false,
         style: 'security_analyst',
-        language: 'en',
+        language: 'fr',
         includeRecommendedActions: true,
         ...request,
       });
       explanation.value = response.data ?? null;
       lastUpdated.value = new Date();
     } catch (err) {
-      error.value = normalizeApiError(err).message;
+      const normalized = normalizeApiError(err);
+      if (normalized.status === 409) {
+        error.value = i18n.global.t('v36.llm.generationInProgress');
+      } else if (normalized.status === 404) {
+        error.value = i18n.global.t('v36.llm.evidenceUnavailable');
+      } else {
+        error.value = normalized.message;
+      }
     } finally {
       generating.value = false;
     }

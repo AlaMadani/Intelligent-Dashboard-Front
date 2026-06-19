@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { getLiveStatsStreamUrl } from 'src/services/analytics';
 
 export type V36RefreshTarget =
@@ -12,6 +12,11 @@ export type V36RefreshTarget =
 
 type RefreshHandler = (target: V36RefreshTarget, payload: Record<string, unknown>) => void;
 
+export interface UseV36SseRefreshOptions {
+  pollIntervalMs?: number;
+  pollAction?: () => void;
+}
+
 const listeners = new Map<V36RefreshTarget, Set<RefreshHandler>>();
 const eventNames: V36RefreshTarget[] = [
   'stats',
@@ -24,9 +29,15 @@ const eventNames: V36RefreshTarget[] = [
 
 let eventSource: EventSource | null = null;
 let refCount = 0;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+let globalPollAction: (() => void) | null = null;
+let globalPollIntervalMs = 30000;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 const connected = ref(false);
+const connecting = ref(false);
 const error = ref('');
+const lastEventAt = ref<Date | null>(null);
 
 const parsePayload = (data: string): Record<string, unknown> => {
   if (!data) return {};
@@ -41,6 +52,7 @@ const parsePayload = (data: string): Record<string, unknown> => {
 };
 
 const dispatch = (target: V36RefreshTarget, payload: Record<string, unknown>) => {
+  lastEventAt.value = new Date();
   listeners.get(target)?.forEach((handler) => {
     handler(target, payload);
   });
@@ -55,20 +67,53 @@ const dispatchRefreshPayload = (payload: Record<string, unknown>) => {
   }
 };
 
+const startPolling = () => {
+  stopPolling();
+  if (!globalPollAction) return;
+  pollTimer = setInterval(globalPollAction, globalPollIntervalMs);
+};
+
+const stopPolling = () => {
+  if (pollTimer !== null) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+};
+
+const disconnect = () => {
+  if (reconnectTimer !== null) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  eventSource?.close();
+  eventSource = null;
+  connected.value = false;
+  connecting.value = false;
+};
+
 const connect = () => {
-  if (eventSource || typeof EventSource === 'undefined') return;
+  if (typeof EventSource === 'undefined') {
+    startPolling();
+    return;
+  }
 
   try {
     eventSource = new EventSource(getLiveStatsStreamUrl());
   } catch {
     connected.value = false;
+    connecting.value = false;
     error.value = 'Unable to connect to V3.6.1 refresh stream.';
+    startPolling();
     return;
   }
 
+  connecting.value = true;
+
   eventSource.onopen = () => {
     connected.value = true;
+    connecting.value = false;
     error.value = '';
+    stopPolling();
   };
 
   eventNames.forEach((eventName) => {
@@ -86,17 +131,38 @@ const connect = () => {
 
   eventSource.onerror = () => {
     connected.value = false;
-    error.value = 'V3.6.1 refresh stream interrupted.';
+    connecting.value = true;
+    error.value = 'V3.6.1 refresh stream interrupted. Auto-reconnecting…';
+    startPolling();
+
+    if (reconnectTimer !== null) {
+      clearTimeout(reconnectTimer);
+    }
+    reconnectTimer = setTimeout(() => {
+      if (!connected.value && eventSource === null) {
+        connect();
+      }
+    }, 5000);
   };
 };
 
-const disconnect = () => {
-  eventSource?.close();
-  eventSource = null;
-  connected.value = false;
+const reconnect = () => {
+  disconnect();
+  connect();
 };
 
-export const useV36SseRefresh = (targets: V36RefreshTarget[], handler: RefreshHandler) => {
+export const useV36SseRefresh = (
+  targets: V36RefreshTarget[],
+  handler: RefreshHandler,
+  options?: UseV36SseRefreshOptions,
+) => {
+  if (options?.pollIntervalMs) {
+    globalPollIntervalMs = options.pollIntervalMs;
+  }
+  if (options?.pollAction) {
+    globalPollAction = options.pollAction;
+  }
+
   onMounted(() => {
     refCount += 1;
     targets.forEach((target) => {
@@ -119,11 +185,29 @@ export const useV36SseRefresh = (targets: V36RefreshTarget[], handler: RefreshHa
     refCount = Math.max(0, refCount - 1);
     if (refCount === 0) {
       disconnect();
+      stopPolling();
+      globalPollAction = null;
     }
   });
 
   return {
     connected,
+    connecting,
+    disconnected: computed(() => !connected.value && !connecting.value),
     error,
+    lastEventAt,
+    reconnect,
+    close: disconnect,
   };
 };
+
+export const useV36SseState = () => ({
+  connected,
+  connecting,
+  disconnected: computed(() => !connected.value && !connecting.value),
+  error,
+  lastEventAt,
+  reconnect,
+});
+
+

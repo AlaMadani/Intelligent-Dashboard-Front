@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import logoUrl from 'src/assets/logo_noveocare.jpg';
+import logoUrl from 'src/assets/logo_noveocare.png';
 
 const { t } = useI18n();
 
@@ -39,8 +39,7 @@ withDefaults(
   justify-content: center;
   overflow: hidden;
   flex: 0 0 auto;
-  border-radius: 8px;
-  background: #ffffff;
+  /* Removed background: #ffffff; here */
 }
 
 .brand-logo__image {
@@ -79,11 +78,11 @@ withDefaults(
 .brand-logo--auth .brand-logo__frame {
   width: 188px;
   height: 74px;
-  box-shadow: 0 14px 30px rgba(6, 14, 18, 0.14);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
 }
 
 .brand-logo--auth .brand-logo__product {
-  color: #f6fbf9;
+  color: var(--neo-drawer-text);
   font-size: 16px;
 }
 
@@ -95,11 +94,11 @@ withDefaults(
 .brand-logo--drawer .brand-logo__frame {
   width: 144px;
   height: 56px;
-  box-shadow: 0 12px 24px rgba(6, 14, 18, 0.16);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.24);
 }
 
 .brand-logo--drawer .brand-logo__product {
-  color: #f6fbf9;
+  color: var(--neo-drawer-text);
 }
 
 @media (max-width: 520px) {

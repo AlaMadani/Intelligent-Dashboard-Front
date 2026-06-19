@@ -126,24 +126,24 @@ const fillId = `neo-trend-fill-${Math.random().toString(36).slice(2, 10)}`;
 // Tone palettes align chart colors with the dashboard design language.
 const palettes = {
   primary: {
-    stroke: '#2f746b',
-    fill: '#9accc3',
-    glow: '#1d465c',
+    stroke: '#e54d56',
+    fill: '#f0626b',
+    glow: '#fbbf24',
   },
   warning: {
-    stroke: '#a76518',
-    fill: '#e5bd79',
-    glow: '#5b3708',
+    stroke: '#fbbf24',
+    fill: '#f7b267',
+    glow: '#fde68a',
   },
   danger: {
-    stroke: '#b34b3c',
-    fill: '#e3a49b',
-    glow: '#6d2118',
+    stroke: '#ef4444',
+    fill: '#fca5a5',
+    glow: '#fecaca',
   },
   success: {
-    stroke: '#2e7d63',
-    fill: '#9dd4bd',
-    glow: '#0f3f2f',
+    stroke: '#34d399',
+    fill: '#a7f3d0',
+    glow: '#d1fae5',
   },
 } as const;
 
@@ -260,12 +260,12 @@ const formatValue = (value: number) => {
 }
 
 .neo-trend-grid line {
-  stroke: rgba(86, 103, 113, 0.14);
+  stroke: rgba(255, 255, 255, 0.1);
   stroke-width: 1;
 }
 
 .neo-trend-grid .neo-trend-axis {
-  stroke: rgba(16, 32, 43, 0.26);
+  stroke: rgba(255, 255, 255, 0.18);
 }
 
 .neo-trend-y-labels text,

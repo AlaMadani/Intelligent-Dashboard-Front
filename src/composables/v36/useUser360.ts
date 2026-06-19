@@ -6,6 +6,7 @@ import type {
   V36UserAlertsResponse,
 } from 'src/types/analytics';
 import { safeArray } from 'src/utils/format';
+import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useUser360 = (insuredId: Ref<string>) => {
@@ -23,11 +24,11 @@ export const useUser360 = (insuredId: Ref<string>) => {
     ...safeArray<string>(alerts.value?.warnings),
   ]);
 
-  const refresh = async () => {
+  const refresh = async (silent = false) => {
     const currentInsuredId = insuredId.value.trim();
     if (!currentInsuredId) return;
 
-    loading.value = true;
+    if (!silent) loading.value = true;
     error.value = '';
 
     try {
@@ -53,8 +54,9 @@ export const useUser360 = (insuredId: Ref<string>) => {
     { immediate: true },
   );
 
+  const throttledRefresh = throttle(() => { void refresh(true); }, 2000);
   useV36SseRefresh(['alerts'], () => {
-    void refresh();
+    throttledRefresh();
   });
 
   return {

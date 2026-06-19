@@ -10,6 +10,7 @@ import type {
   V36LiveAlertsResponse,
 } from 'src/types/analytics';
 import { safeArray } from 'src/utils/format';
+import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useLiveAlerts = () => {
@@ -30,8 +31,8 @@ export const useLiveAlerts = () => {
   const count = computed(() => data.value?.count ?? items.value.length);
   const hasMore = computed(() => Boolean(data.value?.hasMore));
 
-  const refresh = async () => {
-    loading.value = true;
+  const refresh = async (silent = false) => {
+    if (!silent) loading.value = true;
     error.value = '';
 
     try {
@@ -73,8 +74,9 @@ export const useLiveAlerts = () => {
     void refresh();
   });
 
+  const throttledRefresh = throttle(() => { void refresh(true); }, 2000);
   useV36SseRefresh(['alerts'], () => {
-    void refresh();
+    throttledRefresh();
   });
 
   return {

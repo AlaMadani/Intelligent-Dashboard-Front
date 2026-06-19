@@ -39,6 +39,10 @@ const ar: AppMessages = {
     upperBound: 'الحد الأعلى',
     users: 'مستخدمون',
     yes: 'نعم',
+    notRun: 'لم يتم التشغيل',
+    cancel: 'إلغاء',
+    close: 'إغلاق',
+    lessThan1ms: '<1 مللي ثانية',
   },
   dashboardState: {
     errors: {
@@ -97,7 +101,19 @@ const ar: AppMessages = {
       openGrafana: 'فتح لوحة Grafana في تبويب جديد',
       openKibana: 'فتح نظرة Kibana العامة في تبويب جديد',
       profile: 'الملف الشخصي',
+      themeMode: 'وضع السمة',
+      useLightTheme: 'استخدام السمة الفاتحة',
+      useDarkTheme: 'استخدام السمة الداكنة',
     },
+  },
+  live: {
+    connected: 'مباشر',
+    connecting: 'جارٍ الاتصال…',
+    disconnected: 'غير متصل',
+    lastUpdate: 'آخر تحديث:',
+    manualRefresh: 'تحديث يدوي',
+    manualRefreshTooltip: 'تحديث يدوي. التحديثات المباشرة تكون تلقائية عادةً.',
+    reconnect: 'إعادة الاتصال بالبث المباشر',
   },
   donutBreakdownChart: {
     noAnomalyMix: 'لا توجد بيانات مزيج شذوذ متاحة',
@@ -114,6 +130,8 @@ const ar: AppMessages = {
     goHome: 'العودة إلى الرئيسية',
   },
   v36: enUS.v36,
+  aiExplainer: enUS.aiExplainer,
+  companion: enUS.companion,
   auth: {
     loginTitle: 'مرحبا بعودتك',
     loginSubtitle: 'تسجيل الدخول إلى حسابك',
@@ -180,6 +198,7 @@ const ar: AppMessages = {
     dismissSessionNotice: 'إخفاء تنبيه انتهاء الجلسة',
     togglePasswordVisibility: 'إظهار أو إخفاء كلمة المرور',
   },
+  loader: enUS.loader,
 };
 
 export default ar;
