@@ -1,0 +1,14 @@
+﻿{
+  "routeId": "account",
+  "routeName": "AccountPage",
+  "routeLabel": "Account Settings",
+  "description": "User account settings page for profile summary and password change.",
+  "elements": [
+    {"id": "account-summary-section","routeId": "account","routeName": "AccountPage","type": "card","label": "Profile Summary","description": "Account section showing the user profile summary with full name, email and role.","synonyms": ["profile summary","account summary","user profile info"],"visibility": "always","exampleUserQuestions": ["highlight profile summary","show account summary","what is my profile"],"actionsSupported": ["HIGHLIGHT_ELEMENT"]},
+    {"id": "account-password-section","routeId": "account","routeName": "AccountPage","type": "card","label": "Password Change Form","description": "Account section with the password change form including current password, new password, and confirm password fields.","synonyms": ["password section","change password form","password change area"],"visibility": "always","exampleUserQuestions": ["highlight password change form","where to change my password","show password section"],"actionsSupported": ["HIGHLIGHT_ELEMENT"]},
+    {"id": "account-current-password-input","routeId": "account","routeName": "AccountPage","type": "input","label": "Current Password Input","description": "Text input field for entering the current password.","synonyms": ["current password","current password field"],"visibility": "always","exampleUserQuestions": ["where to enter current password"],"actionsSupported": ["HIGHLIGHT_ELEMENT"]},
+    {"id": "account-new-password-input","routeId": "account","routeName": "AccountPage","type": "input","label": "New Password Input","description": "Text input field for entering a new password.","synonyms": ["new password","new password field"],"visibility": "always","exampleUserQuestions": ["where to enter new password"],"actionsSupported": ["HIGHLIGHT_ELEMENT"]},
+    {"id": "account-confirm-password-input","routeId": "account","routeName": "AccountPage","type": "input","label": "Confirm New Password Input","description": "Text input field for confirming the new password.","synonyms": ["confirm password","confirm new password field"],"visibility": "always","exampleUserQuestions": ["where to confirm new password"],"actionsSupported": ["HIGHLIGHT_ELEMENT"]},
+    {"id": "account-change-password-button","routeId": "account","routeName": "AccountPage","type": "button","label": "Change Password Submit Button","description": "Button that submits the password change form.","synonyms": ["change password button","save password","update password button"],"visibility": "always","exampleUserQuestions": ["click change password","highlight change password button"],"actionsSupported": ["HIGHLIGHT_ELEMENT"]}
+  ]
+}

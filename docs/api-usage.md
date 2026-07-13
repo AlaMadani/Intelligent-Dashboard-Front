@@ -125,12 +125,24 @@ Same per-item fields as Live Alerts. The overview page extracts: `riskLevel`, `e
 | Tabular Evidence | `tabularEvidence.availableModels`, `.unavailableModels`, `.featureWarnings` |
 | Rule Evidence | `ruleEvidence.ruleContributions` — bar chart |
 | Anomaly Attribution | `anomalyTypeAttribution.anomalyType`, `.confidence`, `.source` |
-| Churn Context | `churnContext.probability`, `.riskLevel`, `.modelArtifact` |
-| Forecast Context | `forecastContext.predictedTotalEvents`, `.predictedAnomalyRate`, `.expectedAlertVolume`, `.forecastModelNames` |
-| Persona | `persona.source`, `.label` |
-| Session Lifecycle | `sessionLifecycle.sessionEndReason`, `.sessionEndedExplicitly`, `.sessionEndedAt`, `.sessionDurationMs`, `.sessionEventCount` |
+| Session containing this alert | `sessionLifecycle.sessionEndReason`, `.sessionEndedExplicitly`, `.sessionEndedAt`, `.sessionDurationMs`, `.sessionEventCount` |
+| User/business context (collapsed) | See below |
 | LLM Links | `llm.evidenceAvailable`, `.evidenceEndpoint`, `.cachedExplanationEndpoint`, `.generateExplanationEndpoint` |
 | Source/Warnings | `source`, `warnings`, `runtimeWarnings` |
+
+> **Secondary/advanced context** (collapsible "User / business context" section):
+>
+> | Context | Fields | Rules |
+> |---------|--------|-------|
+> | Churn Risk | `churnContext.probability`, `.riskLevel`, `.modelArtifact` | `modelArtifact` hidden if null. Tooltip: "Churn risk is business context for the insured user. It is not part of the security risk score." |
+> | Forecast Context | `forecastContext.predictedTotalEvents`, `.predictedAnomalyRate`, `.expectedAlertVolume` | Entire card hidden if all three values are null. Individual null rows hidden. Tooltip: "Forecast context describes expected platform-level activity and anomaly volume." |
+> | Persona disabled | `persona.source`, `.label` | Compact one-line note. Internal codes (`disabled_v3_6_refactor`, `persona_disabled`) hidden. |
+
+#### Layout rationale
+
+Alert Investigation separates direct alert evidence from contextual user/platform data:
+- **Primary evidence** (always visible): Event Metadata, Model Scores, Model Contributions, Sequence Evidence, Tabular Evidence, Rule Evidence, Anomaly Attribution, Session Lifecycle
+- **Secondary context** (collapsed by default): Churn Risk, Forecast Context, Persona disabled note
 
 ---
 
@@ -319,7 +331,8 @@ Same shape as the GET response. `cached: false`, `source: "generated"` or `"forc
 | Idempotency | `idempotency.duplicateEventsSkipped`, `.duplicateSequenceAppendsSkipped`, `.duplicateAlertsSkipped`, `.duplicateSqlWritesSkipped` |
 | Performance | **Primary**: `data.performance`; **Fallback**: `data.kafka.performance`. Union of both shapes supports: `eventProcessingMsAvg/P95`, `.redisWriteMsAvg/P95`, `.modelInferenceMsAvg/P95`, `.sequenceMsAvg/P95`, `.tabularMsAvg/P95`, `.historyFetchMsAvg/P95`, `.rulesMsAvg/P95`, `.finalizationMsAvg/P95`, `.alertPublishMsAvg/P95`, `.kafkaEventAgeReceiveMsAvg/P95`, `.sqlWriteMsAvg/P95`, `.dashboardRefreshMsAvg/P95`, `.recordsProcessedPerSecond` (displayed via `formatThroughput()` as `0.00/s`), `.dashboardLastRefreshAt`, `.dashboardRefreshSkippedDueToRateLimit`, `.kafkaLagCached`, `.loadSheddingMode`, `.sequenceMode`, plus kafka-specific: `.performanceSummaryRunCount`, `.performanceSummaryLastRunAt`, `.kafka_listener_hot_path_blocked`. Values `normal`/`rules_only`/`degraded`/`transformer`/`tcn`/`insufficient_context` in `.loadSheddingMode`/`.sequenceMode` are mapped to user-friendly labels via `formatSequenceMode()`/`formatLoadSheddingMode()`. |
 | Stats | `stats.liveTimeBasis` |
-| Next Action Prediction | `nextActionPrediction.enabled`, `.mode`, `.lastSkipReason`, `.predictionsGeneratedTotal`, `.predictionsSkippedTotal` |
+| Next Action Prediction | `nextActionPrediction.enabled`, `.mode`, `.lastSkipReason`, `.predictionsGeneratedTotal`, `.predictionsSkippedTotal` — deprecated, shown only as fallback |
+| Next Event Prediction | `nextEventPrediction.enabled`, `.model`, `.topK`, `.minimumContextEvents`, `.heads`, `.affectsRiskScore`, `.redisWrite`, `.sqlWrite`, `.deviationEvaluation` — preferred over `nextActionPrediction` |
 | Source/Warnings | `source`, `warnings` |
 
 ---
@@ -375,6 +388,47 @@ Same shape as the GET response. `cached: false`, `source: "generated"` or `"forc
 | `recentSessions` | Session list — shows `sessionId`, `riskLevel`, `finalRiskScore`. Risk level inferred from score via `riskLevelFromScore()` if missing. Up to 8 items. |
 | `riskTimeline` | Timeline list — shows `timestamp`, `finalRiskScore`. Risk level optionally inferred as display-only. Up to 8 items. |
 | `source`, `warnings` | Chip + banner |
+| `nextEventPrediction` | Prediction card — see section 18 |
+
+---
+
+### 18. Next Event Prediction (User360)
+
+Included in the User360 response as `nextEventPrediction`:
+
+| Field | Display |
+|-------|---------|
+| `heads.frontend_action_name` | Top 3 items with rank, value, probability |
+| `heads.page` | Top 3 items |
+| `heads.api_template` | Top 3 items |
+| `heads.api_family` | Top 3 items |
+| `heads.status` | Top 3 items |
+| `contextSize` | Fact grid |
+| `model` | Fact grid |
+| `source` | Fact grid |
+| `warnings` | If contains `next_event_prediction_not_available`, compact empty state shown |
+
+Other heads are hidden by default.
+
+---
+
+### 19. Next Event Prediction Evidence (Alert Investigation)
+
+Included in the Alert Investigation response as `nextEventPredictionEvidence`:
+
+| Field | Display |
+|-------|---------|
+| `prediction.heads.frontend_action_name[0]` | Predicted next action |
+| `prediction.heads.api_template[0]` | Predicted API |
+| `prediction.heads.api_family[0]` | Predicted API family |
+| `prediction.source` | Prediction source |
+| `prediction.contextSize` | Context size |
+| `prediction.model` | Model |
+| `deviation.actualEventProbability` | Deviation section |
+| `deviation.deviationScore` | Deviation section |
+| `deviation.matchedTopPredictions` | Deviation section |
+
+Card only visible when `prediction` exists. Does not affect `finalRiskScore`.
 
 ---
 
@@ -571,6 +625,10 @@ All 6 data pages retain their refresh buttons. The button now includes:
 | `fallbackMode = 'insufficient_context'` | `'Insufficient sequence context'` | `formatSequenceMode('insufficient_context')` |
 | `loadSheddingMode = 'insufficient_context'` | `'Insufficient sequence context'` | `formatLoadSheddingMode('insufficient_context')` |
 | `topApiFamilies = []` | `'No API families available'` | `t('v36.user360.noApiFamilies')` |
+| `nextEventPrediction = null` or empty heads | `'No next-event prediction available yet.'` | `t('v36.user360.noNextEventPrediction')` |
+| `nextEventPrediction probability` | `0.42 → '42.0%'` | `formatPredictionProb()` — one decimal place |
+| `nextEventPredictionEvidence.warnings` contains `next_event_prediction_not_available` | Compact empty state | Handled in computed `hasPredictionWarning` |
+| `deviation` null/missing | `'Deviation evidence is not available yet.'` | `t('v36.investigation.deviationNotAvailable')` |
 | `finalRiskScore` exists in timeline | Shown as formatted score, not `'n/a'` | `formatNullableNumber()` |
 | `riskLevel` missing from timeline point | Inferred display-only from `finalRiskScore`: `<35 LOW, <60 MEDIUM, <80 HIGH, >=80 CRITICAL` | `riskLevelFromScore()` |
 

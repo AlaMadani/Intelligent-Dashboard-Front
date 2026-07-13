@@ -34,6 +34,7 @@ const esES: AppMessages = {
     confidenceBand: 'Banda de confianza',
     trend: 'Tendencia',
     unknown: 'DESCONOCIDO',
+    unknownToken: 'Desconocido',
     notAvailable: 'n/d',
     up: 'ACTIVO',
     upperBound: 'Límite superior',
@@ -200,6 +201,7 @@ const esES: AppMessages = {
     dismissSessionNotice: 'Cerrar aviso de sesión expirada',
     togglePasswordVisibility: 'Mostrar u ocultar contraseña',
   },
+  dashboardAssistant: enUS.dashboardAssistant,
   loader: enUS.loader,
 };
 

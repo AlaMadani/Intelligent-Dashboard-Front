@@ -6,12 +6,18 @@
       <q-toolbar class="neo-toolbar">
         <div class="neo-toolbar-start">
           <q-btn
+            id="sidebar-toggle"
             flat
             dense
             round
             :icon="leftDrawerOpen ? 'chevron_left' : 'menu'"
             :aria-label="t('layout.aria.toggleNavigation')"
             class="neo-menu-btn"
+            data-assistant-id="sidebar-toggle"
+            data-assistant-type="button"
+            data-assistant-label="Sidebar Toggle"
+            data-assistant-description="Toggle button that opens and closes the sidebar navigation drawer."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
             @click="toggleLeftDrawer"
           />
 
@@ -25,6 +31,7 @@
           <theme-toggle />
 
           <q-btn
+            id="btn-grafana"
             flat
             dense
             :round="compactHeaderActions"
@@ -32,12 +39,18 @@
             :label="compactHeaderActions ? undefined : t('layout.grafanaButton')"
             :aria-label="t('layout.aria.openGrafana')"
             class="neo-external-btn"
+            data-assistant-id="btn-grafana"
+            data-assistant-type="button"
+            data-assistant-label="Grafana Dashboard"
+            data-assistant-description="Opens the external Grafana monitoring dashboard."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
             @click="openGrafana"
           >
             <q-tooltip anchor="bottom middle">{{ t('layout.grafanaTooltip') }}</q-tooltip>
           </q-btn>
 
           <q-btn
+            id="btn-kibana"
             flat
             dense
             :round="compactHeaderActions"
@@ -45,18 +58,29 @@
             :label="compactHeaderActions ? undefined : t('layout.kibanaButton')"
             :aria-label="t('layout.aria.openKibana')"
             class="neo-external-btn"
+            data-assistant-id="btn-kibana"
+            data-assistant-type="button"
+            data-assistant-label="Kibana Dashboard"
+            data-assistant-description="Opens the external Kibana monitoring dashboard."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
             @click="openKibana"
           >
             <q-tooltip anchor="bottom middle">{{ t('layout.kibanaTooltip') }}</q-tooltip>
           </q-btn>
 
           <q-btn
+            id="btn-user-avatar"
             flat
             dense
             round
             icon="account_circle"
             :aria-label="t('layout.aria.profile')"
             class="neo-avatar-btn"
+            data-assistant-id="btn-user-avatar"
+            data-assistant-type="button"
+            data-assistant-label="User Avatar"
+            data-assistant-description="Avatar button that opens the user dropdown menu with Account Settings and Sign Out options."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
           >
             <q-menu anchor="bottom right" self="top right" class="neo-user-menu">
               <q-list>
@@ -69,14 +93,32 @@
 
                 <q-separator />
 
-                <q-item clickable @click="openAccountSettings">
+                <q-item
+                  id="nav-account-settings"
+                  clickable
+                  data-assistant-id="nav-account-settings"
+                  data-assistant-type="menu-item"
+                  data-assistant-label="Account Settings"
+                  data-assistant-description="Navigates to the Account Settings page."
+                  data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
+                  @click="openAccountSettings"
+                >
                   <q-item-section avatar>
                     <q-icon name="manage_accounts" />
                   </q-item-section>
                   <q-item-section>{{ t('auth.accountSettings') }}</q-item-section>
                 </q-item>
 
-                <q-item clickable @click="handleSignOut">
+                <q-item
+                  id="btn-sign-out"
+                  clickable
+                  data-assistant-id="btn-sign-out"
+                  data-assistant-type="menu-item"
+                  data-assistant-label="Sign Out"
+                  data-assistant-description="Signs out of the application."
+                  data-assistant-actions="HIGHLIGHT_ELEMENT"
+                  @click="handleSignOut"
+                >
                   <q-item-section avatar>
                     <q-icon name="logout" />
                   </q-item-section>
@@ -138,10 +180,16 @@
           <q-item
             v-for="item in navigation"
             :key="item.id"
+            :id="'nav-' + item.id"
             clickable
             class="neo-nav-item"
             :active="isActive(item.id)"
             active-class="neo-nav-item--active"
+            :data-assistant-id="'nav-' + item.id"
+            data-assistant-type="nav-item"
+            :data-assistant-label="item.label"
+            :data-assistant-description="'Navigates to the ' + item.label + ' page.'"
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
             @click="navigateTo(item.id)"
           >
             <q-item-section avatar>
@@ -175,10 +223,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { environment } from 'src/config/environment';
+import { ASSISTANT_EXPLAIN_AI_EVENT } from 'src/constants/events';
 import { SESSION_EXPIRED_EVENT } from 'src/constants/auth';
 import { LAYOUT_NAVIGATION_ITEMS } from 'src/constants/layout/navigation';
 import { ROUTE_NAMES, type RouteName } from 'src/router/route-names';
 import { useAuthStore } from 'src/stores/auth';
+import { useAiExplainer } from 'src/composables/useAiExplainer';
 import {
   clearSessionExpiredNotice,
   consumeSessionExpiredReason,
@@ -204,6 +254,16 @@ const route = useRoute();
 const authStore = useAuthStore();
 const sessionExpiredVisible = ref(false);
 let idleTimer: number | undefined;
+
+const { open: openExplainer } = useAiExplainer();
+
+const handleAssistantExplainAi = () => {
+  const eventId = route.params.eventId ? String(route.params.eventId) : undefined;
+  void openExplainer({
+    contextKey: 'investigation-overview',
+    ...(eventId ? { eventId } : {}),
+  });
+};
 
 // Sidebar destinations map each dashboard surface to its route, label, and icon.
 const navigation = computed<NavigationItem[]>(() =>
@@ -377,6 +437,7 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('focus', checkIdleSession);
   window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpiredEvent);
+  document.addEventListener(ASSISTANT_EXPLAIN_AI_EVENT, handleAssistantExplainAi);
 });
 
 onBeforeUnmount(() => {
@@ -387,6 +448,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('focus', checkIdleSession);
   window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpiredEvent);
+  document.removeEventListener(ASSISTANT_EXPLAIN_AI_EVENT, handleAssistantExplainAi);
 });
 
 watch(

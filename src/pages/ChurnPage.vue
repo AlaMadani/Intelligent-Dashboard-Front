@@ -9,14 +9,24 @@
           <p class="neo-section-subtitle">{{ t('v36.churn.subtitle') }}</p>
         </div>
         <div class="neo-section-actions">
-          <LiveConnectionBadge
-            :connected="sseConnected"
-            :connecting="sseConnecting"
-            :last-event-at="sseLastEventAt"
-          />
-          <div v-if="source" class="neo-analytics-chip">{{ t('v36.common.source') }}: {{ source }}</div>
+          <span id="churn-live-connection-badge" data-assistant-id="churn-live-connection-badge" data-assistant-type="status-indicator" data-assistant-label="Live Connection Badge" data-assistant-description="Badge showing the SSE live connection status for churn data." data-assistant-actions="HIGHLIGHT_ELEMENT">
+            <LiveConnectionBadge
+              :connected="sseConnected"
+              :connecting="sseConnecting"
+              :last-event-at="sseLastEventAt"
+            />
+          </span>
+          <div v-if="source" id="churn-source-chip" class="neo-analytics-chip" data-assistant-id="churn-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the churn data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
           <ai-explain-button context-key="churn-dashboard" variant="prominent" />
-          <q-btn unelevated color="primary" icon="refresh" :disable="loading" :label="t('v36.common.refresh')" @click="() => refresh()">
+          <q-btn
+            id="churn-refresh-button"
+            data-assistant-id="churn-refresh-button"
+            data-assistant-type="button"
+            data-assistant-label="Refresh Churn"
+            data-assistant-description="Refreshes the churn data."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
+            unelevated color="primary" icon="refresh" :disable="loading" :label="t('v36.common.refresh')" @click="() => refresh()"
+          >
             <q-tooltip>{{ t('live.manualRefreshTooltip') }}</q-tooltip>
           </q-btn>
         </div>
@@ -38,8 +48,15 @@
       </q-banner>
     </section>
 
-    <section class="neo-section neo-v36-kpis">
-      <article v-for="metric in metrics" :key="metric.label" class="neo-kpi-card">
+    <section
+      class="neo-section neo-v36-kpis"
+      data-assistant-id="churn-kpi-section"
+      data-assistant-type="section"
+      data-assistant-label="Churn KPI Cards"
+      data-assistant-description="Key churn metric cards."
+      data-assistant-actions="HIGHLIGHT_ELEMENT"
+    >
+      <article v-for="(metric, idx) in metrics" :key="metric.label" :id="'churn-kpi-' + idx" :data-assistant-id="'churn-kpi-' + idx" data-assistant-type="card" :data-assistant-label="'KPI: ' + metric.label" data-assistant-description="Churn key performance indicator." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
         <div class="neo-kpi-label">{{ metric.label }} <InfoTooltip v-if="metric.help" :text="metric.help" /></div>
         <div class="neo-kpi-value">{{ metric.value }}</div>
         <div class="neo-kpi-meta">{{ metric.meta }}</div>
@@ -48,7 +65,7 @@
     </section>
 
     <section class="neo-section neo-v36-grid">
-      <article class="neo-analytics-panel">
+      <article id="churn-distribution-chart" data-assistant-id="churn-distribution-chart" data-assistant-type="chart" data-assistant-label="Churn Distribution Chart" data-assistant-description="Donut chart showing churn risk distribution across users." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.churn.distribution') }} <InfoTooltip :text="t('v36.help.churn.distribution')" /></h3>
@@ -69,9 +86,15 @@
             <h3>{{ t('v36.churn.topUsers') }} <InfoTooltip :text="t('v36.help.churn.topUsers')" /></h3>
             <p>{{ t('v36.churn.topUsersSubtitle') }}</p>
           </div>
-          <div class="neo-section-actions">
+          <div id="churn-risk-filter" data-assistant-id="churn-risk-filter" data-assistant-type="filter" data-assistant-label="Churn Risk Filter" data-assistant-description="Filter the churn table by risk level." data-assistant-actions="HIGHLIGHT_ELEMENT,SET_FILTER" class="neo-section-actions">
             
             <q-select
+            id="churn-risk-filter-select"
+            data-assistant-id="churn-risk-filter-select"
+            data-assistant-type="dropdown"
+            data-assistant-label="Risk Level Filter"
+            data-assistant-description="Select risk level to filter churn users."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,SET_FILTER"
             v-model="params.riskLevel"
             dense
             outlined
@@ -85,8 +108,8 @@
           </div>
         </div>
 
-          <div class="neo-table-wrapper">
-          <table class="neo-table">
+          <div id="churn-table" data-assistant-id="churn-table" data-assistant-type="table" data-assistant-label="Churn Users Table" data-assistant-description="Table of users with churn probability and risk level." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-table-wrapper">
+          <table id="churn-table-element" data-assistant-id="churn-table-element" data-assistant-type="table" data-assistant-label="Churn Table Data" data-assistant-description="HTML table with churn user rows." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-table">
             <thead>
               <tr>
                 <th>{{ t('v36.common.insuredId') }}</th>
@@ -105,8 +128,8 @@
                 <td>{{ user.insuredId ?? t('common.notAvailable') }}</td>
                 <td>{{ formatPercent(user.churnProbability, 1) }}</td>
                 <td><q-badge :color="riskTone(user.churnRiskLevel)" rounded>{{ user.churnRiskLevel ?? t('common.unknown') }}</q-badge></td>
-                <td>{{ formatNullableScore(user.averageRiskScore) }}</td>
-                <td>{{ formatNumber(user.alertCount) }}</td>
+                <td>{{ formatNullableScore(user.averageRiskScoreLast30d ?? user.averageRiskScore ?? null) }}</td>
+                <td>{{ formatNumber(user.alertCountLast30d ?? user.alertCount ?? null) }}</td>
                 <td>
                   <div class="neo-v36-row-actions">
                     <ai-explain-button
@@ -117,8 +140,8 @@
                         insuredId: user.insuredId,
                         riskLevel: user.churnRiskLevel,
                         probability: formatPercent(user.churnProbability, 1),
-                        averageRisk: formatNullableScore(user.averageRiskScore),
-                        alertCount: formatNumber(user.alertCount),
+                        averageRisk: formatNullableScore(user.averageRiskScoreLast30d ?? user.averageRiskScore ?? null),
+                        alertCount: formatNumber(user.alertCountLast30d ?? user.alertCount ?? null),
                       }"
                     />
                     <q-btn
@@ -138,9 +161,9 @@
         </div>
 
         <div class="neo-v36-pagination">
-          <q-btn flat icon="chevron_left" :label="t('v36.common.previous')" :disable="(params.offset ?? 0) <= 0" @click="previousPage" />
+          <q-btn id="churn-pagination-previous" data-assistant-id="churn-pagination-previous" data-assistant-type="button" data-assistant-label="Previous Page" data-assistant-description="Go to the previous page of churn users." data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT" flat icon="chevron_left" :label="t('v36.common.previous')" :disable="(params.offset ?? 0) <= 0" @click="previousPage" />
           <span>{{ t('v36.alerts.offsetLabel', { offset: params.offset ?? 0, limit: params.limit ?? 20 }) }}</span>
-          <q-btn flat icon-right="chevron_right" :label="t('v36.common.next')" :disable="!hasMore" @click="nextPage" />
+          <q-btn id="churn-pagination-next" data-assistant-id="churn-pagination-next" data-assistant-type="button" data-assistant-label="Next Page" data-assistant-description="Go to the next page of churn users." data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT" flat icon-right="chevron_right" :label="t('v36.common.next')" :disable="!hasMore" @click="nextPage" />
         </div>
       </article>
     </section>
@@ -148,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import InfoTooltip from 'src/components/common/InfoTooltip.vue';
@@ -156,6 +179,7 @@ import DonutBreakdownChart from 'src/components/dashboard/DonutBreakdownChart.vu
 import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
 import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
 import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
+import { ASSISTANT_REFRESH_CHURN_EVENT } from 'src/constants/events';
 import { useChurnDashboard } from 'src/composables/v36/useChurnDashboard';
 import { useV36SseState } from 'src/composables/v36/useV36SseRefresh';
 import { ROUTE_NAMES } from 'src/router/route-names';
@@ -245,6 +269,28 @@ const openUser = async (insuredId: string | undefined) => {
   if (!insuredId) return;
   await router.push({ name: ROUTE_NAMES.USER_360_DETAIL, params: { insuredId } });
 };
+
+const handleChurnRefresh = () => {
+  void refresh();
+};
+
+const handleFilterChurnRisk = (event: Event) => {
+  const detail = (event as CustomEvent).detail;
+  if (detail?.value) {
+    params.value = { ...params.value, riskLevel: detail.value, offset: 0 };
+    void refresh();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener(ASSISTANT_REFRESH_CHURN_EVENT, handleChurnRefresh);
+  window.addEventListener('assistant:filter-churn-risk', handleFilterChurnRisk);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener(ASSISTANT_REFRESH_CHURN_EVENT, handleChurnRefresh);
+  window.removeEventListener('assistant:filter-churn-risk', handleFilterChurnRisk);
+});
 </script>
 
 <style scoped>

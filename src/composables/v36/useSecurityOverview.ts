@@ -27,10 +27,12 @@ export const useSecurityOverview = () => {
 
   const source = computed(() => data.value?.source ?? '');
   const warnings = computed(() => [
-    ...safeArray<string>(data.value?.warnings),
-    ...safeArray<string>(data.value?.fieldCoverageWarnings),
-    ...safeArray<string>(diagnostics.value?.warnings),
-    ...safeArray<string>(runtimeHealth.value?.warnings),
+    ...new Set([
+      ...safeArray<string>(data.value?.warnings),
+      ...safeArray<string>(data.value?.fieldCoverageWarnings),
+      ...safeArray<string>(diagnostics.value?.warnings),
+      ...safeArray<string>(runtimeHealth.value?.warnings),
+    ]),
   ]);
 
   const refreshCriticalAlerts = async () => {

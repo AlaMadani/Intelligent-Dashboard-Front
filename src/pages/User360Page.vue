@@ -9,26 +9,50 @@
           <p class="neo-section-subtitle">{{ t('v36.user360.subtitle') }}</p>
         </div>
         <div class="neo-section-actions">
-          <div v-if="source" class="neo-analytics-chip">{{ t('v36.common.source') }}: {{ source }}</div>
+          <div v-if="source" id="user360-source-chip" class="neo-analytics-chip" data-assistant-id="user360-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the user 360 data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
           <ai-explain-button
             v-if="data?.insuredId"
             context-key="user360-profile"
             variant="prominent"
             :params="{ insuredId: data.insuredId }"
           />
-          <LiveConnectionBadge
-            :connected="sseConnected"
-            :connecting="sseConnecting"
-            :last-event-at="sseLastEventAt"
-          />
-          <q-btn unelevated color="primary" icon="refresh" :disable="loading" :label="t('v36.common.refresh')" @click="() => refresh()">
+          <span id="user360-live-connection-badge" data-assistant-id="user360-live-connection-badge" data-assistant-type="status-indicator" data-assistant-label="Live Connection Badge" data-assistant-description="Badge showing the SSE live connection status for user 360." data-assistant-actions="HIGHLIGHT_ELEMENT">
+            <LiveConnectionBadge
+              :connected="sseConnected"
+              :connecting="sseConnecting"
+              :last-event-at="sseLastEventAt"
+            />
+          </span>
+          <q-btn
+            id="user360-refresh-button"
+            data-assistant-id="user360-refresh-button"
+            data-assistant-type="button"
+            data-assistant-label="Refresh User360"
+            data-assistant-description="Refreshes the User 360 data."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
+            unelevated color="primary" icon="refresh" :disable="loading" :label="t('v36.common.refresh')" @click="() => refresh()"
+          >
             <q-tooltip>{{ t('live.manualRefreshTooltip') }}</q-tooltip>
           </q-btn>
         </div>
         </div>
 
-      <div class="neo-panel neo-v36-lookup">
+      <div
+        id="user360-search-input"
+        data-assistant-id="user360-search-input"
+        data-assistant-type="section"
+        data-assistant-label="User Search Section"
+        data-assistant-description="Search for a user by insured ID."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+        class="neo-panel neo-v36-lookup"
+      >
         <q-input
+          id="user360-search-input-field"
+          data-assistant-id="user360-search-input-field"
+          data-assistant-type="input"
+          data-assistant-label="Search Insured ID"
+          data-assistant-description="Enter an insured ID to search."
+          data-assistant-actions="HIGHLIGHT_ELEMENT,SET_FILTER"
           v-model="lookupId"
           dense
           outlined
@@ -36,7 +60,15 @@
           :label="t('v36.common.insuredId')"
           @keyup.enter="openUser"
         />
-        <q-btn unelevated color="secondary" icon="manage_search" :label="t('v36.user360.loadUser')" @click="openUser" />
+        <q-btn
+          id="user360-search-button"
+          data-assistant-id="user360-search-button"
+          data-assistant-type="button"
+          data-assistant-label="Search User Button"
+          data-assistant-description="Button that triggers the user search by insured ID."
+          data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
+          unelevated color="secondary" icon="manage_search" :label="t('v36.user360.loadUser')" @click="openUser"
+        />
       </div>
 
       <q-banner v-if="error" class="neo-banner">
@@ -60,8 +92,15 @@
     </section>
 
     <template v-else-if="data">
-      <section class="neo-section neo-v36-kpis">
-        <article v-for="metric in metrics" :key="metric.label" class="neo-kpi-card">
+      <section
+        class="neo-section neo-v36-kpis"
+        data-assistant-id="user360-kpi-section"
+        data-assistant-type="section"
+        data-assistant-label="User360 KPI Cards"
+        data-assistant-description="Key metric cards for the selected user."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
+        <article v-for="metric in metrics" :key="metric.label" :id="'user360-kpi-' + metric.key" :data-assistant-id="'user360-kpi-' + metric.key" data-assistant-type="card" :data-assistant-label="'KPI: ' + metric.label" data-assistant-description="Key performance indicator for the user." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
           <div class="neo-kpi-label">{{ metric.label }} <InfoTooltip v-if="metric.help" :text="metric.help" /></div>
           <div class="neo-kpi-value">{{ metric.value }}</div>
           <div class="neo-kpi-meta">{{ metric.meta }}</div>
@@ -70,7 +109,7 @@
       </section>
 
       <section class="neo-section neo-v36-grid">
-        <article class="neo-analytics-panel">
+        <article id="user360-persona-card" data-assistant-id="user360-persona-card" data-assistant-type="card" data-assistant-label="Persona Card" data-assistant-description="Disabled persona information for the user." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
               <h3>{{ t('v36.common.personaDisabled') }} <InfoTooltip :text="t('v36.help.user360.persona')" /></h3>
@@ -81,7 +120,7 @@
           <div class="neo-analytics-empty">{{ t('v36.user360.personaNotice') }}</div>
         </article>
 
-        <article class="neo-analytics-panel">
+        <article id="user360-baseline-card" data-assistant-id="user360-baseline-card" data-assistant-type="card" data-assistant-label="Baseline Card" data-assistant-description="Baseline profile data for the user including country and active hours." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
               <h3>{{ t('v36.user360.baseline') }} <InfoTooltip :text="t('v36.help.user360.baseline')" /></h3>
@@ -105,7 +144,31 @@
           </div>
         </article>
 
-        <article class="neo-analytics-panel">
+        <article id="user360-next-event-prediction-card" data-assistant-id="user360-next-event-prediction-card" data-assistant-type="card" data-assistant-label="Next Event Prediction Card" data-assistant-description="AI-predicted next events for the user." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel">
+          <div class="neo-analytics-head">
+            <div>
+              <h3><span class="neo-ai-text">{{ t('v36.user360.nextEventPrediction') }}</span> <InfoTooltip :text="t('v36.user360.noNextEventPredictionTooltip')" /></h3>
+              <p>{{ t('v36.user360.nextEventPredictionSubtitle') }}</p>
+            </div>
+          </div>
+          <div v-if="hasNextEventPrediction && !hasPredictionWarning" class="neo-v36-list">
+            <div v-for="(items, head) in visiblePredictionHeads" :key="head" class="neo-v36-prediction-head">
+              <div class="neo-v36-section-label">{{ headLabel(head) }}</div>
+              <div class="neo-v36-prediction-items">
+                <div v-for="item in items.slice(0, 3)" :key="item.rank" class="neo-v36-prediction-item">
+                  <span class="neo-v36-prediction-rank">{{ item.rank }}</span>
+                  <span class="neo-v36-prediction-value">{{ cleanPredictedValue(item.value) }}</span>
+                  <span class="neo-v36-prediction-prob">{{ formatPredictionProb(item.probability) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="neo-analytics-empty">
+            {{ t('v36.user360.noNextEventPrediction') }}
+          </div>
+        </article>
+
+        <article id="user360-recent-sessions-card" data-assistant-id="user360-recent-sessions-card" data-assistant-type="card" data-assistant-label="Recent Sessions Card" data-assistant-description="Recent user sessions list." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
               <h3>{{ t('v36.user360.recentSessions') }}</h3>
@@ -122,7 +185,7 @@
           </div>
         </article>
 
-        <article class="neo-analytics-panel">
+        <article id="user360-risk-timeline-card" data-assistant-id="user360-risk-timeline-card" data-assistant-type="card" data-assistant-label="Risk Timeline Card" data-assistant-description="Timeline of risk scores for the user." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel">
           <div class="neo-analytics-head">
             <div>
               <h3>{{ t('v36.user360.riskTimeline') }} <InfoTooltip :text="t('v36.help.user360.riskTimeline')" /></h3>
@@ -139,7 +202,7 @@
           </div>
         </article>
 
-        <article class="neo-analytics-panel neo-v36-wide">
+        <article id="user360-alerts-table" data-assistant-id="user360-alerts-table" data-assistant-type="table" data-assistant-label="User Alerts Table" data-assistant-description="Table of alerts for the user with risk level and actions." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel neo-v36-wide">
           <div class="neo-analytics-head">
             <div>
               <h3>{{ t('v36.user360.userAlerts') }}</h3>
@@ -148,7 +211,7 @@
             
           </div>
           <div class="neo-table-wrapper">
-            <table class="neo-table">
+            <table id="user360-alerts-table-element" data-assistant-id="user360-alerts-table-element" data-assistant-type="table" data-assistant-label="User Alerts Table Data" data-assistant-description="HTML table with user alert rows." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-table">
               <thead>
                 <tr>
                   <th>{{ t('v36.common.riskLevel') }}</th>
@@ -168,7 +231,7 @@
                   <td>{{ formatNullableScore(alert.finalRiskScore) }}</td>
                   <td>{{ formatDate(alert.timestamp) }}</td>
                   <td>{{ alert.anomalyType ?? t('common.unknown') }}</td>
-                  <td>{{ alert.eventAction ?? t('common.notAvailable') }}</td>
+                  <td>{{ getEventAction(alert) }}</td>
                   <td>
                     <div class="neo-v36-row-actions">
                       <ai-explain-button
@@ -215,6 +278,7 @@ import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
 import { useUser360 } from 'src/composables/v36/useUser360';
 import { useV36SseState } from 'src/composables/v36/useV36SseRefresh';
 import { ROUTE_NAMES } from 'src/router/route-names';
+import type { V36LiveAlertItem, V36NextEventPredictionHeadItem } from 'src/types/analytics';
 import {
   formatDate,
   formatNullableScore,
@@ -231,6 +295,13 @@ import {
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+
+const getEventAction = (alert: V36LiveAlertItem): string => {
+  return alert.eventAction
+    ?? alert.eventMetadata?.eventAction
+    ?? alert.llmEvidencePayload?.eventMetadata?.eventAction
+    ?? t('common.notAvailable');
+};
 
 const textValue = (value: unknown, fallback = '') => {
   if (typeof value === 'string') return value;
@@ -267,30 +338,81 @@ watch(
 
 const metrics = computed(() => [
   {
+    key: 'churn-probability',
     label: t('v36.churn.churnProbability'),
     value: formatPercent(data.value?.churn?.probability, 1),
     meta: data.value?.churn?.riskLevel ?? t('common.unknown'),
     help: t('v36.help.user360.churnProbability'),
   },
   {
+    key: 'average-risk-last-30d',
     label: t('v36.user360.averageRiskLast30d'),
     value: formatNullableScore(data.value?.risk?.averageRiskScoreLast30d),
     meta: t('v36.common.last30d'),
     help: t('v36.help.user360.averageRiskLast30d'),
   },
   {
+    key: 'alert-count-last-30d',
     label: t('v36.user360.alertCountLast30d'),
     value: formatNumber(data.value?.risk?.alertCountLast30d),
     meta: t('v36.common.last30d'),
     help: t('v36.help.user360.alertCountLast30d'),
   },
   {
+    key: 'critical-alert-count-last-30d',
     label: t('v36.user360.criticalAlertCountLast30d'),
     value: formatNumber(data.value?.risk?.criticalAlertCountLast30d),
     meta: t('v36.common.last30d'),
     help: t('v36.help.user360.criticalAlertCountLast30d'),
   },
 ]);
+
+const formatPredictionProb = (prob: number): string => {
+  if (prob == null) return t('common.notAvailable');
+  return `${(prob * 100).toFixed(1)}%`;
+};
+
+const visibleHeads = ['frontend_action_name', 'page', 'api_template', 'api_family', 'status'];
+
+const headLabel = (head: string): string => {
+  const map: Record<string, string> = {
+    frontend_action_name: t('v36.user360.likelyNextAction'),
+    page: t('v36.user360.likelyPage'),
+    api_template: t('v36.user360.likelyApi'),
+    api_family: t('v36.user360.apiFamily'),
+    status: t('v36.user360.status'),
+  };
+  return map[head] ?? head;
+};
+
+const predictionData = computed(() => data.value?.nextEventPrediction ?? null);
+
+const hasPredictionWarning = computed(() =>
+  predictionData.value?.warnings?.includes('next_event_prediction_not_available') ?? false,
+);
+
+const hasNextEventPrediction = computed(() =>
+  !!predictionData.value?.heads && Object.keys(predictionData.value.heads).length > 0,
+);
+
+const UNK_TOKENS = new Set(['UNK_0', 'UNK', '<unk>', 'PAD', 'MASK']);
+
+const cleanPredictedValue = (value: string): string =>
+  UNK_TOKENS.has(value) ? t('common.unknownToken') : value;
+
+const visiblePredictionHeads = computed(() => {
+  const heads = predictionData.value?.heads ?? {};
+  const result: Record<string, V36NextEventPredictionHeadItem[]> = {};
+  for (const head of visibleHeads) {
+    const items = heads[head];
+    if (items?.length) {
+      const sorted = items.sort((a, b) => a.rank - b.rank);
+      const meaningful = sorted.filter(item => !UNK_TOKENS.has(item.value));
+      result[head] = meaningful.length > 0 ? meaningful : sorted;
+    }
+  }
+  return result;
+});
 
 const topApiFamilies = computed(() => {
   const families = data.value?.baseline?.topApiFamilies ?? [];
@@ -432,6 +554,41 @@ const openAlert = async (eventId: string | undefined) => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+.neo-v36-prediction-head {
+  margin-bottom: 12px;
+}
+
+.neo-v36-prediction-items {
+  display: grid;
+  gap: 4px;
+}
+
+.neo-v36-prediction-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.neo-v36-prediction-rank {
+  min-width: 16px;
+  color: var(--neo-ink-muted);
+  font-size: 11px;
+}
+
+.neo-v36-prediction-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neo-v36-prediction-prob {
+  font-variant-numeric: tabular-nums;
+  color: var(--neo-ink-muted);
 }
 
 @media (max-width: 900px) {

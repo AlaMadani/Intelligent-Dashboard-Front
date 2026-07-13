@@ -163,6 +163,54 @@ export interface V36NextActionPredictionDiagnostics {
   predictionsSkippedTotal?: number | null;
 }
 
+export interface V36NextEventPredictionHeadItem {
+  value: string;
+  probability: number;
+  rank: number;
+}
+
+export interface V36NextEventPredictionDeviation {
+  deviationScore?: number | null;
+  actual?: Record<string, string>;
+  actualProbabilities?: Record<string, number>;
+  predictionMatch?: Record<string, boolean>;
+  previousPrediction?: V36NextEventPrediction;
+  evaluatedEventId?: string;
+  previousPredictionContextEventId?: string;
+}
+
+export interface V36NextEventPrediction {
+  schemaVersion?: string;
+  insuredId?: string;
+  sessionId?: string;
+  contextEventId?: string;
+  contextSize?: number;
+  model?: string;
+  heads?: Record<string, V36NextEventPredictionHeadItem[]>;
+  deviation?: V36NextEventPredictionDeviation | null;
+  createdAt?: string;
+  source?: string;
+  warnings?: string[];
+}
+
+export interface V36NextEventPredictionEvidence {
+  prediction?: V36NextEventPrediction;
+  deviation?: V36NextEventPredictionDeviation | null;
+  predictionAfterEvent?: V36NextEventPrediction;
+}
+
+export interface V36NextEventPredictionDiagnostics {
+  enabled?: boolean | null;
+  model?: string | null;
+  topK?: number | null;
+  minimumContextEvents?: number | null;
+  heads?: string[];
+  affectsRiskScore?: boolean | null;
+  redisWrite?: boolean | null;
+  sqlWrite?: boolean | null;
+  deviationEvaluation?: boolean | null;
+}
+
 export interface V36SessionFinalizationDiagnostics {
   openSessionCount?: number | null;
   sessionsFinalizedByExplicitEnd?: number | null;
@@ -191,6 +239,7 @@ export interface V36RuntimeHealthResponse {
   performance?: V36PerformanceDiagnostics | null;
   stats?: V36StatsDiagnostics | null;
   nextActionPrediction?: V36NextActionPredictionDiagnostics | null;
+  nextEventPrediction?: V36NextEventPredictionDiagnostics | null;
   warnings?: string[];
   source?: V36Source;
   raw?: V36UnknownMap;
@@ -283,6 +332,8 @@ export interface V36LiveAlertItem {
   churnProbability?: number;
   churnRiskLevel?: V36RiskLevel;
   personaLabel?: string;
+  eventMetadata?: V36EventMetadata | null;
+  llmEvidencePayload?: V36LlmEvidencePayload | null;
   llmEvidencePayloadAvailable?: boolean;
   llmEvidenceRedisKey?: string;
   alertStatus?: string;
@@ -446,6 +497,7 @@ export interface V36AlertInvestigationDetail {
   churnContext?: V36ChurnContext;
   forecastContext?: V36ForecastContext;
   persona?: V36PersonaDisabled;
+  nextEventPredictionEvidence?: V36NextEventPredictionEvidence;
   runtimeWarnings?: string[];
   llmEvidencePayloadAvailable?: boolean;
   llmEvidenceRedisKey?: string;
@@ -594,6 +646,7 @@ export interface V36User360Response {
   churn?: V36ChurnContext;
   risk?: V36UserRiskSummary;
   baseline?: V36UserBaseline;
+  nextEventPrediction?: V36NextEventPrediction;
   recentSessions?: V36UserRecentSession[];
   riskTimeline?: V36UserRiskTimelinePoint[];
   source?: V36Source;
@@ -607,7 +660,14 @@ export interface V36ChurnRiskUser {
   insuredId?: string;
   churnProbability?: number;
   churnRiskLevel?: V36RiskLevel;
+  averageRiskScoreLast30d?: number;
+  alertCountLast30d?: number;
+  criticalAlertCountLast30d?: number;
+  latestFinalRiskScore?: number;
+  latestRiskLevel?: V36RiskLevel;
+  /** @deprecated use averageRiskScoreLast30d */
   averageRiskScore?: number;
+  /** @deprecated use alertCountLast30d */
   alertCount?: number;
   source?: V36Source;
   warnings?: string[];

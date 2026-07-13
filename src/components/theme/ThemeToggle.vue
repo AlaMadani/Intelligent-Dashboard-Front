@@ -1,5 +1,11 @@
 <template>
-  <div class="neo-theme-toggle" role="group" :aria-label="t('layout.aria.themeMode')">
+  <div id="theme-toggle" class="neo-theme-toggle" role="group" :aria-label="t('layout.aria.themeMode')"
+    data-assistant-id="theme-toggle"
+    data-assistant-type="toggle"
+    data-assistant-label="Theme Toggle"
+    data-assistant-description="Toggle switch to change between dark mode and light mode for the dashboard."
+    data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
+  >
     <button
       type="button"
       class="neo-theme-toggle__option"

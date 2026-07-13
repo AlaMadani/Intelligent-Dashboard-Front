@@ -34,6 +34,7 @@ const ar: AppMessages = {
     confidenceBand: 'نطاق الثقة',
     trend: 'اتجاه',
     unknown: 'غير معروف',
+    unknownToken: 'غير معروف',
     notAvailable: 'غير متاح',
     up: 'يعمل',
     upperBound: 'الحد الأعلى',
@@ -198,6 +199,7 @@ const ar: AppMessages = {
     dismissSessionNotice: 'إخفاء تنبيه انتهاء الجلسة',
     togglePasswordVisibility: 'إظهار أو إخفاء كلمة المرور',
   },
+  dashboardAssistant: enUS.dashboardAssistant,
   loader: enUS.loader,
 };
 

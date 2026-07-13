@@ -274,15 +274,6 @@ export const sessionEndReasonTone = (value: string | null | undefined) => {
   }
 };
 
-export const formatModelRunStatus = (
-  score: number | null | undefined,
-  usedInFusion: boolean | undefined,
-) => {
-  if (score == null) return i18n.global.t('v36.common.notRun');
-  if (usedInFusion === false && score === 0) return formatNumber(0, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
 export const formatSource = (source: string | null | undefined) => {
   if (!source) return i18n.global.t('common.notAvailable');
   switch (source) {

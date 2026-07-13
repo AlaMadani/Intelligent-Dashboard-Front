@@ -3,22 +3,24 @@
     <Transition name="neo-ai-modal">
       <div
         v-if="visible"
+        id="explain-ai"
         class="neo-ai-modal"
         role="dialog"
         aria-modal="true"
         :aria-label="t('aiExplainer.modalTitle')"
+        data-assistant-id="explain-ai"
+        data-assistant-type="panel"
+        data-assistant-label="AI Explainer Modal"
+        data-assistant-description="Modal panel that shows AI-generated explanations, evidence payloads, and recommended actions for alerts."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
         @click.self="close"
       >
         <div class="neo-ai-modal__panel">
           <header class="neo-ai-modal__header">
             <div class="neo-ai-modal__header-copy">
-              <div class="neo-ai-modal__icon">
-                <q-icon name="memory" />
-              </div>
               <div>
                 <h2 class="neo-ai-modal__title">
                   {{ t('aiExplainer.modalTitle') }}
-                  <span class="neo-ai-modal__badge">{{ t('aiExplainer.activeDiagnostic') }}</span>
                 </h2>
                 <p class="neo-ai-modal__subtitle">{{ t('aiExplainer.modalSubtitle') }}</p>
               </div>
@@ -38,7 +40,13 @@
 
             <template v-if="currentEventId && normalizedExplanation">
               <template v-if="showEvidence && evidenceJson">
-                <div class="neo-ai-modal__evidence-header">
+                <div id="evidence-payload" class="neo-ai-modal__evidence-header"
+                  data-assistant-id="evidence-payload"
+                  data-assistant-type="panel"
+                  data-assistant-label="Evidence Payload Panel"
+                  data-assistant-description="Panel showing the raw evidence payload JSON for the selected alert."
+                  data-assistant-actions="HIGHLIGHT_ELEMENT"
+                >
                   <div>
                     <div class="text-h6">{{ t('v36.llm.evidencePayload') }}</div>
                     <div class="text-caption">{{ currentEventId }}</div>
@@ -52,11 +60,17 @@
               <template v-else>
                 <div class="neo-ai-modal__llm-actions q-mb-md">
                   <q-btn
+                    id="btn-evidence-payload"
                     flat
                     dense
                     size="sm"
                     icon="data_object"
                     :label="t('v36.llm.evidencePayload')"
+                    data-assistant-id="btn-evidence-payload"
+                    data-assistant-type="button"
+                    data-assistant-label="Evidence Payload Button"
+                    data-assistant-description="Button within the AI explanation modal that shows the raw evidence payload JSON."
+                    data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
                     :disable="evidenceLoading"
                     @click="openEvidence"
                   />
@@ -227,17 +241,6 @@ const openEvidence = async () => {
   gap: 12px;
 }
 
-.neo-ai-modal__icon {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  border: 1px solid var(--neo-accent);
-  background: var(--neo-accent-soft);
-  color: var(--neo-accent);
-}
-
 .neo-ai-modal__title {
   margin: 0;
   display: flex;
@@ -246,16 +249,12 @@ const openEvidence = async () => {
   gap: 8px;
   font-size: 16px;
   font-weight: 700;
-}
-
-.neo-ai-modal__badge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--neo-accent);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  background: var(--neo-diamond);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s ease-in-out infinite;
 }
 
 .neo-ai-modal__subtitle {
@@ -493,6 +492,11 @@ const openEvidence = async () => {
   max-height: 50vh;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 200% center; }
 }
 
 .neo-ai-modal-enter-active,

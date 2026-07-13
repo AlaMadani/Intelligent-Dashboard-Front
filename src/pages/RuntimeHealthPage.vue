@@ -9,14 +9,24 @@
           <p class="neo-section-subtitle">{{ t('v36.runtime.subtitle') }}</p>
         </div>
         <div class="neo-section-actions">
-          <LiveConnectionBadge
-            :connected="sseConnected"
-            :connecting="sseConnecting"
-            :last-event-at="sseLastEventAt"
-          />
-          <div v-if="source" class="neo-analytics-chip">{{ t('v36.common.source') }}: {{ source }}</div>
+          <span id="runtime-live-connection-badge" data-assistant-id="runtime-live-connection-badge" data-assistant-type="status-indicator" data-assistant-label="Live Connection Badge" data-assistant-description="Badge showing the SSE live connection status for runtime health." data-assistant-actions="HIGHLIGHT_ELEMENT">
+            <LiveConnectionBadge
+              :connected="sseConnected"
+              :connecting="sseConnecting"
+              :last-event-at="sseLastEventAt"
+            />
+          </span>
+          <div v-if="source" id="runtime-source-chip" class="neo-analytics-chip" data-assistant-id="runtime-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the runtime health data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
           <ai-explain-button context-key="runtime-health" variant="prominent" />
-          <q-btn unelevated color="primary" icon="refresh" :disable="loading" :label="t('v36.common.refresh')" @click="() => refresh()">
+          <q-btn
+            id="runtime-refresh-button"
+            data-assistant-id="runtime-refresh-button"
+            data-assistant-type="button"
+            data-assistant-label="Refresh Runtime Health"
+            data-assistant-description="Refreshes the runtime health data."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
+            unelevated color="primary" icon="refresh" :disable="loading" :label="t('v36.common.refresh')" @click="() => refresh()"
+          >
             <q-tooltip>{{ t('live.manualRefreshTooltip') }}</q-tooltip>
           </q-btn>
         </div>
@@ -39,37 +49,37 @@
     </section>
 
     <section class="neo-section neo-v36-kpis">
-      <article class="neo-kpi-card">
+      <article id="card-runtime-summary" data-assistant-id="card-runtime-summary" data-assistant-type="card" data-assistant-label="Overall Status" data-assistant-description="Overall runtime health status and version." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
         <div class="neo-kpi-label">{{ t('v36.runtime.overallStatus') }} <InfoTooltip :text="t('v36.help.runtime.overallStatus')" /></div>
         <div class="neo-kpi-value">{{ runtimeHealth?.status ?? t('common.unknown') }}</div>
         <div class="neo-kpi-meta">{{ runtimeHealth?.runtimeVersion ?? 'v3.6.1' }}</div>
         <div class="neo-kpi-accent" aria-hidden="true"></div>
       </article>
-      <article class="neo-kpi-card">
+      <article id="runtime-kpi-persona" data-assistant-id="runtime-kpi-persona" data-assistant-type="card" data-assistant-label="Persona Enabled" data-assistant-description="Indicates whether persona is enabled." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
         <div class="neo-kpi-label">{{ t('v36.common.persona') }} <InfoTooltip :text="t('v36.help.runtime.persona')" /></div>
         <div class="neo-kpi-value">{{ runtimeHealth?.personaEnabled ? t('common.yes') : t('common.no') }}</div>
         <div class="neo-kpi-meta">{{ t('v36.runtime.personaDisabledMeta') }}</div>
         <div class="neo-kpi-accent" aria-hidden="true"></div>
       </article>
-      <article class="neo-kpi-card">
+      <article id="runtime-kpi-evidence-payload" data-assistant-id="runtime-kpi-evidence-payload" data-assistant-type="card" data-assistant-label="Evidence Payload" data-assistant-description="Indicates whether LLM evidence payload is enabled." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
         <div class="neo-kpi-label">{{ t('v36.llm.evidencePayload') }} <InfoTooltip :text="t('v36.help.runtime.evidencePayload')" /></div>
         <div class="neo-kpi-value">{{ runtimeHealth?.llmEvidencePayloadEnabled ? t('common.yes') : t('common.no') }}</div>
         <div class="neo-kpi-meta">{{ t('v36.runtime.evidenceMeta') }}</div>
         <div class="neo-kpi-accent" aria-hidden="true"></div>
       </article>
-      <article class="neo-kpi-card">
+      <article id="runtime-kpi-artifact-base-path" data-assistant-id="runtime-kpi-artifact-base-path" data-assistant-type="card" data-assistant-label="Artifact Base Path" data-assistant-description="The artifact base path for the runtime." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
         <div class="neo-kpi-label">{{ t('v36.runtime.artifactBasePath') }} <InfoTooltip :text="t('v36.help.runtime.artifactBasePath')" /></div>
         <div class="neo-kpi-value neo-mono">{{ runtimeHealth?.artifactBasePath ?? t('common.notAvailable') }}</div>
         <div class="neo-kpi-meta">{{ t('v36.runtime.artifactMeta') }}</div>
         <div class="neo-kpi-accent" aria-hidden="true"></div>
       </article>
-      <article class="neo-kpi-card">
+      <article id="runtime-kpi-llm-dataprocessor" data-assistant-id="runtime-kpi-llm-dataprocessor" data-assistant-type="card" data-assistant-label="LLM in Dataprocessor" data-assistant-description="Indicates whether LLM explanation in dataprocessor is enabled." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
         <div class="neo-kpi-label">{{ t('v36.runtime.llmInDataprocessor') }} <InfoTooltip :text="t('v36.help.runtime.llmInDataprocessor')" /></div>
         <div class="neo-kpi-value">{{ runtimeHealth?.llmExplanationInDataprocessor ? t('common.yes') : t('common.no') }}</div>
         <div class="neo-kpi-meta">{{ t('v36.runtime.llmInDataprocessorMeta') }}</div>
         <div class="neo-kpi-accent" aria-hidden="true"></div>
       </article>
-      <article class="neo-kpi-card">
+      <article id="runtime-kpi-sequence-model" data-assistant-id="runtime-kpi-sequence-model" data-assistant-type="card" data-assistant-label="Sequence Model" data-assistant-description="The selected sequence model mode." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-kpi-card">
         <div class="neo-kpi-label">{{ t('v36.runtime.sequenceModel') }} <InfoTooltip :text="t('v36.help.runtime.sequenceModel')" /></div>
         <div class="neo-kpi-value">{{ formatSequenceMode(runtimeHealth?.fallbackMode) }}</div>
         <div class="neo-kpi-meta">{{ t('v36.runtime.selectedSequenceModel') }}</div>
@@ -78,7 +88,7 @@
     </section>
 
     <section class="neo-section neo-v36-grid">
-      <article class="neo-analytics-panel neo-v36-wide">
+      <article id="card-model-health" data-assistant-id="card-model-health" data-assistant-type="section" data-assistant-label="Model Health" data-assistant-description="Health status for all known models." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel neo-v36-wide">
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.modelHealth') }}</h3>
@@ -103,7 +113,13 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="runtime-diagnostics-section" class="neo-analytics-panel"
+        data-assistant-id="runtime-diagnostics-section"
+        data-assistant-type="card"
+        data-assistant-label="Diagnostics Section"
+        data-assistant-description="Section showing diagnostics including field coverage, sequence coverage, tabular coverage, model latency, and benchmark data."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.diagnostics') }}</h3>
@@ -122,7 +138,7 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="card-kafka-health" data-assistant-id="card-kafka-health" data-assistant-type="section" data-assistant-label="Kafka Health" data-assistant-description="Kafka consumer group health and configuration." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel">
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.kafka.title') }}</h3>
@@ -211,7 +227,13 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="runtime-idempotency-section" class="neo-analytics-panel"
+        data-assistant-id="runtime-idempotency-section"
+        data-assistant-type="card"
+        data-assistant-label="Idempotency Section"
+        data-assistant-description="Section showing idempotency metrics including duplicate events, sequence appends, alerts, and SQL writes skipped."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.idempotency.title') }}</h3>
@@ -243,7 +265,13 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel neo-v36-wide">
+      <article id="runtime-performance-section" class="neo-analytics-panel neo-v36-wide"
+        data-assistant-id="runtime-performance-section"
+        data-assistant-type="card"
+        data-assistant-label="Performance Section"
+        data-assistant-description="Section showing performance metrics including event processing, model inference, sequence inference, Redis write, and other latency measurements (Avg/P95)."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.performance.title') }}</h3>
@@ -350,7 +378,13 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="runtime-stats-section" class="neo-analytics-panel"
+        data-assistant-id="runtime-stats-section"
+        data-assistant-type="card"
+        data-assistant-label="Stats Section"
+        data-assistant-description="Section showing live time basis statistics for the runtime."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.stats.title') }}</h3>
@@ -377,49 +411,106 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="runtime-next-event-prediction-section" class="neo-analytics-panel"
+        data-assistant-id="runtime-next-event-prediction-section"
+        data-assistant-type="card"
+        data-assistant-label="Next Event Prediction Section"
+        data-assistant-description="Section showing next event prediction configuration including enabled status, model, top-K, minimum context events, heads, and feature flags."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
-            <h3>{{ t('v36.runtime.nextActionPrediction.title') }}</h3>
-            <p>{{ t('v36.runtime.nextActionPrediction.subtitle') }}</p>
+            <h3>{{ t('v36.runtime.nextEventPrediction.title') }}</h3>
+            <p>{{ t('v36.runtime.nextEventPrediction.subtitle') }}</p>
           </div>
-          
         </div>
-        <div v-if="nextActionPredictionSection" class="neo-v36-list">
+        <template v-if="nextEventPredictionSection">
+          <div v-if="nextEventPredictionSection.enabled === false" class="neo-v36-info-box">
+            {{ t('v36.runtime.nextEventPrediction.disabledMessage') }}
+          </div>
+          <div class="neo-v36-fact-grid">
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.enabled') }}</span>
+              <q-badge :color="nextEventPredictionSection.enabled ? 'positive' : 'grey'" rounded>
+                {{ formatBooleanYesNo(nextEventPredictionSection.enabled) }}
+              </q-badge>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.model') }}</span>
+              <strong>{{ nextEventPredictionSection.model ?? t('common.notAvailable') }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.topK') }}</span>
+              <strong>{{ formatNumber(nextEventPredictionSection.topK) }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.minimumContextEvents') }}</span>
+              <strong>{{ formatNumber(nextEventPredictionSection.minimumContextEvents) }}</strong>
+            </div>
+            <div class="neo-v36-fact neo-v36-wide-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.heads') }}</span>
+              <strong>{{ nextEventPredictionSection.heads?.join(', ') ?? t('common.none') }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.affectsRiskScore') }}</span>
+              <strong>{{ t('common.no') }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.redisWrite') }}</span>
+              <strong>{{ formatBooleanYesNo(nextEventPredictionSection.redisWrite) }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.sqlWrite') }}</span>
+              <strong>{{ formatBooleanYesNo(nextEventPredictionSection.sqlWrite) }}</strong>
+            </div>
+            <div class="neo-v36-fact">
+              <span>{{ t('v36.runtime.nextEventPrediction.deviationEvaluation') }}</span>
+              <strong>{{ formatBooleanYesNo(nextEventPredictionSection.deviationEvaluation) }}</strong>
+            </div>
+          </div>
+        </template>
+        <template v-else-if="nextActionPredictionSection">
+          <div class="neo-v36-info-box q-mb-sm">Deprecated: {{ t('v36.runtime.nextActionPrediction.title') }}</div>
           <div v-if="nextActionPredictionSection.enabled === false" class="neo-v36-info-box">
             {{ t('v36.runtime.nextActionPrediction.disabledMessage') }}
           </div>
           <div class="neo-v36-fact-grid">
             <div class="neo-v36-fact">
-              <span>{{ t('v36.runtime.nextActionPrediction.enabled') }} <InfoTooltip :text="t('v36.help.runtime.nextActionPredictionEnabled')" /></span>
+              <span>{{ t('v36.runtime.nextActionPrediction.enabled') }}</span>
               <q-badge :color="nextActionPredictionSection.enabled ? 'positive' : 'grey'" rounded>
                 {{ formatBooleanYesNo(nextActionPredictionSection.enabled) }}
               </q-badge>
             </div>
             <div class="neo-v36-fact">
-              <span>{{ t('v36.runtime.nextActionPrediction.mode') }} <InfoTooltip :text="t('v36.help.runtime.nextActionPredictionMode')" /></span>
+              <span>{{ t('v36.runtime.nextActionPrediction.mode') }}</span>
               <strong>{{ nextActionPredictionSection.mode ?? t('common.notAvailable') }}</strong>
             </div>
             <div class="neo-v36-fact">
-              <span>{{ t('v36.runtime.nextActionPrediction.lastSkipReason') }} <InfoTooltip :text="t('v36.help.runtime.nextActionPredictionLastSkipReason')" /></span>
+              <span>{{ t('v36.runtime.nextActionPrediction.lastSkipReason') }}</span>
               <strong>{{ nextActionPredictionSection.lastSkipReason ?? t('common.none') }}</strong>
             </div>
             <div class="neo-v36-fact">
-              <span>{{ t('v36.runtime.nextActionPrediction.generatedTotal') }} <InfoTooltip :text="t('v36.help.runtime.nextActionPredictionGeneratedTotal')" /></span>
+              <span>{{ t('v36.runtime.nextActionPrediction.generatedTotal') }}</span>
               <strong>{{ formatNumber(nextActionPredictionSection.predictionsGeneratedTotal) }}</strong>
             </div>
             <div class="neo-v36-fact">
-              <span>{{ t('v36.runtime.nextActionPrediction.skippedTotal') }} <InfoTooltip :text="t('v36.help.runtime.nextActionPredictionSkippedTotal')" /></span>
+              <span>{{ t('v36.runtime.nextActionPrediction.skippedTotal') }}</span>
               <strong>{{ formatNumber(nextActionPredictionSection.predictionsSkippedTotal) }}</strong>
             </div>
           </div>
-        </div>
+        </template>
         <div v-else class="neo-analytics-empty">
           {{ t('v36.runtime.notAvailable') }}
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="runtime-session-finalization-section" class="neo-analytics-panel"
+        data-assistant-id="runtime-session-finalization-section"
+        data-assistant-type="card"
+        data-assistant-label="Session Finalization Section"
+        data-assistant-description="Section showing session finalization metrics including open sessions, explicit end, timeout, max duration, flush counts, and late events."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.sessionFinalization.title') }}</h3>
@@ -466,7 +557,13 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="runtime-final-winners-section" class="neo-analytics-panel"
+        data-assistant-id="runtime-final-winners-section"
+        data-assistant-type="card"
+        data-assistant-label="Final Winners Section"
+        data-assistant-description="Section showing the final model winners and recommended approaches for each use case."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.finalWinners') }} <InfoTooltip :text="t('v36.help.runtime.finalWinners')" /></h3>
@@ -487,7 +584,7 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel neo-v36-wide">
+      <article id="runtime-reports-section" data-assistant-id="runtime-reports-section" data-assistant-type="table" data-assistant-label="Reports Table" data-assistant-description="Table showing available runtime reports with name, availability status, generation timestamp, and path." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-analytics-panel neo-v36-wide">
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.runtime.reports') }}</h3>
@@ -496,7 +593,7 @@
           
         </div>
         <div class="neo-table-wrapper">
-          <table class="neo-table">
+          <table id="runtime-reports-table-element" data-assistant-id="runtime-reports-table-element" data-assistant-type="table" data-assistant-label="Runtime Reports Table Data" data-assistant-description="HTML table with runtime report rows." data-assistant-actions="HIGHLIGHT_ELEMENT" class="neo-table">
             <thead>
               <tr>
                 <th>{{ t('v36.runtime.reportName') }}</th>
@@ -524,12 +621,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import InfoTooltip from 'src/components/common/InfoTooltip.vue';
 import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
 import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
+import { ASSISTANT_REFRESH_RUNTIME_EVENT } from 'src/constants/events';
 import { useRuntimeHealth } from 'src/composables/v36/useRuntimeHealth';
 import { useV36SseState } from 'src/composables/v36/useV36SseRefresh';
 import type {
@@ -882,6 +980,10 @@ const nextActionPredictionSection = computed(() =>
   runtimeHealth.value?.nextActionPrediction ?? null,
 );
 
+const nextEventPredictionSection = computed(() =>
+  runtimeHealth.value?.nextEventPrediction ?? null,
+);
+
 
 const kafkaConcurrencyInfo = computed(() => {
   const k = kafkaSection.value;
@@ -916,6 +1018,18 @@ const performanceHighLagWarning = computed(() => {
     return t('v36.runtime.performance.highLagWarning', { value: formatNumber(p.kafkaLagCached) });
   }
   return null;
+});
+
+const handleRuntimeRefresh = () => {
+  void refresh();
+};
+
+onMounted(() => {
+  document.addEventListener(ASSISTANT_REFRESH_RUNTIME_EVENT, handleRuntimeRefresh);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener(ASSISTANT_REFRESH_RUNTIME_EVENT, handleRuntimeRefresh);
 });
 </script>
 

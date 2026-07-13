@@ -89,6 +89,24 @@ const handleClick = () => {
   background: var(--neo-accent-soft);
   color: var(--neo-accent);
   font-size: 12px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.neo-ai-explain-btn--prominent::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 50%, rgba(255,255,255,0.2) 100%);
+  opacity: 0;
+  transition: opacity var(--neo-transition-fast);
+  pointer-events: none;
+}
+
+.neo-ai-explain-btn--prominent:hover::before {
+  opacity: 1;
 }
 
 .neo-ai-explain-btn--prominent:hover {
@@ -109,6 +127,30 @@ const handleClick = () => {
   background: var(--neo-accent);
   border-color: var(--neo-accent);
   color: #fff;
+}
+
+.neo-ai-explain-btn:not(.neo-ai-explain-btn--icon) .neo-ai-explain-btn__label,
+.neo-ai-explain-btn:not(.neo-ai-explain-btn--icon) .neo-ai-explain-btn__icon {
+  background: var(--neo-diamond);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.neo-ai-explain-btn:not(.neo-ai-explain-btn--icon):hover .neo-ai-explain-btn__label,
+.neo-ai-explain-btn:not(.neo-ai-explain-btn--icon):hover .neo-ai-explain-btn__icon {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: currentColor;
+  animation: none;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 200% center; }
 }
 
 .neo-ai-explain-btn--icon {

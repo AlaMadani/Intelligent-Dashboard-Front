@@ -21,7 +21,20 @@ export const useChurnDashboard = () => {
   const error = ref('');
   const lastUpdated = ref<Date | null>(null);
 
-  const userItems = computed(() => users.value?.items ?? data.value?.topChurnRiskUsers ?? []);
+  const userItems = computed(() => {
+    const raw = users.value?.items ?? data.value?.topChurnRiskUsers ?? [];
+    const seen = new Map<string, (typeof raw)[number]>();
+    let anonIdx = 0;
+    for (const item of raw) {
+      const id = item.insuredId;
+      if (!id) { seen.set(`__anon__${anonIdx++}`, item); continue; }
+      const existing = seen.get(id);
+      if (!existing || (item.churnProbability ?? 0) > (existing.churnProbability ?? 0)) {
+        seen.set(id, item);
+      }
+    }
+    return [...seen.values()];
+  });
   const count = computed(() => users.value?.count ?? data.value?.topChurnRiskUsers?.length ?? 0);
   const hasMore = computed(() => users.value?.hasMore ?? false);
   const source = computed(() => data.value?.source ?? users.value?.source ?? '');

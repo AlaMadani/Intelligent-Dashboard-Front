@@ -9,18 +9,26 @@
           <p class="neo-section-subtitle">{{ t('v36.securityOverview.subtitle') }}</p>
         </div>
         <div class="neo-section-actions">
-          <LiveConnectionBadge
-            :connected="sseConnected"
-            :connecting="sseConnecting"
-            :last-event-at="sseLastEventAt"
-          />
-          <div v-if="source" class="neo-analytics-chip">{{ t('v36.common.source') }}: {{ source }}</div>
+          <span id="overview-live-connection-badge" data-assistant-id="overview-live-connection-badge" data-assistant-type="status-indicator" data-assistant-label="Live Connection Badge" data-assistant-description="Badge showing the SSE live connection status for real-time updates." data-assistant-actions="HIGHLIGHT_ELEMENT">
+            <LiveConnectionBadge
+              :connected="sseConnected"
+              :connecting="sseConnecting"
+              :last-event-at="sseLastEventAt"
+            />
+          </span>
+          <div v-if="source" id="overview-source-chip" class="neo-analytics-chip" data-assistant-id="overview-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the overview data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
           <q-btn
+            id="overview-refresh-button"
             unelevated
             color="primary"
             icon="refresh"
             :disable="loading"
             :label="t('v36.common.refresh')"
+            data-assistant-id="overview-refresh-button"
+            data-assistant-type="button"
+            data-assistant-label="Refresh Security Overview"
+            data-assistant-description="Refreshes the security overview dashboard data."
+            data-assistant-actions="HIGHLIGHT_ELEMENT,CLICK_ELEMENT"
             @click="() => refresh()"
           >
             <q-tooltip>{{ t('live.manualRefreshTooltip') }}</q-tooltip>
@@ -47,7 +55,17 @@
     </section>
 
     <section class="neo-section neo-v36-kpis">
-      <article v-for="metric in metrics" :key="metric.key" class="neo-kpi-card neo-kpi-card--explainable">
+      <article
+        v-for="metric in metrics"
+        :key="metric.key"
+        :id="'overview-kpi-' + metric.key"
+        class="neo-kpi-card neo-kpi-card--explainable"
+        :data-assistant-id="'overview-kpi-' + metric.key"
+        data-assistant-type="card"
+        :data-assistant-label="metric.label"
+        :data-assistant-description="metric.description"
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         
         <div class="neo-kpi-head">
           <div class="neo-kpi-icon"><q-icon :name="metric.icon" /></div>
@@ -63,7 +81,15 @@
     </section>
 
     <section class="neo-section neo-v36-grid">
-      <article class="neo-analytics-panel">
+      <article
+        id="overview-top-anomaly-types"
+        class="neo-analytics-panel"
+        data-assistant-id="overview-top-anomaly-types"
+        data-assistant-type="chart"
+        data-assistant-label="Top Anomaly Types"
+        data-assistant-description="Shows the most frequently occurring anomaly types."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.securityOverview.topAnomalyTypes') }} <InfoTooltip :text="t('v36.help.securityOverview.topAnomalyTypes')" /></h3>
@@ -71,10 +97,18 @@
           </div>
           <ai-explain-button context-key="security-overview-top-anomalies" variant="prominent" />
         </div>
-        <bar-list-chart :items="topAnomalyRows" :empty-message="t('v36.common.noData')" />
+        <bar-list-chart :items="topAnomalyRows" :empty-message="t('v36.securityOverview.noAnomalyTypes')" />
       </article>
 
-      <article class="neo-analytics-panel">
+      <article
+        id="overview-top-rules"
+        class="neo-analytics-panel"
+        data-assistant-id="overview-top-rules"
+        data-assistant-type="chart"
+        data-assistant-label="Top Triggered Rules"
+        data-assistant-description="Shows the most frequently triggered detection rules."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.securityOverview.topTriggeredRules') }} <InfoTooltip :text="t('v36.help.securityOverview.topTriggeredRules')" /></h3>
@@ -85,7 +119,13 @@
         <bar-list-chart :items="topRuleRows" :empty-message="t('v36.common.noData')" />
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="overview-model-health" class="neo-analytics-panel"
+        data-assistant-id="overview-model-health"
+        data-assistant-type="card"
+        data-assistant-label="Model Health Overview"
+        data-assistant-description="Panel showing the health status of ML models in the overview page."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.securityOverview.modelHealth') }}</h3>
@@ -104,26 +144,69 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel">
+      <article id="overview-field-coverage" class="neo-analytics-panel"
+        data-assistant-id="overview-field-coverage"
+        data-assistant-type="card"
+        data-assistant-label="Field Coverage"
+        data-assistant-description="Panel showing field coverage metrics including sequence coverage, unknown ratios, missing features, and defaulted features."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.securityOverview.fieldCoverage') }} <InfoTooltip :text="t('v36.help.securityOverview.fieldCoverage')" /></h3>
             <p>{{ t('v36.securityOverview.fieldCoverageSubtitle') }}</p>
           </div>
-            
         </div>
-        <div v-if="!fieldWarnings.length" class="neo-analytics-empty">
-          {{ t('v36.securityOverview.noFieldWarnings') }}
+        <div v-if="hasFieldCoverage" class="neo-v36-field-coverage">
+          <div class="neo-v36-section-label q-mb-xs">{{ t('v36.securityOverview.sequenceCoverage') }}</div>
+          <div class="neo-v36-model-grid q-mb-md">
+            <div class="neo-v36-mini-card">
+              <strong>{{ formatNumber(fieldCoverageSummary.sequenceEvents) }}</strong>
+              <span>{{ t('v36.securityOverview.fieldCoverageSeqEvents') }}</span>
+            </div>
+            <div class="neo-v36-mini-card">
+              <strong>{{ formatNumber(fieldCoverageSummary.sequenceUnknownWarnings) }}</strong>
+              <span>{{ t('v36.securityOverview.fieldCoverageSeqUnknown') }}</span>
+            </div>
+          </div>
+          <div class="neo-v36-section-label q-mb-xs">{{ t('v36.securityOverview.tabularCoverage') }}</div>
+          <div class="neo-v36-model-grid q-mb-md">
+            <div class="neo-v36-mini-card">
+              <strong>{{ formatPercent(fieldCoverageSummary.tabularUnknownRatio, 1) }}</strong>
+              <span>{{ t('v36.securityOverview.fieldCoverageTabUnknownRatio') }}</span>
+            </div>
+            <div class="neo-v36-mini-card">
+              <strong>{{ formatNumber(fieldCoverageSummary.tabularMissingFeatures) }}</strong>
+              <span>{{ t('v36.securityOverview.fieldCoverageTabMissing') }}</span>
+            </div>
+            <div class="neo-v36-mini-card">
+              <strong>{{ formatNumber(fieldCoverageSummary.tabularDefaultedFeatures) }}</strong>
+              <span>{{ t('v36.securityOverview.fieldCoverageTabDefaulted') }}</span>
+            </div>
+            <div class="neo-v36-mini-card">
+              <strong>{{ formatNumber(fieldCoverageSummary.tabularNanInfReplacements) }}</strong>
+              <span>{{ t('v36.securityOverview.fieldCoverageTabNanInf') }}</span>
+            </div>
+          </div>
         </div>
-        <div v-else class="neo-v36-list">
+        <div v-if="fieldWarnings.length" class="neo-v36-list">
           <div v-for="warning in fieldWarnings" :key="warning" class="neo-v36-list-row">
             <q-icon name="warning" />
             <span>{{ warning }}</span>
           </div>
         </div>
+        <div v-else class="neo-analytics-empty" :class="{ 'neo-v36-no-warnings': hasFieldCoverage }">
+          {{ t('v36.securityOverview.noFieldWarnings') }}
+        </div>
       </article>
 
-      <article v-if="sessionFinalizationSummary" class="neo-analytics-panel">
+      <article id="overview-session-finalization" v-if="sessionFinalizationSummary" class="neo-analytics-panel"
+        data-assistant-id="overview-session-finalization"
+        data-assistant-type="card"
+        data-assistant-label="Session Finalization Summary"
+        data-assistant-description="Panel showing open sessions, explicitly finalized, and timeout finalized session counts."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.sessionFinalization.title') }}</h3>
@@ -147,7 +230,15 @@
         </div>
       </article>
 
-      <article class="neo-analytics-panel neo-v36-wide">
+      <article
+        id="overview-recent-critical-alerts-table"
+        class="neo-analytics-panel neo-v36-wide"
+        data-assistant-id="overview-recent-critical-alerts-table"
+        data-assistant-type="table"
+        data-assistant-label="Recent Critical Alerts Table"
+        data-assistant-description="Shows the most recent critical alerts with risk level, event ID, insured ID, anomaly type, and score."
+        data-assistant-actions="HIGHLIGHT_ELEMENT"
+      >
         <div class="neo-analytics-head">
           <div>
             <h3>{{ t('v36.securityOverview.criticalPreview') }}</h3>
@@ -175,7 +266,18 @@
               <tr v-for="alert in criticalAlerts" :key="alert.eventId ?? alert.recordId">
                 <td><q-badge :color="riskTone(alert.riskLevel)" rounded>{{ alert.riskLevel }}</q-badge></td>
                 <td class="neo-mono">{{ alert.eventId ?? t('common.notAvailable') }}</td>
-                <td>{{ alert.insuredId ?? t('common.notAvailable') }}</td>
+                <td>
+                  <q-btn
+                    v-if="alert.insuredId"
+                    flat
+                    dense
+                    no-caps
+                    color="primary"
+                    :label="alert.insuredId"
+                    @click="openUser(alert.insuredId)"
+                  />
+                  <span v-else>{{ t('common.notAvailable') }}</span>
+                </td>
                 <td>{{ alert.anomalyType ?? t('common.unknown') }}</td>
                 <td>{{ formatNullableScore(alert.finalRiskScore) }}</td>
                 <td>{{ formatDate(alert.timestamp) }}</td>
@@ -192,6 +294,15 @@
                       finalRiskScore: formatNullableScore(alert.finalRiskScore),
                     }"
                   />
+                  <q-btn
+                    v-if="alert.eventId"
+                    dense
+                    unelevated
+                    color="primary"
+                    icon="manage_search"
+                    :label="t('v36.common.investigate')"
+                    @click="openInvestigation(alert.eventId)"
+                  />
                 </td>
               </tr>
             </tbody>
@@ -203,7 +314,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import InfoTooltip from 'src/components/common/InfoTooltip.vue';
 import BarListChart from 'src/components/dashboard/BarListChart.vue';
@@ -212,6 +324,8 @@ import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
 import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import { useSecurityOverview } from 'src/composables/v36/useSecurityOverview';
 import { useV36SseState } from 'src/composables/v36/useV36SseRefresh';
+import { ROUTE_NAMES } from 'src/router/route-names';
+import { ASSISTANT_REFRESH_SECURITY_OVERVIEW_EVENT } from 'src/constants/events';
 import {
   formatDate,
   formatNullableScore,
@@ -219,9 +333,11 @@ import {
   formatPercent,
   riskTone,
   safeArray,
+  safeRecord,
   sourceInfoBanner,
 } from 'src/utils/format';
 
+const router = useRouter();
 const { connected: sseConnected, connecting: sseConnecting, lastEventAt: sseLastEventAt } = useV36SseState();
 const { t } = useI18n();
 const {
@@ -341,6 +457,39 @@ const topAnomalyRows = computed(() => toBarRows(data.value?.topAnomalyTypes));
 const topRuleRows = computed(() => toBarRows(data.value?.topTriggeredRules));
 const fieldWarnings = computed(() => safeArray<string>(data.value?.fieldCoverageWarnings));
 
+type FieldCoverageSummary = {
+  sequenceEvents: number | null;
+  sequenceUnknownWarnings: number | null;
+  tabularUnknownRatio: number | null;
+  tabularMissingFeatures: number | null;
+  tabularDefaultedFeatures: number | null;
+  tabularNanInfReplacements: number | null;
+};
+
+const fieldCoverageSummary = computed<FieldCoverageSummary>(() => {
+  const mhs = safeRecord(data.value?.modelHealthSummary);
+  const fc = safeRecord(mhs.fieldCoverage);
+  const seq = safeRecord(fc.sequence);
+  const tab = safeRecord(fc.tabular);
+  return {
+    sequenceEvents: (seq.totalEvents as number | undefined) ?? null,
+    sequenceUnknownWarnings: (seq.highUnknownFieldWarnings as number | undefined) ?? null,
+    tabularUnknownRatio: (tab.unknownCategoricalRatio as number | undefined) ?? null,
+    tabularMissingFeatures: (tab.missingFeatureCount as number | undefined) ?? null,
+    tabularDefaultedFeatures: (tab.defaultedFeatureCount as number | undefined) ?? null,
+    tabularNanInfReplacements: (tab.nanInfinityReplacements as number | undefined) ?? null,
+  };
+});
+
+const hasFieldCoverage = computed(() =>
+  fieldCoverageSummary.value.sequenceEvents != null
+  || fieldCoverageSummary.value.sequenceUnknownWarnings != null
+  || fieldCoverageSummary.value.tabularUnknownRatio != null
+  || fieldCoverageSummary.value.tabularMissingFeatures != null
+  || fieldCoverageSummary.value.tabularDefaultedFeatures != null
+  || fieldCoverageSummary.value.tabularNanInfReplacements != null,
+);
+
 const runtimeTone = computed(() => {
   const status = runtimeHealth.value?.status?.toUpperCase();
   if (status === 'HEALTHY' || status === 'UP') return 'positive';
@@ -382,6 +531,30 @@ const sessionFinalizationSummary = computed(() => {
     explicitFinalized: sf.sessionsFinalizedByExplicitEnd,
     timeoutFinalized: sf.sessionsFinalizedByInactivityTimeout,
   };
+});
+
+const openInvestigation = async (eventId: string | undefined) => {
+  if (!eventId) return;
+  await router.push({ name: ROUTE_NAMES.ALERT_INVESTIGATION, params: { eventId } });
+};
+
+const openUser = async (insuredId: string) => {
+  await router.push({ name: ROUTE_NAMES.USER_360_DETAIL, params: { insuredId } });
+};
+
+const handleSecurityOverviewRefresh = () => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[SecurityOverviewPage] Assistant refresh received');
+  }
+  void refresh();
+};
+
+onMounted(() => {
+  document.addEventListener(ASSISTANT_REFRESH_SECURITY_OVERVIEW_EVENT, handleSecurityOverviewRefresh);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener(ASSISTANT_REFRESH_SECURITY_OVERVIEW_EVENT, handleSecurityOverviewRefresh);
 });
 </script>
 
@@ -430,6 +603,15 @@ const sessionFinalizationSummary = computed(() => {
   background: var(--neo-card-bg-tint);
 }
 
+.neo-v36-no-warnings {
+  margin-top: 0;
+  min-height: 0;
+  padding: 8px 0 0;
+  font-size: 12px;
+  text-align: left;
+  place-items: start;
+}
+
 .neo-v36-model-grid {
   display: grid;
   gap: var(--neo-space-3);
@@ -473,6 +655,12 @@ const sessionFinalizationSummary = computed(() => {
   font-size: 12px;
 }
 
+.neo-v36-section-label {
+  color: var(--neo-ink-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
 @media (max-width: 520px) {
   .neo-v36-model-grid {
     grid-template-columns: 1fr;
@@ -495,4 +683,5 @@ const sessionFinalizationSummary = computed(() => {
   right: 12px;
   z-index: 1;
 }
+
 </style>

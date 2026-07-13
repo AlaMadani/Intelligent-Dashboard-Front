@@ -9,6 +9,20 @@ const scrollLockTargets = () => [
 let scrollLockCount = 0;
 const lockedElements = new Set<Element>();
 
+const removeLockFromAll = () => {
+  lockedElements.forEach((element) => {
+    try {
+      element.classList.remove(SCROLL_LOCK_CLASS);
+    } catch {
+      /* element may have been removed from DOM */
+    }
+  });
+  lockedElements.clear();
+  scrollLockTargets().forEach((element) => {
+    element.classList.remove(SCROLL_LOCK_CLASS);
+  });
+};
+
 export const acquireLoaderScrollLock = () => {
   scrollLockCount += 1;
 
@@ -29,16 +43,10 @@ export const releaseLoaderScrollLock = () => {
     return;
   }
 
-  lockedElements.forEach((element) => {
-    element.classList.remove(SCROLL_LOCK_CLASS);
-  });
-  lockedElements.clear();
+  removeLockFromAll();
 };
 
 export const resetLoaderScrollLock = () => {
   scrollLockCount = 0;
-  lockedElements.forEach((element) => {
-    element.classList.remove(SCROLL_LOCK_CLASS);
-  });
-  lockedElements.clear();
+  removeLockFromAll();
 };
