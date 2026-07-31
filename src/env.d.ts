@@ -1,4 +1,5 @@
 // Environment typing keeps Quasar router mode variables strongly typed in the app code.
+// ---- NodeJS ProcessEnv ----
 declare namespace NodeJS {
   interface ProcessEnv {
     NODE_ENV: string;
@@ -7,6 +8,7 @@ declare namespace NodeJS {
   }
 }
 
+// ---- ImportMetaEnv ----
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_LOGGER_ENDPOINT?: string;
@@ -17,6 +19,7 @@ interface ImportMetaEnv {
   readonly VITE_I18N_FALLBACK_LOCALE?: string;
 }
 
+// ---- ImportMeta ----
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

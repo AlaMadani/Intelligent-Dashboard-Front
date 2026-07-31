@@ -1,3 +1,4 @@
+// ---- UI Elements ----
 export interface AssistantVisibleElement {
   id: string;
   type: string;
@@ -18,6 +19,7 @@ export interface AssistantVisibleElement {
   };
 }
 
+// ---- Snapshots ----
 export interface UISnapshot {
   routeId: string;
   routeName: string;
@@ -33,6 +35,7 @@ export interface UISnapshot {
   timestamp: string;
 }
 
+// ---- Request ----
 export interface DashboardAssistantRequest {
   message: string;
   currentRoute: string;
@@ -43,6 +46,7 @@ export interface DashboardAssistantRequest {
   model?: string;
 }
 
+// ---- Commands ----
 export type DashboardCommandType =
   | 'NAVIGATE'
   | 'HIGHLIGHT_ELEMENT'
@@ -83,6 +87,7 @@ export interface AssistantDebugMetadata {
   rejectedReason?: string;
 }
 
+// ---- Response ----
 export interface DashboardAssistantResponse {
   responseType?: string;
   message: string;
@@ -92,6 +97,7 @@ export interface DashboardAssistantResponse {
   debug?: AssistantDebugMetadata;
 }
 
+// ---- Context ----
 export interface DashboardAssistantContext {
   currentRoute: string;
   currentContext: Record<string, string>;

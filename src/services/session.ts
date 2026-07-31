@@ -1,9 +1,11 @@
+// ---- Imports ----
 import { environment } from 'src/config/environment';
 import { SESSION_EXPIRED_EVENT, type SessionExpiredReason } from 'src/constants/auth';
 import { useAuthStore } from 'src/stores/auth';
 
 export type { SessionExpiredReason } from 'src/constants/auth';
 
+// ---- Session Management ----
 export const clearStoredAuth = () => {
   useAuthStore().clearAuthenticatedState();
 };
@@ -52,6 +54,7 @@ export const consumeSessionExpiredReason = (): SessionExpiredReason | null => {
   return reason;
 };
 
+// ---- JWT Helpers ----
 export const isJwtExpired = (token: string | null) => {
   if (!token) {
     return true;

@@ -22,12 +22,13 @@
 </template>
 
 <script setup lang="ts">
-// Convert labeled values into a CSS-driven donut chart with legend metadata.
+// ---- Imports ----
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { DonutSegment } from 'src/models/chart';
 import { formatNumber } from 'src/utils/format';
 
+// ---- Props ----
 const props = withDefaults(
   defineProps<{
     segments: DonutSegment[];
@@ -41,10 +42,10 @@ const props = withDefaults(
 
 const { t } = useI18n();
 
-// Provide default colors when callers omit segment styling.
+// ---- Constants ----
 const fallbackColors = ['#e54d56', '#fbbf24', '#ef4444', '#34d399', '#4a413f'];
 
-// Normalize legend text and segment colors before generating the donut.
+// ---- Computed ----
 const normalizedSegments = computed(() =>
   props.segments.map((segment, index) => ({
     ...segment,
@@ -75,6 +76,7 @@ const donutGradient = computed(() => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 /* Donut chart layout and legend styling. */
 .neo-donut-shell {

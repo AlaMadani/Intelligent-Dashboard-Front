@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page">
     <section class="neo-section">
@@ -172,6 +173,7 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';

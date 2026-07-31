@@ -1,6 +1,8 @@
+// ---- Imports ----
 import { i18n } from 'src/boot/i18n';
 import type { NormalizedLlmExplanation, V36LlmExplanationResponse } from 'src/types/analytics';
 
+// ---- Locale Helpers ----
 const DEFAULT_LOCALE = 'en-US';
 
 export const getCurrentLocale = () => {
@@ -27,6 +29,8 @@ export const formatNumber = (
   if (value == null || Number.isNaN(value)) return i18n.global.t('common.notAvailable');
   return value.toLocaleString(getCurrentLocale(), options);
 };
+
+// ---- Numeric Formatters ----
 
 // Shared value formatters keep scores, dates, percentages, and durations consistent in the UI.
 export const formatScore = (value: number | null | undefined) => {
@@ -75,6 +79,7 @@ export const formatNullableScore = (value: number | null | undefined, digits = 2
   });
 };
 
+// ---- Safe Utilities ----
 export const safeArray = <T = unknown>(value: unknown): T[] =>
   Array.isArray(value) ? (value as T[]) : [];
 
@@ -83,6 +88,7 @@ export const safeRecord = (value: unknown): Record<string, unknown> =>
     ? (value as Record<string, unknown>)
     : {};
 
+// ---- Risk Helpers ----
 export const riskTone = (riskLevel: string | null | undefined) => {
   switch (riskLevel?.trim().toUpperCase()) {
     case 'CRITICAL':
@@ -142,6 +148,7 @@ export const assignedPartitionCount = (
 export const normalizeRiskLevel = (riskLevel: string | null | undefined) =>
   riskLevel?.trim() ? riskLevel.trim().toUpperCase() : i18n.global.t('common.unknown');
 
+// ---- Duration Formatters ----
 export const formatDurationMs = (value: number | null | undefined) => {
   if (value == null || Number.isNaN(value)) return i18n.global.t('common.notAvailable');
   const totalSeconds = Math.max(0, Math.round(value / 1000));
@@ -175,11 +182,13 @@ export const formatLatencyMs = (value: number | null | undefined) => {
   return `${formatNumber(value / 1000, { maximumFractionDigits: 1 })}s`;
 };
 
+// ---- Boolean Formatter ----
 export const formatBooleanYesNo = (value: boolean | null | undefined) => {
   if (value == null) return i18n.global.t('common.notAvailable');
   return value ? i18n.global.t('common.yes') : i18n.global.t('common.no');
 };
 
+// ---- Sequence Mode Formatters ----
 const formatSequenceModeValue = (value: string): string => {
   switch (value) {
     case 'normal':
@@ -223,6 +232,7 @@ export const formatSequenceMode = (value: string | null | undefined) => {
   return formatSequenceModeValue(value);
 };
 
+// ---- Model Latency Helpers ----
 const MODEL_LATENCY_NAMES: Record<string, string> = {
   xgboostMs: i18n.global.t('v36.runtime.modelNameXgboost'),
   lightgbmMs: i18n.global.t('v36.runtime.modelNameLightgbm'),
@@ -250,6 +260,7 @@ export const formatUnknownRatio = (value: number | null | undefined): string => 
   return formatPercent(value, 1);
 };
 
+// ---- Tone Helpers ----
 export const autoOffsetResetTone = (value: string | null | undefined) => {
   switch (value) {
     case 'latest':
@@ -316,6 +327,7 @@ export const sourceInfoBanner = (
   }
 };
 
+// ---- Source Helpers ----
 export const sourceTone = (source: string | null | undefined) => {
   if (!source) return 'grey';
   switch (source) {
@@ -337,6 +349,7 @@ export const sourceTone = (source: string | null | undefined) => {
 export const riskLevelDisplay = (riskTier: string | null | undefined, riskLevel: string | null | undefined): string | null =>
   riskTier ?? riskLevel ?? null;
 
+// ---- LLM Explanation Helpers ----
 const parseJsonFromString = (input: string | null | undefined): Record<string, unknown> | null => {
   if (!input) return null;
   const jsonMatch = input.match(/```json\s*([\s\S]*?)\s*```/);

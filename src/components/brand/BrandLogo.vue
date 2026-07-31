@@ -8,11 +8,13 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { useI18n } from 'vue-i18n';
 import logoUrl from 'src/assets/logo_noveocare.png';
 
 const { t } = useI18n();
 
+// ---- Props ----
 withDefaults(
   defineProps<{
     variant?: 'auth' | 'card' | 'drawer' | 'header';
@@ -25,6 +27,7 @@ withDefaults(
 );
 </script>
 
+// ---- Styles ----
 <style scoped>
 .brand-logo {
   display: inline-flex;

@@ -1,7 +1,7 @@
+/* ---- Google Fonts ---- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* Noveo Care command-center theme inspired by the supplied HTML mockup. */
-
+/* ---- Dark Theme Variables ---- */
 :root {
   color-scheme: dark;
 
@@ -106,6 +106,7 @@
   --neo-diamond-glow: 0 0 6px rgba(168, 200, 232, 0.2);
 }
 
+/* ---- Light Theme Variables ---- */
 :root[data-theme='light'] {
   color-scheme: light;
 
@@ -187,6 +188,7 @@
   --neo-diamond-glow: 0 0 6px rgba(107, 123, 141, 0.15);
 }
 
+/* ---- Base & Reset ---- */
 html,
 body,
 #q-app {
@@ -207,6 +209,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ---- Grid Overlay ---- */
 body::before {
   content: '';
   position: fixed;
@@ -220,6 +223,7 @@ body::before {
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.72), transparent 78%);
 }
 
+/* ---- Scrollbar ---- */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -234,11 +238,13 @@ body::before {
   background: var(--neo-surface-muted);
 }
 
+/* ---- Selection ---- */
 ::selection {
   background: var(--neo-accent);
   color: #ffffff;
 }
 
+/* ---- Typography ---- */
 h1,
 h2,
 h3,
@@ -274,6 +280,7 @@ button,
   outline-offset: 3px;
 }
 
+/* ---- Quasar Overrides ---- */
 .q-layout,
 .q-page-container {
   background: transparent;
@@ -425,6 +432,7 @@ button,
   animation: shimmer 1.4s infinite;
 }
 
+/* ---- Layout ---- */
 .neo-page-container {
   background: transparent;
 }
@@ -468,6 +476,7 @@ body.noveo-loader-scroll-lock,
   touch-action: none;
 }
 
+/* ---- Responsive: Loading Scopes ---- */
 @media (max-width: 900px) {
   :root {
     --neo-loader-viewport-offset: 96px;
@@ -481,6 +490,7 @@ body.noveo-loader-scroll-lock,
   }
 }
 
+/* ---- Sections ---- */
 .neo-section {
   margin-bottom: 28px;
 }
@@ -865,6 +875,7 @@ body.noveo-loader-scroll-lock,
   font-weight: 800;
 }
 
+/* ---- Account ---- */
 .auth-inline-action {
   margin-top: -4px;
   text-align: right;
@@ -932,7 +943,7 @@ body.noveo-loader-scroll-lock,
   font-weight: 800;
 }
 
-/* Header and navigation shell. */
+/* ---- Header & Navigation Shell ---- */
 .neo-header {
   border-bottom: var(--neo-border);
   background: var(--neo-header-bg);
@@ -1302,7 +1313,7 @@ body.noveo-loader-scroll-lock,
   font-size: 14px;
 }
 
-/* Investigation panels. */
+/* ---- Investigation Panels ---- */
 .neo-investigation-grid {
   display: grid;
   gap: var(--neo-space-5);
@@ -1427,7 +1438,7 @@ body.noveo-loader-scroll-lock,
   line-height: 1.5;
 }
 
-/* Shared summary and KPI primitives. */
+/* ---- KPI Primitives ---- */
 .neo-kpis {
   display: grid;
   gap: var(--neo-space-4);
@@ -1532,6 +1543,7 @@ body.noveo-loader-scroll-lock,
   line-height: 1.5;
 }
 
+/* ---- Responsive ---- */
 @media (max-width: 1220px) {
   .neo-toolbar {
     min-height: auto;
@@ -1652,6 +1664,7 @@ body.noveo-loader-scroll-lock,
   }
 }
 
+/* ---- Loader Animations ---- */
 @keyframes noveo-loader-stroke-draw {
   from {
     stroke-dashoffset: 600;
@@ -1682,6 +1695,8 @@ body.noveo-loader-scroll-lock,
   outline: none;
 }
 
+/* ---- Utilities ---- */
+
 .metric-info-icon:hover,
 .metric-info-icon:focus-visible {
   opacity: 1;
@@ -1710,6 +1725,7 @@ body.noveo-loader-scroll-lock,
   50% { background-position: 200% center; }
 }
 
+/* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

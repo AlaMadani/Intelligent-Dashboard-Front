@@ -15,6 +15,7 @@ import type {
 } from 'src/types/analytics';
 import type { AiExplainerContent, AiExplainerOpenOptions } from 'src/types/aiExplainer';
 
+// ---- Module-Level State ----
 const visible = ref(false);
 const loading = ref(false);
 const generating = ref(false);
@@ -27,8 +28,10 @@ const explanation = shallowRef<V36LlmExplanationResponse | null>(null);
 const evidence = shallowRef<V36LlmEvidencePayload | null>(null);
 const currentEventId = ref<string | null>(null);
 
+// ---- Computed ----
 const normalizedExplanation = computed(() => normalizeExplanationPayload(explanation.value));
 
+// ---- Helpers ----
 const notAvailableLabel = () => i18n.global.t('common.notAvailable');
 
 const interpolate = (template: string, params: Record<string, string | number | undefined | null>) =>
@@ -183,7 +186,9 @@ const loadEvidence = async () => {
   }
 };
 
+// ---- Composable ----
 export const useAiExplainer = () => {
+  // ---- Methods ----
   const open = async (options: AiExplainerOpenOptions) => {
     const params = options.params ?? {};
     const eventId = options.eventId?.trim() || null;
@@ -232,6 +237,7 @@ export const useAiExplainer = () => {
     return i18n.global.t('aiExplainer.safeguardsDeployed');
   };
 
+  // ---- Return ----
   return {
     visible: readonly(visible),
     loading: readonly(loading),

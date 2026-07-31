@@ -1,10 +1,13 @@
+// ---- Template ----
 <template>
   <auth-shell :title="title" :subtitle="subtitle">
     <component :is="activeComponent" :key="authView" />
   </auth-shell>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
+// ---- Imports ----
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -16,9 +19,11 @@ import ForgotPasswordPage from 'src/pages/ForgotPasswordPage.vue';
 import ResetPasswordCodePage from 'src/pages/ResetPasswordCodePage.vue';
 import ResetPasswordPage from 'src/pages/ResetPasswordPage.vue';
 
+// ---- Composables ----
 const route = useRoute();
 const { t } = useI18n();
 
+// ---- Computed Properties ----
 const authView = computed(() => {
   if (typeof route.meta.authView === 'string') {
     return route.meta.authView;

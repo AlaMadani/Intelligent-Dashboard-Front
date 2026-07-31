@@ -13,6 +13,7 @@ import type {
 } from 'src/types/auth';
 import { api } from 'src/services/api-client';
 
+// ---- Error Helpers ----
 const authErrorResponse = (error: unknown, fallbackMessage: string): AuthResponse => {
   const data = axios.isAxiosError<AuthResponse>(error) ? error.response?.data : undefined;
   return {
@@ -22,6 +23,7 @@ const authErrorResponse = (error: unknown, fallbackMessage: string): AuthRespons
   };
 };
 
+// ---- Auth Service ----
 class AuthService {
   async signUp(request: SignUpRequest): Promise<AuthResponse> {
     try {

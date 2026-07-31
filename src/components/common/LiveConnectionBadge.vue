@@ -38,16 +38,19 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
+// ---- Props ----
 defineProps<{
   connected: boolean;
   connecting?: boolean;
   lastEventAt?: Date | null;
 }>();
 
+// ---- Methods ----
 const formatTime = (date: Date) => {
   const hh = String(date.getHours()).padStart(2, '0');
   const mm = String(date.getMinutes()).padStart(2, '0');
@@ -56,6 +59,7 @@ const formatTime = (date: Date) => {
 };
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-live-badge {
   display: inline-flex;

@@ -1,7 +1,8 @@
-// Navigation metadata extracted from layout component implementation.
+// ---- Imports ----
 import { ROUTE_NAMES } from 'src/router/route-names';
 import type { NavigationItemConfig } from 'src/types/navigation';
 
+// ---- Navigation Items ----
 export const LAYOUT_NAVIGATION_ITEMS: NavigationItemConfig[] = [
   {
     id: 'security-overview',

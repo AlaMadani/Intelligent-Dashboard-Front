@@ -1,3 +1,4 @@
+// ---- Imports ----
 /* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
@@ -6,6 +7,7 @@ const path = require('path');
 // This is a generated file from dashboardAssistantManifest.ts
 // Run: node genManifest.cjs to refresh dashboardAssistantManifest.json
 
+// ---- Route Names ----
 const ROUTE_NAMES = {
   SECURITY_OVERVIEW: 'SecurityOverviewPage',
   ALERTS: 'AlertsPage',
@@ -21,6 +23,8 @@ const ROUTE_NAMES = {
 const manifest = {
   version: '1.0.0',
   updatedAt: '2026-07-03',
+
+  // ---- Routes ----
   routes: [
     {
       id: 'security-overview', routeName: ROUTE_NAMES.SECURITY_OVERVIEW, path: '/security-overview', label: 'Security Overview',
@@ -78,6 +82,7 @@ const manifest = {
     },
   ],
 
+  // ---- Elements ----
   elements: [
     // Navigation sidebar
     { id: 'nav-security-overview', routeId: 'security-overview', routeName: ROUTE_NAMES.SECURITY_OVERVIEW, type: 'navigation-item', label: 'Security Overview Nav', description: 'Sidebar navigation item that opens the Security Overview page.', synonyms: ['overview button', 'overview link', 'dashboard nav', 'security overview nav'], exampleUserQuestions: ['where to click to go to overview', 'show me where to click for overview', 'highlight overview navigation'], actionsSupported: ['HIGHLIGHT_ELEMENT'] },
@@ -157,17 +162,20 @@ const manifest = {
     { id: 'forecast-chart', routeId: 'forecast', routeName: ROUTE_NAMES.FORECAST, type: 'card', label: 'Forecast Chart', description: 'Chart showing historical total events and anomaly rate with forecast overlay.', synonyms: ['forecast chart', 'forecast graph', 'events chart', 'anomaly rate chart'], exampleUserQuestions: ['where can i see forecast chart', 'highlight forecast chart'], actionsSupported: ['HIGHLIGHT_ELEMENT'] },
   ],
 
+  // ---- Panels ----
   panels: [
     { id: 'explain-ai', label: 'AI Explanation Panel', description: 'Modal panel that displays AI-generated explanations for alerts.', synonyms: ['ai explanation', 'explain ai panel', 'ai modal'], actionsSupported: ['OPEN_PANEL'] },
     { id: 'evidence-payload', label: 'Evidence Payload Panel', description: 'Sub-panel within the AI explanation modal showing raw evidence payload JSON.', synonyms: ['evidence payload', 'evidence panel', 'raw evidence'], actionsSupported: ['OPEN_PANEL'] },
     { id: 'advanced-context', label: 'Advanced Context Panel', description: 'Expanded section within alert investigation showing additional context data.', synonyms: ['advanced context', 'context panel', 'more context'], actionsSupported: ['OPEN_PANEL'] },
   ],
 
+  // ---- Filters ----
   filters: [
     { id: 'alerts-risk', routeId: 'alerts', routeName: ROUTE_NAMES.ALERTS, label: 'Alerts Risk Filter', description: 'Filters the alerts table by risk level.', allowedValues: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'], synonyms: ['filter alerts', 'alert risk', 'critical alerts', 'high risk alerts'], actionsSupported: ['SET_FILTER'] },
     { id: 'churn-risk', routeId: 'churn', routeName: ROUTE_NAMES.CHURN, label: 'Churn Risk Filter', description: 'Filters the churn users table by risk level.', allowedValues: ['LOW', 'MEDIUM', 'HIGH'], synonyms: ['filter churn', 'churn risk', 'medium risk churn'], actionsSupported: ['SET_FILTER'] },
   ],
 
+  // ---- Refresh Targets ----
   refreshTargets: [
     { id: 'forecast', routeId: 'forecast', routeName: ROUTE_NAMES.FORECAST, label: 'Refresh Forecast', description: 'Refreshes forecast dashboard data.', synonyms: ['refresh forecast', 'forecast refresh'], actionsSupported: ['REFRESH_VIEW'] },
     { id: 'alerts', routeId: 'alerts', routeName: ROUTE_NAMES.ALERTS, label: 'Refresh Alerts', description: 'Refreshes alerts page data.', synonyms: ['refresh alerts', 'alerts refresh'], actionsSupported: ['REFRESH_VIEW'] },
@@ -175,12 +183,14 @@ const manifest = {
     { id: 'runtime', routeId: 'runtime-health', routeName: ROUTE_NAMES.RUNTIME_HEALTH, label: 'Refresh Runtime Health', description: 'Refreshes runtime health data.', synonyms: ['refresh runtime', 'runtime refresh'], actionsSupported: ['REFRESH_VIEW'] },
   ],
 
+  // ---- Search Targets ----
   searchTargets: [
     { id: 'alert-search', routeId: 'alerts', routeName: ROUTE_NAMES.ALERTS, label: 'Search Alerts', description: 'Search alerts by query or event ID.', params: ['q'], synonyms: ['search alerts', 'find alert', 'lookup alert'], actionsSupported: ['SEARCH_ALERT'] },
     { id: 'user-search', routeId: 'user360', routeName: ROUTE_NAMES.USER_360, label: 'Search User', description: 'Search for a user by insured ID.', params: ['insuredId'], synonyms: ['search user', 'find user', 'lookup user', 'search insured'], actionsSupported: ['SEARCH_USER'] },
   ],
 };
 
+// ---- Output ----
 const outputPath = path.resolve(__dirname, 'dashboardAssistantManifest.json');
 fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
 console.log('Manifest JSON written successfully');

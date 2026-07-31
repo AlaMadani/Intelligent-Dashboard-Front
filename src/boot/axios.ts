@@ -1,15 +1,17 @@
-// Axios boot file: configure the shared HTTP clients used across the dashboard.
+// ---- Imports ----
 import { defineBoot } from '#q-app/wrappers';
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import { api, isAuthEndpoint } from 'src/services/api-client';
 import { useAuthStore } from 'src/stores/auth';
 import { markSessionExpired } from 'src/services/session';
 
+// ---- Types & Helpers ----
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 const asError = (error: unknown, fallbackMessage: string) =>
   error instanceof Error ? error : new Error(fallbackMessage);
 
+// ---- Global Polyfill ----
 // Polyfill `global` for browser bundles (some libs expect it).
 try {
   if (typeof window !== 'undefined') {

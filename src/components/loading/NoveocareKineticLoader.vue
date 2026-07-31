@@ -88,9 +88,11 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import logoUrl from 'src/assets/logo_noveocare.png';
 
+// ---- Props ----
 const props = withDefaults(
   defineProps<{
     active?: boolean;
@@ -106,12 +108,14 @@ const props = withDefaults(
   },
 );
 
+// ---- State ----
 const progress = ref(0);
 const messageIndex = ref(0);
 
 let progressTimer: number | undefined;
 let messageTimer: number | undefined;
 
+// ---- Computed ----
 const statusText = computed(() => {
   if (!props.messages.length) {
     return '';
@@ -120,6 +124,7 @@ const statusText = computed(() => {
   return props.messages[messageIndex.value % props.messages.length] ?? props.messages[0];
 });
 
+// ---- Methods ----
 const clearTimers = () => {
   if (progressTimer) {
     window.clearInterval(progressTimer);
@@ -175,11 +180,13 @@ watch(
   { immediate: true },
 );
 
+// ---- Lifecycle ----
 onBeforeUnmount(() => {
   clearTimers();
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 .noveo-kinetic-loader {
   display: flex;

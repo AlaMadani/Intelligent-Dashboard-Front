@@ -181,6 +181,7 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -189,11 +190,13 @@ import { useAssistantVisibleElements } from 'src/assistant/useAssistantVisibleEl
 import { transcribeAudio } from 'src/services/asrService';
 import type { DashboardAssistantContext } from 'src/types/dashboardAssistant';
 
+// ---- Setup ----
 const { t } = useI18n();
 const route = useRoute();
 const feedRef = ref<HTMLElement | null>(null);
 const isDev = process.env.NODE_ENV === 'development';
 
+// ---- Constants ----
 const MODEL_STORAGE_KEY = 'dashboardAssistant_model';
 const DEFAULT_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning';
 
@@ -211,6 +214,7 @@ watch(selectedModel, (val) => {
   localStorage.setItem(MODEL_STORAGE_KEY, val);
 });
 
+// ---- Model Menu ----
 const modelMenuOpen = ref(false);
 const modelTriggerRef = ref<HTMLElement | null>(null);
 
@@ -250,7 +254,7 @@ const handleModelClickOutside = (e: MouseEvent) => {
   }
 };
 
-// Voice session state machine
+// ---- Voice Types ----
 type VoiceSessionState =
   | 'idle'
   | 'listening'
@@ -259,7 +263,7 @@ type VoiceSessionState =
   | 'assistant-thinking'
   | 'error';
 
-// Settings
+// ---- Voice Settings ----
 const AUTO_SEND_VOICE_STORAGE_KEY = 'dashboardAssistant_autoSendVoice';
 const autoSendVoiceTranscript = ref(
   localStorage.getItem(AUTO_SEND_VOICE_STORAGE_KEY) !== 'false',
@@ -276,7 +280,7 @@ watch(voiceReadAssistantResponses, (val) => {
   localStorage.setItem(VOICE_READ_RESPONSES_STORAGE_KEY, String(val));
 });
 
-// Reactive state
+// ---- Reactive State ----
 const sessionActive = ref(false);
 const voiceSessionState = ref<VoiceSessionState>('idle');
 const voiceError = ref('');
@@ -287,7 +291,7 @@ const currentRms = ref(0);
 const voiceThreshold = ref(0.010);
 const sessionId = ref(0);
 
-// Non-reactive session variables
+// ---- Non-reactive Variables ----
 let vsStream: MediaStream | null = null;
 let vsAudioContext: AudioContext | null = null;
 let vsAnalyser: AnalyserNode | null = null;
@@ -308,7 +312,7 @@ const MIN_UTTERANCE_MS = 600;
 const MAX_UTTERANCE_DURATION_MS = 12000;
 const MIN_BLOB_SIZE_BYTES = 3000;
 
-// VAD helpers
+// ---- VAD Helpers ----
 function calculateRms(buffer: Float32Array): number {
   let sum = 0;
   for (const sample of buffer) sum += sample * sample;
@@ -360,8 +364,7 @@ const handleSubmit = async () => {
   await submitDraft();
 };
 
-// ─── Session lifecycle ───────────────────────────────────────
-
+// ---- Session Lifecycle ----
 async function startVoiceSession() {
   try {
     vsSessionId += 1;
@@ -457,8 +460,7 @@ function stopVoiceSession() {
   if (isDev) console.log('[Voice] session stopped', { sessionId: vsSessionId });
 }
 
-// ─── VAD loop (speech boundaries only) ──────────────────────
-
+// ---- VAD Loop ----
 function startVadLoop(activeSessionId: number) {
   if (!vsAnalyser) return;
   const buffer = new Float32Array(vsAnalyser.frequencyBinCount);
@@ -507,8 +509,7 @@ function startVadLoop(activeSessionId: number) {
   vadRaf = requestAnimationFrame(loop);
 }
 
-// ─── Recorder lifecycle ─────────────────────────────────────
-
+// ---- Recorder Lifecycle ----
 function startNewUtteranceRecorder(activeSessionId: number) {
   if (!sessionActive.value || activeSessionId !== vsSessionId) return;
 
@@ -636,6 +637,7 @@ async function handleRecorderStopped(activeSessionId: number) {
   }
 }
 
+// ---- Lifecycle Hooks ----
 onMounted(() => {
   document.addEventListener('mousedown', handleModelClickOutside);
 
@@ -692,6 +694,7 @@ onBeforeUnmount(() => {
   }
 });
 
+// ---- Assistant Context ----
 const visibleElements = useAssistantVisibleElements();
 
 const assistantContext = computed<DashboardAssistantContext>(() => {
@@ -764,12 +767,14 @@ const {
   submitSuggestion,
 } = useNoveoCompanionChat(assistantContext, selectedModel);
 
+// ---- Suggestions ----
 const suggestions = [
   { key: 'ddos', labelKey: 'companion.suggestions.ddos' },
   { key: 'anomalies', labelKey: 'companion.suggestions.anomalies' },
   { key: 'fraud', labelKey: 'companion.suggestions.fraud' },
 ];
 
+// ---- Scroll ----
 const scrollFeed = async () => {
   await nextTick();
   if (feedRef.value) {
@@ -781,8 +786,7 @@ watch([messages, typing, open], () => {
   void scrollFeed();
 });
 
-// ─── TTS ─────────────────────────────────────────────────────
-
+// ---- TTS ----
 function speakAssistantMessage(text: string) {
   if (!voiceReadAssistantResponses.value) return;
   if (sessionActive.value) return; // skip during voice session to avoid feedback
@@ -808,9 +812,7 @@ function speakAssistantMessage(text: string) {
   window.speechSynthesis.speak(utterance);
 }
 
-// ─── Watchers ────────────────────────────────────────────────
-
-// Speak new assistant messages via TTS (only outside voice session)
+// ---- Watchers ----
 watch(messages, (msgs) => {
   if (msgs.length === 0) return;
   const last = msgs[msgs.length - 1];
@@ -827,6 +829,7 @@ watch(open, (val) => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-companion {
   position: fixed;

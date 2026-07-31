@@ -1,8 +1,10 @@
+// ---- Imports ----
 import { computed, type ComputedRef } from 'vue'
 import { useRoute } from 'vue-router'
 import manifest from './dashboardAssistantManifest'
 import type { AssistantVisibleElement } from 'src/types/dashboardAssistant'
 
+// ---- Route ID Resolution ----
 function resolveRouteId(route: ReturnType<typeof useRoute>): string {
   const name = route.name
   if (!name || typeof name !== 'string') return ''
@@ -32,6 +34,7 @@ function resolveRouteId(route: ReturnType<typeof useRoute>): string {
   return ''
 }
 
+// ---- Visibility Check ----
 function isElementVisible(el: Element): boolean {
   const rect = el.getBoundingClientRect()
   const vw = window.innerWidth
@@ -45,6 +48,7 @@ function isElementVisible(el: Element): boolean {
   return (visibleArea / totalArea) > 0.05
 }
 
+// ---- DOM Elements Collection ----
 function collectDomAssistantElements(currentRouteId: string): AssistantVisibleElement[] {
   const results: AssistantVisibleElement[] = []
   const seen = new Set<string>()
@@ -81,6 +85,7 @@ function collectDomAssistantElements(currentRouteId: string): AssistantVisibleEl
   return results
 }
 
+// ---- Manifest Elements Collection ----
 function collectManifestElements(currentRouteId: string): Map<string, AssistantVisibleElement> {
   const map = new Map<string, AssistantVisibleElement>()
 
@@ -120,6 +125,7 @@ function collectManifestElements(currentRouteId: string): Map<string, AssistantV
   return map
 }
 
+// ---- Composable ----
 export function useAssistantVisibleElements(): ComputedRef<AssistantVisibleElement[]> {
   const route = useRoute()
 

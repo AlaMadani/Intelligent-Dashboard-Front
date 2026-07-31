@@ -1,3 +1,4 @@
+// ---- Imports ----
 import { api } from 'src/services/api-client';
 import { unwrapEnvelope } from 'src/services/http';
 import type { ApiEnvelope, ApiResponse } from 'src/types/api';
@@ -6,6 +7,7 @@ import type {
   DashboardAssistantResponse,
 } from 'src/types/dashboardAssistant';
 
+// ---- API Functions ----
 export const sendDashboardAssistantMessage = async (
   request: DashboardAssistantRequest,
 ): Promise<ApiEnvelope<DashboardAssistantResponse>> => {

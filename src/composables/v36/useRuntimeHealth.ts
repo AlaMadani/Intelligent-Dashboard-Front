@@ -17,6 +17,7 @@ import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useRuntimeHealth = () => {
+  // ---- State ----
   const runtimeHealth = shallowRef<V36RuntimeHealthResponse | null>(null);
   const diagnostics = shallowRef<V36DiagnosticsResponse | null>(null);
   const finalWinners = shallowRef<V36FinalWinnersResponse | null>(null);
@@ -25,6 +26,7 @@ export const useRuntimeHealth = () => {
   const error = ref('');
   const lastUpdated = ref<Date | null>(null);
 
+  // ---- Computed ----
   const source = computed(() => runtimeHealth.value?.source ?? diagnostics.value?.source ?? '');
   const warnings = computed(() => [
     ...safeArray<string>(runtimeHealth.value?.warnings),
@@ -33,6 +35,7 @@ export const useRuntimeHealth = () => {
     ...safeArray<string>(reports.value?.warnings),
   ]);
 
+  // ---- Methods ----
   const refresh = async (silent = false) => {
     if (!silent) loading.value = true;
     error.value = '';
@@ -58,15 +61,18 @@ export const useRuntimeHealth = () => {
     }
   };
 
+  // ---- Lifecycle ----
   onMounted(() => {
     void refresh();
   });
 
+  // ---- SSE Refresh ----
   const throttledRefresh = throttle(() => { void refresh(true); }, 5000);
   useV36SseRefresh(['runtime-health'], () => {
     throttledRefresh();
   });
 
+  // ---- Return ----
   return {
     runtimeHealth,
     diagnostics,

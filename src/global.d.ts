@@ -2,6 +2,7 @@ export {};
 
 import type { AxiosInstance } from 'axios';
 
+// ---- Vue Augmentation ----
 declare module 'vue' {
   interface ComponentCustomProperties {
     $axios: AxiosInstance;
@@ -9,6 +10,7 @@ declare module 'vue' {
   }
 }
 
+// ---- Global Window ----
 declare global {
   interface Window {
     global?: Window;

@@ -1,3 +1,4 @@
+// ---- Imports ----
 import { defineBoot } from '#q-app/wrappers';
 import { createI18n } from 'vue-i18n';
 import { environment } from 'src/config/environment';
@@ -7,6 +8,7 @@ import esES from 'src/i18n/messages/es-ES';
 import frFR from 'src/i18n/messages/fr-FR';
 import { isRtlLocale, resolveAppLocale } from 'src/i18n/locale';
 
+// ---- Messages & Locale Config ----
 const messages = {
   en: enUS,
   'en-US': enUS,
@@ -29,6 +31,7 @@ export const i18n = createI18n({
   messages,
 });
 
+// ---- Boot Export ----
 export default defineBoot(({ app }) => {
   if (typeof document !== 'undefined') {
     document.documentElement.lang = locale;

@@ -1,3 +1,4 @@
+// ---- Throttle Utility ----
 export function throttle<T extends (...args: unknown[]) => void>(fn: T, delayMs: number): T {
   let lastCall = 0;
   let pending = false;

@@ -5,11 +5,13 @@ import { safeArray } from 'src/utils/format';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useAlertInvestigation = (eventId: Ref<string>) => {
+  // ---- State ----
   const data = shallowRef<V36AlertInvestigationDetail | null>(null);
   const loading = ref(false);
   const error = ref('');
   const lastUpdated = ref<Date | null>(null);
 
+  // ---- Computed ----
   const source = computed(() => data.value?.source ?? '');
   const warnings = computed(() => [
     ...safeArray<string>(data.value?.warnings),
@@ -17,6 +19,7 @@ export const useAlertInvestigation = (eventId: Ref<string>) => {
     ...safeArray<string>(data.value?.forecastContext?.forecastWarnings),
   ]);
 
+  // ---- Methods ----
   const refresh = async (silent = false) => {
     const currentEventId = eventId.value.trim();
     if (!currentEventId) return;
@@ -36,6 +39,7 @@ export const useAlertInvestigation = (eventId: Ref<string>) => {
     }
   };
 
+  // ---- Watchers ----
   watch(
     eventId,
     () => {
@@ -44,10 +48,12 @@ export const useAlertInvestigation = (eventId: Ref<string>) => {
     { immediate: true },
   );
 
+  // ---- SSE Refresh ----
   useV36SseRefresh(['alerts'], () => {
     void refresh(true);
   });
 
+  // ---- Return ----
   return {
     data,
     loading,

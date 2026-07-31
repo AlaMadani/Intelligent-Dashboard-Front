@@ -1,0 +1,67 @@
+@startuml
+title Diagramme de Cas d'Utilisation — Interface Utilisateur (Frontend)
+left to right direction
+skinparam packageStyle rectangle
+skinparam useCaseBorderColor #2E6E9E
+skinparam useCaseBackgroundColor #EBF5FB
+skinparam actorBorderColor #2E6E9E
+skinparam actorBackgroundColor #EBF5FB
+
+actor "Analyste\nsécurité / métier" as Analyste
+actor "Administrateur\ntechnique" as Admin
+
+rectangle "Application Dashboard" {
+  rectangle "Authentification" {
+    usecase "Créer un compte" as UC_Signup
+    usecase "Se connecter" as UC_Login
+    usecase "Vérifier son email" as UC_Verify
+    usecase "Réinitialiser\nson mot de passe" as UC_ResetPwd
+  }
+
+  rectangle "Consultation" {
+    usecase "Consulter le tableau\nde bord sécurité\n(KPI, alertes, anomalies)" as UC_Security
+    usecase "Consulter la liste\ndes alertes live" as UC_Alerts
+    usecase "Investiguer une alerte\n(scores, preuves, session)" as UC_Investigate
+    usecase "Consulter le profil\n360° d'un assuré" as UC_User360
+    usecase "Consulter les\ntableaux churn" as UC_Churn
+    usecase "Consulter les\ntableaux prévisions" as UC_Forecast
+    usecase "Consulter la page\nsanté du moteur" as UC_Health
+  }
+
+  rectangle "IA & Assistance" {
+    usecase "Générer une\nexplication IA\nd'une alerte" as UC_Explain
+    usecase "Lire une explication\ndéjà générée" as UC_ReadExplain
+    usecase "Interagir avec\nl'assistant IA\n(textuel / vocal)" as UC_Assistant
+    usecase "Transcrire une\ncommande vocale" as UC_ASR
+  }
+
+  rectangle "Préférences" {
+    usecase "Changer de langue\n(en / fr / es / ar)" as UC_Lang
+    usecase "Changer de thème\n(Dark / Light)" as UC_Theme
+    usecase "Utiliser\nl'application hors-ligne\n(PWA)" as UC_PWA
+  }
+}
+
+Analyste --> UC_Signup
+Analyste --> UC_Login
+Analyste --> UC_Security
+Analyste --> UC_Alerts
+Analyste --> UC_Investigate
+Analyste --> UC_User360
+Analyste --> UC_Churn
+Analyste --> UC_Forecast
+Analyste --> UC_Explain
+Analyste --> UC_ReadExplain
+Analyste --> UC_Assistant
+Analyste --> UC_ASR
+Analyste --> UC_Lang
+Analyste --> UC_Theme
+Analyste --> UC_PWA
+
+Admin --> UC_Health
+
+UC_Verify ..> UC_Signup : <<extend>>
+UC_ResetPwd ..> UC_Login : <<extend>>
+UC_Investigate ..> UC_Explain : <<extend>>
+UC_Assistant ..> UC_ASR : <<extend>>
+@enduml

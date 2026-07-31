@@ -1,8 +1,10 @@
+// ---- Imports ----
 import { useAuthStore } from 'src/stores/auth';
 import { hasIdleSessionExpired, isJwtExpired, markSessionExpired } from 'src/services/session';
 import { ROUTE_NAMES } from 'src/router/route-names';
 import type { Router } from 'vue-router';
 
+// ---- Navigation Guard ----
 export function setupAuthGuard(router: Router) {
   router.beforeEach((to) => {
     const authStore = useAuthStore();

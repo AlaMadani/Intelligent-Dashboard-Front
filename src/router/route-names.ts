@@ -1,3 +1,4 @@
+// ---- Route Names ----
 export const ROUTE_NAMES = {
   LOGIN: 'LoginPage',
   SIGN_UP: 'SignUpPage',
@@ -16,4 +17,5 @@ export const ROUTE_NAMES = {
   ACCOUNT: 'AccountPage',
 } as const;
 
+// ---- Type Export ----
 export type RouteName = (typeof ROUTE_NAMES)[keyof typeof ROUTE_NAMES];

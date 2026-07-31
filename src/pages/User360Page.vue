@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page neo-loading-scope">
     <loading-overlay :show="loading" context="fetch" />
@@ -10,12 +11,6 @@
         </div>
         <div class="neo-section-actions">
           <div v-if="source" id="user360-source-chip" class="neo-analytics-chip" data-assistant-id="user360-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the user 360 data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
-          <ai-explain-button
-            v-if="data?.insuredId"
-            context-key="user360-profile"
-            variant="prominent"
-            :params="{ insuredId: data.insuredId }"
-          />
           <span id="user360-live-connection-badge" data-assistant-id="user360-live-connection-badge" data-assistant-type="status-indicator" data-assistant-label="Live Connection Badge" data-assistant-description="Badge showing the SSE live connection status for user 360." data-assistant-actions="HIGHLIGHT_ELEMENT">
             <LiveConnectionBadge
               :connected="sseConnected"
@@ -267,6 +262,7 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -473,6 +469,7 @@ const openAlert = async (eventId: string | undefined) => {
 };
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-v36-lookup {
   display: grid;

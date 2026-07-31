@@ -1,4 +1,4 @@
-// Reusable charting models shared by SVG visualization components.
+// ---- Line Chart ----
 export interface Point {
   x: number;
   y: number;
@@ -7,17 +7,20 @@ export interface Point {
   isLast: boolean;
 }
 
+// ---- Ticks ----
 export interface Tick {
   value: number;
   position: number;
 }
 
+// ---- Bar Chart ----
 export interface BarChartRow {
   label: string;
   value: number;
   display?: string;
 }
 
+// ---- Donut Chart ----
 export interface DonutSegment {
   label: string;
   value: number;
@@ -25,6 +28,7 @@ export interface DonutSegment {
   color?: string;
 }
 
+// ---- Forecast Chart ----
 export interface ForecastPoint {
   label: string;
   forecast: number | null;

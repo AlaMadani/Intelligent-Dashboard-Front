@@ -17,6 +17,7 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
@@ -26,9 +27,11 @@ import {
 import { i18n } from 'src/boot/i18n';
 import NoveocareKineticLoader from './NoveocareKineticLoader.vue';
 
+// ---- Types ----
 type LoaderContext = 'auth' | 'fetch' | 'llm';
 type LoaderPlacement = 'viewport' | 'panel';
 
+// ---- Props ----
 const props = withDefaults(
   defineProps<{
     show?: boolean;
@@ -47,8 +50,10 @@ const props = withDefaults(
 
 const { t } = useI18n();
 
+// ---- State ----
 const visible = ref(false);
 
+// ---- Computed ----
 const resolvedMessages = computed(() => {
   if (props.messages?.length) {
     return props.messages;
@@ -62,6 +67,7 @@ const resolvedMessages = computed(() => {
   return [t('loader.defaultStatus')];
 });
 
+// ---- Watchers ----
 watch(
   () => props.show,
   (shouldShow) => {
@@ -88,6 +94,7 @@ watch(visible, (isVisible) => {
   releaseLoaderScrollLock();
 });
 
+// ---- Lifecycle ----
 onBeforeUnmount(() => {
   if (visible.value) {
     visible.value = false;
@@ -97,6 +104,7 @@ onBeforeUnmount(() => {
 
 </script>
 
+// ---- Styles ----
 <style scoped>
 .noveo-loading-overlay {
   z-index: 12;

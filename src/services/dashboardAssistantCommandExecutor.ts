@@ -1,3 +1,4 @@
+// ---- Imports ----
 import type { LocationQueryRaw, Router } from 'vue-router';
 import { Dark } from 'quasar';
 import { i18n } from 'src/boot/i18n';
@@ -18,6 +19,7 @@ import {
   type ThemeMode,
 } from 'src/utils/theme';
 
+// ---- Constants & Config ----
 const isDev = process.env.NODE_ENV === 'development';
 
 const log = (label: string, data: unknown) => {
@@ -63,6 +65,7 @@ const resolveRouteName = (name: string | undefined): string | undefined => {
   return ROUTE_ALIASES[name];
 };
 
+// ---- Helper Functions ----
 let driverObj: ReturnType<typeof driver> | null = null;
 
 const clearScrollLock = () => {
@@ -122,6 +125,7 @@ const waitForNavigation = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 200));
 };
 
+// ---- Command Handlers ----
 const handleNavigate = async (command: DashboardCommand, router: Router): Promise<string | null> => {
   const rawName = command.routeName;
   const resolvedName = resolveRouteName(rawName);
@@ -374,6 +378,7 @@ export interface PanelActions {
   openExplainAi?: () => void;
 }
 
+// ---- Public API ----
 export const executeCommands = async (
   commands: DashboardCommand[],
   router: Router,

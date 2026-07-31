@@ -1,0 +1,75 @@
+@startuml
+title Diagramme de Cas d'Utilisation — Backend & Traitement
+left to right direction
+skinparam packageStyle rectangle
+skinparam useCaseBorderColor #2E6E9E
+skinparam useCaseBackgroundColor #EBF5FB
+skinparam actorBorderColor #2E6E9E
+skinparam actorBackgroundColor #EBF5FB
+
+actor "Système\nopérationnel\nsource" as Source
+actor "Fournisseur\nLLM\n(NVIDIA NIM /\nGemini)" as LLM
+actor "Service\nASR\n(NVIDIA Riva /\nNIM)" as ASR
+
+rectangle "Backend Platform" {
+  rectangle "Ingestion" {
+    usecase "Consommer les\ntraces depuis Kafka" as UC_Consume
+    usecase "Vérifier l'idempotence\n(Redis)" as UC_Idempot
+    usecase "Gérer l'état\ndes sessions (Redis)" as UC_Session
+    usecase "Finaliser les sessions\n(timeout / durée max)" as UC_Finalize
+  }
+
+  rectangle "Analyse" {
+    usecase "Enrichir les événements\n(feature engineering)" as UC_Features
+    usecase "Évaluer les règles\nheurtistiques (15)" as UC_Rules
+    usecase "Inférer les modèles\nML (tabulaires + séquentiels)" as UC_ML
+    usecase "Fusionner les scores\nen risque global" as UC_Fusion
+    usecase "Détecter les anomalies\net attribuer un type" as UC_Anomaly
+    usecase "Prédire le churn\net les tendances" as UC_ChurnPred
+  }
+
+  rectangle "Publication" {
+    usecase "Publier les alertes\n(Kafka + Redis + SQL)" as UC_AlertPub
+    usecase "Persister les analyses\n(SQL Server)" as UC_Persist
+    usecase "Mettre à jour les\nprofils de risque" as UC_Profile
+    usecase "Préparer les preuves\nLLM (evidence payload)" as UC_Evidence
+  }
+
+  rectangle "API & Temps Réel" {
+    usecase "Servir les endpoints\nREST (Redis 1er / SQL fallback)" as UC_API
+    usecase "Diffuser les mises\nà jour SSE" as UC_SSE
+    usecase "Générer des\nexplications LLM" as UC_LLM
+    usecase "Transcrire un flux\naudio en texte" as UC_ASR
+  }
+}
+
+Source --> UC_Consume
+
+LLM <-- UC_LLM
+ASR <-- UC_ASR
+
+UC_Consume --> UC_Idempot : <<include>>
+UC_Consume --> UC_Session : <<include>>
+UC_Consume --> UC_Features : <<include>>
+UC_Features --> UC_Rules : <<include>>
+UC_Features --> UC_ML : <<include>>
+UC_Rules --> UC_Fusion : <<include>>
+UC_ML --> UC_Fusion : <<include>>
+UC_Fusion --> UC_Anomaly : <<include>>
+UC_Anomaly ..> UC_AlertPub : <<extend>>
+UC_Session --> UC_Finalize : <<include>>
+UC_Session --> UC_ChurnPred : <<include>>
+UC_Anomaly --> UC_Persist : <<include>>
+UC_Anomaly --> UC_Profile : <<include>>
+UC_Anomaly --> UC_Evidence : <<include>>
+UC_AlertPub --> UC_SSE : <<include>>
+UC_LLM --> UC_Evidence : <<include>>
+
+note top of UC_Fusion
+  finalRisk = clamp(
+    XGBoost×0.30 + LightGBM×0.25 +
+    Transformer×0.20 + TCN×0.10 +
+    Rules×0.15 + AggrBoost, 0, 100)
+end note
+note top of UC_AlertPub : Seulement si\nfinalRisk ≥ 35\nou sessionAlertRisk\n≥ 60
+@enduml

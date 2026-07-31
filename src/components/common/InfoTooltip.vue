@@ -18,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+// ---- Props ----
 withDefaults(defineProps<{
   text: string
   size?: string

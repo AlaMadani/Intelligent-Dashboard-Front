@@ -6,6 +6,7 @@ import { executeCommands, cleanupAssistant } from 'src/services/dashboardAssista
 import { ASSISTANT_ADVANCED_CONTEXT_EVENT, ASSISTANT_EVIDENCE_PAYLOAD_EVENT, ASSISTANT_EXPLAIN_AI_EVENT } from 'src/constants/events';
 import type { DashboardAssistantContext } from 'src/types/dashboardAssistant';
 
+// ---- Debug Utilities ----
 const isDev = process.env.NODE_ENV === 'development';
 
 if (typeof window !== 'undefined') {
@@ -83,6 +84,7 @@ if (typeof window !== 'undefined') {
   };
 }
 
+// ---- Types ----
 export type ChatSender = 'user' | 'bot';
 
 export interface ChatMessage {
@@ -91,6 +93,7 @@ export interface ChatMessage {
   text: string;
 }
 
+// ---- Module-Level State ----
 const open = ref(false);
 const typing = ref(false);
 const showSuggestions = ref(true);
@@ -124,12 +127,14 @@ if (messages.value.length === 0) {
   seedWelcome();
 }
 
+// ---- Composable ----
 export const useNoveoCompanionChat = (
   assistantContextRef?: ComputedRef<DashboardAssistantContext> | DashboardAssistantContext,
   selectedModelRef?: ComputedRef<string> | Ref<string>,
 ) => {
   const router = useRouter();
 
+  // ---- Methods ----
   const getSelectedModel = (): string | undefined => {
     if (!selectedModelRef) return undefined;
     if ('value' in selectedModelRef) {
@@ -287,6 +292,7 @@ export const useNoveoCompanionChat = (
     cleanupAssistant();
   });
 
+  // ---- Return ----
   return {
     open: readonly(open),
     typing: readonly(typing),

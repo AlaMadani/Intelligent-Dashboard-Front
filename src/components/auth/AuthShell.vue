@@ -63,6 +63,7 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BrandLogo from 'src/components/brand/BrandLogo.vue';
@@ -71,6 +72,7 @@ import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import { environment } from 'src/config/environment';
 import { useAuthStore } from 'src/stores/auth';
 
+// ---- Props & Emits ----
 defineProps<{
   title: string;
   subtitle: string;
@@ -81,9 +83,11 @@ defineEmits<{
   (event: 'dismiss-notice'): void;
 }>();
 
+// ---- Composables ----
 const { t } = useI18n();
 const authStore = useAuthStore();
 
+// ---- Computed ----
 const brandPanelStyle = computed(() =>
   environment.authPanelImageUrl
     ? { '--auth-panel-image': `url("${environment.authPanelImageUrl}")` }
@@ -91,6 +95,7 @@ const brandPanelStyle = computed(() =>
 );
 </script>
 
+// ---- Styles ----
 <style scoped>
 .auth-page {
   position: relative;

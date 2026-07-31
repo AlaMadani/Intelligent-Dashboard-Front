@@ -12,11 +12,13 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAiExplainer } from 'src/composables/useAiExplainer';
 import type { AiExplainerOpenOptions } from 'src/types/aiExplainer';
 
+// ---- Props ----
 const props = withDefaults(
   defineProps<{
     contextKey: string;
@@ -34,9 +36,11 @@ const props = withDefaults(
   },
 );
 
+// ---- Composables ----
 const { t } = useI18n();
 const { open } = useAiExplainer();
 
+// ---- Computed ----
 const label = computed(() => {
   if (props.variant === 'compact') {
     return t('aiExplainer.aiExplainer');
@@ -44,6 +48,7 @@ const label = computed(() => {
   return t(props.labelKey);
 });
 
+// ---- Methods ----
 const handleClick = () => {
   void open({
     contextKey: props.contextKey,
@@ -54,6 +59,7 @@ const handleClick = () => {
 };
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-ai-explain-btn {
   display: inline-flex;

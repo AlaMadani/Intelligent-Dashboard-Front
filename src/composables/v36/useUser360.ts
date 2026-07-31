@@ -10,6 +10,7 @@ import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useUser360 = (insuredId: Ref<string>) => {
+  // ---- State ----
   const data = shallowRef<V36User360Response | null>(null);
   const alerts = shallowRef<V36UserAlertsResponse | null>(null);
   const params = ref<V36UserAlertsParams>({ limit: 25, offset: 0 });
@@ -17,6 +18,7 @@ export const useUser360 = (insuredId: Ref<string>) => {
   const error = ref('');
   const lastUpdated = ref<Date | null>(null);
 
+  // ---- Computed ----
   const alertItems = computed(() => alerts.value?.items ?? []);
   const source = computed(() => data.value?.source ?? alerts.value?.source ?? '');
   const warnings = computed(() => [
@@ -24,6 +26,7 @@ export const useUser360 = (insuredId: Ref<string>) => {
     ...safeArray<string>(alerts.value?.warnings),
   ]);
 
+  // ---- Methods ----
   const refresh = async (silent = false) => {
     const currentInsuredId = insuredId.value.trim();
     if (!currentInsuredId) return;
@@ -46,6 +49,7 @@ export const useUser360 = (insuredId: Ref<string>) => {
     }
   };
 
+  // ---- Watchers ----
   watch(
     insuredId,
     () => {
@@ -54,11 +58,13 @@ export const useUser360 = (insuredId: Ref<string>) => {
     { immediate: true },
   );
 
+  // ---- SSE Refresh ----
   const throttledRefresh = throttle(() => { void refresh(true); }, 2000);
   useV36SseRefresh(['alerts'], () => {
     throttledRefresh();
   });
 
+  // ---- Return ----
   return {
     data,
     alerts,

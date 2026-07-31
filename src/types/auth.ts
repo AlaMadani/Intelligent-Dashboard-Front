@@ -1,6 +1,7 @@
-// Authentication types and interfaces
+// ---- Imports ----
 import type { SessionExpiredReason } from 'src/constants/auth';
 
+// ---- User ----
 export interface User {
   id: number;
   email: string;
@@ -9,6 +10,7 @@ export interface User {
   emailVerified: boolean;
 }
 
+// ---- Request DTOs ----
 export interface SignUpRequest {
   fullName: string;
   email: string;
@@ -52,6 +54,7 @@ export interface ChangePasswordRequest {
   passwordConfirm: string;
 }
 
+// ---- Response DTOs ----
 export interface AuthResponse {
   success: boolean;
   message: string;
@@ -67,6 +70,7 @@ export interface AuthResponse {
   remainingAttempts?: number;
 }
 
+// ---- State / Tokens ----
 export interface AuthState {
   user: User | null;
   accessToken: string | null;

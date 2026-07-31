@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-form class="auth-form" @submit="handleSubmit">
     <q-input
@@ -42,6 +43,7 @@
   </div>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';

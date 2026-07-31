@@ -1,4 +1,4 @@
-// Runtime configuration sourced from Vite environment variables.
+// ---- Helpers ----
 const readEnv = (value: string | undefined, fallback: string) => {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : fallback;
@@ -9,6 +9,7 @@ const readEnvNumber = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+// ---- Exports ----
 export const environment = {
   apiBaseUrl: readEnv(import.meta.env.VITE_API_BASE_URL, 'http://localhost:8081'),
   loggerEndpoint: readEnv(import.meta.env.VITE_LOGGER_ENDPOINT, 'http://localhost:5001'),

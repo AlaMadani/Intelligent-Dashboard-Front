@@ -1,10 +1,11 @@
-// Resolve app locale from explicit config or browser region/language hints.
+// ---- Constants & Types ----
 export const DEFAULT_LOCALE = 'en-US';
 export const DEFAULT_FALLBACK_LOCALE = 'en-US';
 export const SUPPORTED_LOCALES = ['en-US', 'ar', 'fr-FR', 'es-ES'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
 
+// ---- Locale Aliases ----
 const LOCALE_ALIASES: Record<string, string> = {
   en: 'en-US',
   'en-us': 'en-US',
@@ -72,6 +73,7 @@ const LANGUAGE_TO_LOCALE: Record<string, string> = {
   en: 'en-US',
 };
 
+// ---- Helper Functions ----
 const normalizeLocale = (value: string | undefined) => {
   if (!value) return null;
   const trimmed = value.trim();
@@ -109,6 +111,7 @@ const readBrowserCandidates = () => {
   return [...new Set([...fromList, ...fallback, ...resolvedLocale])].filter(Boolean);
 };
 
+// ---- Browser Detection ----
 const detectLocaleFromBrowser = () => {
   const candidates = readBrowserCandidates();
   for (const candidate of candidates) {
@@ -131,6 +134,7 @@ const detectLocaleFromBrowser = () => {
   return null;
 };
 
+// ---- Public API ----
 export const resolveAppLocale = (
   preferredLocale: string | undefined,
   fallbackLocale: string | undefined,

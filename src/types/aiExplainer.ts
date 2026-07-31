@@ -1,3 +1,4 @@
+// ---- Content ----
 export interface AiExplainerContent {
   target: string;
   summary: string;
@@ -7,6 +8,7 @@ export interface AiExplainerContent {
 
 export type AiExplainerContextKey = string;
 
+// ---- Options ----
 export interface AiExplainerOpenOptions {
   contextKey: AiExplainerContextKey;
   params?: Record<string, string | number | undefined | null>;
@@ -14,6 +16,7 @@ export interface AiExplainerOpenOptions {
   eventId?: string;
 }
 
+// ---- State ----
 export interface AiExplainerState {
   visible: boolean;
   loading: boolean;

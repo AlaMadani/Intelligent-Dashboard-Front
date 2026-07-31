@@ -1,3 +1,4 @@
+// ---- Imports ----
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import type { SessionExpiredReason } from 'src/constants/auth';
@@ -17,6 +18,7 @@ import type {
   User,
 } from 'src/types/auth';
 
+// ---- Types ----
 export interface AuthPersistedState {
   user: User | null;
   accessToken: string | null;
@@ -28,6 +30,7 @@ export interface AuthPersistedState {
   sessionExpiredReason: SessionExpiredReason | null;
 }
 
+// ---- Default State Factory ----
 const emptyPersistedState = (): AuthPersistedState => ({
   user: null,
   accessToken: null,
@@ -39,7 +42,9 @@ const emptyPersistedState = (): AuthPersistedState => ({
   sessionExpiredReason: null,
 });
 
+// ---- Store Definition ----
 export const useAuthStore = defineStore('auth', () => {
+  // -- State --
   const user = ref<User | null>(null);
   const accessToken = ref<string | null>(null);
   const refreshToken = ref<string | null>(null);
@@ -52,6 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
+  // -- Getters --
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value);
 
   const authState = computed<AuthState>(() => ({
@@ -79,6 +85,7 @@ export const useAuthStore = defineStore('auth', () => {
     sessionExpiredReason: sessionExpiredReason.value,
   }));
 
+  // -- Actions: Hydration --
   const hydratePersistedState = (state: Partial<AuthPersistedState> | null) => {
     const persisted = { ...emptyPersistedState(), ...(state ?? {}) };
 
@@ -99,6 +106,7 @@ export const useAuthStore = defineStore('auth', () => {
     hasHydrated.value = true;
   };
 
+  // -- Actions: Session Management --
   const markSessionActivity = () => {
     lastActivityAt.value = Date.now();
   };
@@ -122,6 +130,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
   };
 
+  // -- Actions: Authentication --
   const setAuthenticatedState = (tokens: AuthTokens, authenticatedUser?: User | null) => {
     accessToken.value = tokens.accessToken;
     refreshToken.value = tokens.refreshToken;
@@ -174,6 +183,7 @@ export const useAuthStore = defineStore('auth', () => {
     passwordResetToken.value = null;
   };
 
+  // -- Actions: API Calls --
   const signUp = async (request: SignUpRequest) => {
     isLoading.value = true;
     error.value = null;
@@ -372,6 +382,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearSessionExpiredNotice();
   };
 
+  // -- Actions: Token Refresh --
   const refreshAccessTokenAction = async (): Promise<AuthTokens | null> => {
     try {
       const tokens = await authService.refreshAccessToken(refreshToken.value);
@@ -386,6 +397,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  // -- Actions: Misc --
   const clearError = () => {
     error.value = null;
   };

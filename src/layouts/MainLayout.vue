@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <!-- Global shell: top toolbar, persistent drawer, and routed page content. -->
   <q-layout view="Hhh Lpr lFf">
@@ -216,8 +217,10 @@
   </q-layout>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 // Main layout state handles navigation, drawer visibility, and external monitoring links.
+// ---- Imports ----
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -243,6 +246,7 @@ import AiExplainerModal from 'src/components/ai/AiExplainerModal.vue';
 import NoveoCompanionChat from 'src/components/ai/NoveoCompanionChat.vue';
 import type { NavigationItem } from 'src/types/navigation';
 
+// ---- Composables & Reactive State ----
 const { t } = useI18n();
 const $q = useQuasar();
 const drawerBreakpoint = 1024;
@@ -265,6 +269,7 @@ const handleAssistantExplainAi = () => {
   });
 };
 
+// ---- Computed Properties ----
 // Sidebar destinations map each dashboard surface to its route, label, and icon.
 const navigation = computed<NavigationItem[]>(() =>
   LAYOUT_NAVIGATION_ITEMS.map((item) => ({
@@ -293,6 +298,7 @@ const drawerWidth = computed(() => {
   return 300;
 });
 
+// ---- Layout Navigation ----
 // Layout interactions and route helpers keep the shell synchronized with navigation.
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -321,6 +327,7 @@ const navigateTo = async (id: string) => {
   }
 };
 
+// ---- External Links & Auth ----
 // Monitoring shortcuts open the external observability tools in new tabs.
 const openGrafana = () => {
   window.open(environment.grafanaDashboardsUrl, '_blank', 'noopener');
@@ -339,6 +346,7 @@ const openAccountSettings = async () => {
   await router.push({ name: ROUTE_NAMES.ACCOUNT });
 };
 
+// ---- Idle Session Management ----
 const clearIdleTimer = () => {
   if (idleTimer) {
     window.clearTimeout(idleTimer);
@@ -384,6 +392,7 @@ const checkIdleSession = () => {
   scheduleIdleCheck();
 };
 
+// ---- Activity & Session Events ----
 const handleActivity = () => {
   if (!authStore.isAuthenticated || sessionExpiredVisible.value) {
     return;
@@ -416,6 +425,7 @@ const goToLogin = async () => {
   await router.replace({ name: ROUTE_NAMES.LOGIN });
 };
 
+// ---- Lifecycle Hooks ----
 const activityEvents = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'] as const;
 
 onMounted(() => {
@@ -451,6 +461,7 @@ onBeforeUnmount(() => {
   document.removeEventListener(ASSISTANT_EXPLAIN_AI_EVENT, handleAssistantExplainAi);
 });
 
+// ---- Watchers ----
 watch(
   () => authStore.isAuthenticated,
   (isAuthenticated) => {
@@ -467,6 +478,7 @@ watch(
 );
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-session-expired-enter-active,
 .neo-session-expired-leave-active {

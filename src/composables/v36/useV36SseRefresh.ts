@@ -17,6 +17,7 @@ export interface UseV36SseRefreshOptions {
   pollAction?: () => void;
 }
 
+// ---- Module-Level State ----
 const listeners = new Map<V36RefreshTarget, Set<RefreshHandler>>();
 const eventNames: V36RefreshTarget[] = [
   'stats',
@@ -39,6 +40,7 @@ const connecting = ref(false);
 const error = ref('');
 const lastEventAt = ref<Date | null>(null);
 
+// ---- Core Functions ----
 const parsePayload = (data: string): Record<string, unknown> => {
   if (!data) return {};
   try {
@@ -151,6 +153,7 @@ const reconnect = () => {
   connect();
 };
 
+// ---- Composable ----
 export const useV36SseRefresh = (
   targets: V36RefreshTarget[],
   handler: RefreshHandler,
@@ -190,6 +193,7 @@ export const useV36SseRefresh = (
     }
   });
 
+  // ---- Return ----
   return {
     connected,
     connecting,
@@ -201,6 +205,7 @@ export const useV36SseRefresh = (
   };
 };
 
+// ---- State Accessor ----
 export const useV36SseState = () => ({
   connected,
   connecting,

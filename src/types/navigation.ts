@@ -1,5 +1,6 @@
 import type { RouteName } from 'src/router/route-names';
 
+// ---- Navigation Config ----
 export interface NavigationItemConfig {
   id: string;
   routeName: RouteName;
@@ -8,6 +9,7 @@ export interface NavigationItemConfig {
   captionKey: string;
 }
 
+// ---- Runtime Item ----
 export interface NavigationItem {
   id: string;
   routeName: RouteName;

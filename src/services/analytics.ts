@@ -1,3 +1,4 @@
+// ---- Imports ----
 import axios from 'axios';
 import { api } from 'src/services/api-client';
 import { unwrapEnvelope } from 'src/services/http';
@@ -25,6 +26,7 @@ import type {
   V36UserAlertsResponse,
 } from 'src/types/analytics';
 
+// ---- Error Types & Helpers ----
 export interface NormalizedApiError {
   status?: number;
   code?: string;
@@ -76,6 +78,7 @@ export const normalizeApiError = (error: unknown): NormalizedApiError => {
   return { message: 'Unexpected API error' };
 };
 
+// ---- API Functions ----
 export const getV36RuntimeHealth = async (): Promise<ApiEnvelope<V36RuntimeHealthResponse>> => {
   const response = await api.get<ApiResponse<V36RuntimeHealthResponse>>(
     '/api/v1/ai/runtime-health',

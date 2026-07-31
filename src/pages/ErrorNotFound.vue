@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <!-- Static fallback shown when no configured route matches the current URL. -->
   <div class="error-page fullscreen text-center q-pa-md flex flex-center">
@@ -18,6 +19,7 @@
   </div>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { ROUTE_NAMES } from 'src/router/route-names';
@@ -25,6 +27,7 @@ import { ROUTE_NAMES } from 'src/router/route-names';
 const { t } = useI18n();
 </script>
 
+// ---- Styles ----
 <style scoped>
 .error-page {
   color: var(--neo-ink);

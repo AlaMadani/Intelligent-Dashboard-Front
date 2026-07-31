@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page neo-loading-scope">
     <loading-overlay :show="loading" context="fetch" />
@@ -17,7 +18,6 @@
             />
           </span>
           <div v-if="source" id="alerts-source-chip" class="neo-analytics-chip" data-assistant-id="alerts-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the alerts data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
-          <ai-explain-button context-key="alerts-feed" variant="prominent" />
           <q-btn
             id="alerts-refresh-button"
             unelevated
@@ -206,6 +206,7 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -370,6 +371,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-v36-filters {
   display: grid;

@@ -1,11 +1,14 @@
-// Route table: mount each dashboard surface under the shared main layout shell.
+// ---- Imports ----
 import type { RouteRecordRaw } from 'vue-router';
 import { ROUTE_NAMES } from 'src/router/route-names';
 
+// ---- Layout Components ----
 const authLayout = () => import('layouts/AuthLayout.vue');
 const mainLayout = () => import('layouts/MainLayout.vue');
 
+// ---- Route Definitions ----
 const routes: RouteRecordRaw[] = [
+  // -- Auth Routes --
   {
     path: '/login',
     name: ROUTE_NAMES.LOGIN,
@@ -43,7 +46,7 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true, authView: 'reset-password' },
   },
 
-  // Protected dashboard routes.
+  // -- Protected Dashboard Routes --
   {
     path: '/',
     component: mainLayout,
@@ -98,7 +101,7 @@ const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // Unknown URLs fall back to the dedicated 404 page.
+  // -- Catch-All / 404 Route --
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),

@@ -128,21 +128,7 @@
             </template>
           </div>
 
-          <footer class="neo-ai-modal__footer">
-            <span class="neo-ai-modal__secured">
-              <q-icon name="verified_user" />
-              {{ t('aiExplainer.securedBy') }}
-            </span>
-            <div class="neo-ai-modal__actions">
-              <button type="button" class="neo-ai-modal__btn neo-ai-modal__btn--ghost" @click="close">
-                {{ t('aiExplainer.dismissAnalysis') }}
-              </button>
-              <button type="button" class="neo-ai-modal__btn neo-ai-modal__btn--primary" @click="handleDeploy">
-                <q-icon name="shield" />
-                {{ t('aiExplainer.deploySafeguards') }}
-              </button>
-            </div>
-          </footer>
+
         </div>
       </div>
     </Transition>
@@ -151,15 +137,15 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
 import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import LlmExplanationPanel from 'src/components/llm/LlmExplanationPanel.vue';
 import { useAiExplainer } from 'src/composables/useAiExplainer';
 
+// ---- State ----
 const { t } = useI18n();
-const $q = useQuasar();
 const showEvidence = ref(false);
 const {
   visible,
@@ -174,21 +160,11 @@ const {
   evidence,
   currentEventId,
   close,
-  deploySafeguards,
   generate,
   loadEvidence,
 } = useAiExplainer();
 
-const handleDeploy = () => {
-  const message = deploySafeguards();
-  $q.notify({
-    type: 'positive',
-    message,
-    icon: 'shield',
-    position: 'top',
-  });
-};
-
+// ---- Computed ----
 const evidenceJson = computed(() => JSON.stringify(evidence.value ?? {}, null, 2));
 
 const openEvidence = async () => {
@@ -199,6 +175,7 @@ const openEvidence = async () => {
 };
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-ai-modal {
   position: fixed;
@@ -407,65 +384,6 @@ const openEvidence = async () => {
   color: var(--neo-success);
 }
 
-.neo-ai-modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: var(--neo-border);
-}
-
-.neo-ai-modal__secured {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--neo-ink-muted);
-  font-size: 11px;
-}
-
-.neo-ai-modal__secured :deep(.q-icon) {
-  color: var(--neo-success);
-}
-
-.neo-ai-modal__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.neo-ai-modal__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.neo-ai-modal__btn--ghost {
-  background: var(--neo-subtle-bg);
-  color: var(--neo-ink-muted);
-}
-
-.neo-ai-modal__btn--ghost:hover {
-  background: var(--neo-card-bg-tint);
-}
-
-.neo-ai-modal__btn--primary {
-  background: var(--neo-accent);
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(229, 77, 86, 0.24);
-}
-
-.neo-ai-modal__btn--primary:hover {
-  background: var(--neo-accent-hover);
-}
-
 .neo-ai-modal__context-info {
   display: flex;
   flex-wrap: wrap;
@@ -535,18 +453,6 @@ const openEvidence = async () => {
     grid-template-columns: 1fr;
   }
 
-  .neo-ai-modal__footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
 
-  .neo-ai-modal__actions {
-    justify-content: stretch;
-  }
-
-  .neo-ai-modal__btn {
-    flex: 1;
-    justify-content: center;
-  }
 }
 </style>

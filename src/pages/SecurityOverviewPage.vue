@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page neo-loading-scope">
     <loading-overlay :show="loading" context="fetch" />
@@ -95,7 +96,6 @@
             <h3>{{ t('v36.securityOverview.topAnomalyTypes') }} <InfoTooltip :text="t('v36.help.securityOverview.topAnomalyTypes')" /></h3>
             <p>{{ t('v36.securityOverview.topAnomalyTypesSubtitle') }}</p>
           </div>
-          <ai-explain-button context-key="security-overview-top-anomalies" variant="prominent" />
         </div>
         <bar-list-chart :items="topAnomalyRows" :empty-message="t('v36.securityOverview.noAnomalyTypes')" />
       </article>
@@ -114,7 +114,6 @@
             <h3>{{ t('v36.securityOverview.topTriggeredRules') }} <InfoTooltip :text="t('v36.help.securityOverview.topTriggeredRules')" /></h3>
             <p>{{ t('v36.securityOverview.topTriggeredRulesSubtitle') }}</p>
           </div>
-          <ai-explain-button context-key="security-overview-top-rules" variant="prominent" />
         </div>
         <bar-list-chart :items="topRuleRows" :empty-message="t('v36.common.noData')" />
       </article>
@@ -244,7 +243,6 @@
             <h3>{{ t('v36.securityOverview.criticalPreview') }}</h3>
             <p>{{ t('v36.securityOverview.criticalPreviewSubtitle') }}</p>
           </div>
-          <ai-explain-button context-key="security-overview-critical-preview" variant="prominent" />
         </div>
         <div class="neo-table-wrapper">
           <table class="neo-table">
@@ -313,6 +311,7 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
@@ -558,6 +557,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-v36-kpis {
   display: grid;

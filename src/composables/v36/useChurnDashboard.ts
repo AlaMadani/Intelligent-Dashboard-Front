@@ -14,6 +14,7 @@ import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useChurnDashboard = () => {
+  // ---- State ----
   const data = shallowRef<V36ChurnDashboardResponse | null>(null);
   const users = shallowRef<V36ChurnUsersResponse | null>(null);
   const params = ref<V36ChurnUsersParams>({ limit: 20, offset: 0 });
@@ -21,6 +22,7 @@ export const useChurnDashboard = () => {
   const error = ref('');
   const lastUpdated = ref<Date | null>(null);
 
+  // ---- Computed ----
   const userItems = computed(() => {
     const raw = users.value?.items ?? data.value?.topChurnRiskUsers ?? [];
     const seen = new Map<string, (typeof raw)[number]>();
@@ -43,6 +45,7 @@ export const useChurnDashboard = () => {
     ...safeArray<string>(users.value?.warnings),
   ]);
 
+  // ---- Methods ----
   const refresh = async (silent = false) => {
     if (!silent) loading.value = true;
     error.value = '';
@@ -62,6 +65,7 @@ export const useChurnDashboard = () => {
     }
   };
 
+  // ---- Pagination ----
   const nextPage = () => {
     if (!hasMore.value) return;
     const limit = params.value.limit ?? 20;
@@ -81,15 +85,18 @@ export const useChurnDashboard = () => {
     void refresh();
   };
 
+  // ---- Lifecycle ----
   onMounted(() => {
     void refresh();
   });
 
+  // ---- SSE Refresh ----
   const throttledRefresh = throttle(() => { void refresh(true); }, 10000);
   useV36SseRefresh(['churn'], () => {
     throttledRefresh();
   });
 
+  // ---- Return ----
   return {
     data,
     users,

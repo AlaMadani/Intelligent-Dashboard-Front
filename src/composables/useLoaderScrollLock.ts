@@ -1,14 +1,18 @@
+// ---- Constants ----
 const SCROLL_LOCK_CLASS = 'noveo-loader-scroll-lock';
 
+// ---- Helpers ----
 const scrollLockTargets = () => [
   document.documentElement,
   document.body,
   ...document.querySelectorAll('.q-page-container, .auth-page, .auth-form-panel'),
 ];
 
+// ---- Module-Level State ----
 let scrollLockCount = 0;
 const lockedElements = new Set<Element>();
 
+// ---- Internal Helpers ----
 const removeLockFromAll = () => {
   lockedElements.forEach((element) => {
     try {
@@ -23,6 +27,7 @@ const removeLockFromAll = () => {
   });
 };
 
+// ---- Public API ----
 export const acquireLoaderScrollLock = () => {
   scrollLockCount += 1;
 

@@ -30,9 +30,11 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { useI18n } from 'vue-i18n';
 import { useTheme } from 'src/composables/useTheme';
 
+// ---- Setup ----
 const { t } = useI18n();
 const { themeMode, setTheme } = useTheme();
 </script>

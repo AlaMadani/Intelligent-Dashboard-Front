@@ -1,7 +1,9 @@
+// ---- Types & Constants ----
 export type ThemeMode = 'light' | 'dark';
 
 export const THEME_STORAGE_KEY = 'noveo-care-theme';
 
+// ---- Resolve Initial Theme ----
 export const resolveInitialTheme = (): ThemeMode => {
   if (typeof window === 'undefined') {
     return 'dark';
@@ -11,6 +13,7 @@ export const resolveInitialTheme = (): ThemeMode => {
   return storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
 };
 
+// ---- Apply Theme ----
 export const applyTheme = (mode: ThemeMode, setQuasarDark?: (value: boolean) => void) => {
   if (typeof document === 'undefined') {
     return;
@@ -23,6 +26,7 @@ export const applyTheme = (mode: ThemeMode, setQuasarDark?: (value: boolean) => 
   setQuasarDark?.(mode === 'dark');
 };
 
+// ---- Persist Theme ----
 export const persistTheme = (mode: ThemeMode) => {
   if (typeof window === 'undefined') {
     return;

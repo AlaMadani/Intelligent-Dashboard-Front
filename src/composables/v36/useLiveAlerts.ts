@@ -14,6 +14,7 @@ import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useLiveAlerts = () => {
+  // ---- State ----
   const data = shallowRef<V36LiveAlertsResponse | null>(null);
   const criticalData = shallowRef<V36LiveAlertsResponse | null>(null);
   const params = ref<V36AlertListParams>({ limit: 50, offset: 0 });
@@ -21,6 +22,7 @@ export const useLiveAlerts = () => {
   const error = ref('');
   const lastUpdated = ref<Date | null>(null);
 
+  // ---- Computed ----
   const items = computed<V36LiveAlertItem[]>(() => {
     const list = data.value?.items ?? [];
     return [...list].sort((a, b) => {
@@ -57,6 +59,7 @@ export const useLiveAlerts = () => {
     return Math.floor(o / l) + 1;
   });
 
+  // ---- Methods ----
   const setPageSize = (size: number) => {
     params.value = {
       ...params.value,
@@ -86,6 +89,7 @@ export const useLiveAlerts = () => {
     }
   };
 
+  // ---- Pagination ----
   const nextPage = () => {
     if (!hasMore.value) return;
     const l = limit.value;
@@ -105,15 +109,18 @@ export const useLiveAlerts = () => {
     void refresh();
   };
 
+  // ---- Lifecycle ----
   onMounted(() => {
     void refresh();
   });
 
+  // ---- SSE Refresh ----
   const throttledRefresh = throttle(() => { void refresh(true); }, 2000);
   useV36SseRefresh(['alerts'], () => {
     throttledRefresh();
   });
 
+  // ---- Return ----
   return {
     data,
     criticalData,

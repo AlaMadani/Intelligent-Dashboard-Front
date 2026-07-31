@@ -88,12 +88,13 @@
 </template>
 
 <script setup lang="ts">
-// Convert compact numeric series into SVG points, axes, and paths for a lightweight trend chart.
+// ---- Imports ----
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { Point, Tick } from 'src/models/chart';
 import { formatNumber } from 'src/utils/format';
 
+// ---- Props ----
 const props = withDefaults(
   defineProps<{
     values: number[];
@@ -110,7 +111,7 @@ const props = withDefaults(
 
 const { t } = useI18n();
 
-// Static chart geometry keeps the SVG calculations consistent across all callers.
+// ---- Constants ----
 const padding = {
   top: 14,
   right: 12,
@@ -149,7 +150,7 @@ const palettes = {
 
 const palette = computed(() => palettes[props.tone]);
 
-// Normalize incoming values into a typed series with display labels.
+// ---- Computed ----
 const series = computed(() =>
   props.values.map((rawValue, index) => ({
     value: Number.isFinite(rawValue) ? Number(rawValue) : 0,
@@ -246,6 +247,7 @@ const formatValue = (value: number) => {
 };
 </script>
 
+// ---- Styles ----
 <style scoped>
 /* Shared SVG chart sizing and axis label styling. */
 .neo-trend-chart {

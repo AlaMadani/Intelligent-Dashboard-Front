@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <div class="auth-verification-summary">
     <q-icon name="mark_email_unread" />
@@ -66,6 +67,7 @@
   </div>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';

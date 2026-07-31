@@ -1,5 +1,7 @@
+// ---- Imports ----
 import { api } from 'src/services/api-client';
 
+// ---- Types ----
 export interface AsrTranscribeResponse {
   transcript: string;
   provider: string;
@@ -10,6 +12,7 @@ export interface AsrTranscribeResponse {
   requestId?: string;
 }
 
+// ---- API Functions ----
 export async function transcribeAudio(
   file: Blob,
   languageCode?: string,

@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page">
     <section class="neo-section">
@@ -594,6 +595,7 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -939,6 +941,7 @@ const handleAssistantAdvancedContext = () => {
 
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-v36-grid {
   display: grid;

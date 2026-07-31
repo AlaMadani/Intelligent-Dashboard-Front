@@ -14,6 +14,7 @@ import type {
 } from 'src/types/analytics';
 
 export const useLlmExplanation = (eventId: Ref<string>) => {
+  // ---- State ----
   const explanation = shallowRef<V36LlmExplanationResponse | null>(null);
   const evidence = shallowRef<V36LlmEvidencePayload | null>(null);
   const loading = ref(false);
@@ -23,10 +24,12 @@ export const useLlmExplanation = (eventId: Ref<string>) => {
   const evidenceError = ref('');
   const lastUpdated = ref<Date | null>(null);
 
+  // ---- Computed ----
   const fallback = computed(
     () => Boolean(explanation.value?.fallback) || explanation.value?.source === 'provider_error_fallback',
   );
 
+  // ---- Methods ----
   const loadCached = async () => {
     const currentEventId = eventId.value.trim();
     if (!currentEventId) return;
@@ -98,6 +101,7 @@ export const useLlmExplanation = (eventId: Ref<string>) => {
     }
   };
 
+  // ---- Watchers ----
   watch(
     eventId,
     () => {
@@ -108,6 +112,7 @@ export const useLlmExplanation = (eventId: Ref<string>) => {
     { immediate: true },
   );
 
+  // ---- Return ----
   return {
     explanation,
     evidence,

@@ -18,12 +18,13 @@
 </template>
 
 <script setup lang="ts">
-// Normalize incoming values into proportional bar rows for a lightweight display-only chart.
+// ---- Imports ----
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { BarChartRow } from 'src/models/chart';
 import { formatNumber } from 'src/utils/format';
 
+// ---- Props ----
 const props = defineProps<{
   items: BarChartRow[];
   emptyMessage?: string;
@@ -31,7 +32,7 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-// Scale each value relative to the current maximum so the list reads like a mini chart.
+// ---- Computed ----
 const rows = computed(() => {
   const max = Math.max(...props.items.map((item) => item.value), 0);
   return props.items.map((item) => ({
@@ -42,6 +43,7 @@ const rows = computed(() => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 /* Shared ranked-bar chart styling. */
 .neo-bar-list {

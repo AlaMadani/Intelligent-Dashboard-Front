@@ -1,0 +1,358 @@
+@startuml
+title Diagramme de Cas d'Utilisation — NoveoCare Fraud & Security Detection Platform
+left to right direction
+skinparam packageStyle rectangle
+skinparam useCaseBorderColor #2E6E9E
+skinparam useCaseBackgroundColor #EBF5FB
+skinparam actorBorderColor #2E6E9E
+skinparam actorBackgroundColor #EBF5FB
+skinparam arrowColor #2E6E9E
+skinparam arrowThickness 1.5
+
+' ============================================
+' ACTEURS EXTERNES
+' ============================================
+actor "Analyste\nsécurité / métier" as Analyste
+actor "Administrateur\ntechnique" as Admin
+actor "Système\nopérationnel\nsource\n(Cosmos DB)" as Source
+actor "Fournisseur\nLLM\n(NVIDIA NIM /\nGemini)" as LLM
+actor "Service\nASR\n(NVIDIA Riva /\nNIM)" as ASR
+
+' ============================================
+' PÉRIMÈTRE DU SYSTÈME
+' ============================================
+rectangle "NoveoCare Platform (Data Processor + API Service + Frontend)" {
+
+  ' ===== 1. INGESTION ET TRAITEMENT DES ÉVÉNEMENTS =====
+  rectangle "1. Ingestion & Traitement" {
+    usecase (Collecter les événements\nd'audit depuis Kafka\n« topic-audit-trail ») as UC_Collect
+    usecase (Parser JSON vers\nAuditTrailEvent) as UC_Parse
+    usecase (Vérifier l'idempotence\nvia Redis marker) as UC_Idempotence
+    usecase (Bufferiser les événements\ndans Redis\n« session:{insuredId}:{sessionId} ») as UC_Buffer
+    usecase (Trier et assembler\nl'historique de session) as UC_History
+    usecase (Gérer l'état de session\ndans Redis\n« session:state:* ») as UC_SessionState
+    usecase (Finaliser les sessions\n- Timeout 20 min\n- Durée max 2h\n- Flush toutes les 30s) as UC_Finalize
+    usecase (Enregistrer les\nstatistiques live\n« stats:live:* ») as UC_Stats
+  }
+
+  ' ===== 2. FEATURE ENGINEERING =====
+  rectangle "2. Feature Engineering" {
+    usecase (Enrichir les événements\npar Feature Engineering) as UC_Features
+    usecase (Calculer les écarts\ntemporels inter-actions) as UC_Deltas
+    usecase (Détecter les changements\nIP / device / pays) as UC_Changes
+    usecase (Suivre les streaks\nKO / OK) as UC_KOStreak
+    usecase (Détecter les bursts\nde téléchargement\n- fenêtre glissante 2min) as UC_Bursts
+    usecase (Détecter les boucles\nping-pong) as UC_PingPong
+    usecase (Construire le résumé\nde session courant) as UC_Summary
+  }
+
+  ' ===== 3. DÉTECTION D'ANOMALIES =====
+  rectangle "3. Détection d'Anomalies" {
+    usecase (Évaluer les règles\ndéterministes - 15 règles) as UC_Rules
+    usecase (Inférer modèles tabulaires\n- XGBoost (pds 0.30)\n- LightGBM (pds 0.25)\n- CatBoost (contexte)\n- OneClassSVM (contexte)) as UC_Tabular
+    usecase (Inférer modèles\nséquentiels\n- Transformer ONNX (pds 0.20)\n- TCN ONNX (pds 0.10)) as UC_Sequence
+    usecase (Prédire le risque\nde churn\n- ExtraTrees) as UC_ChurnPred
+    usecase (Évaluer les prévisions\nvolumétriques\n- XGBoost / Ridge) as UC_ForecastEval
+    usecase (Fusionner les scores\nen risque global\nRiskFusionServiceV36) as UC_Fusion
+    usecase (Attribuer le type\nd'anomalie\nAnomalyTypeAttributionService) as UC_Attribution
+    usecase (Appliquer le load\nshedding selon lag Kafka) as UC_LoadShed
+    usecase (Appliquer le live\nfast mode - budget 500ms) as UC_FastMode
+  }
+
+  ' ===== 4. PUBLICATION ET PERSISTANCE =====
+  rectangle "4. Publication & Persistance" {
+    usecase (Publier l'alerte\nd'anomalie\n→ Kafka « topic-anomaly-alerts »\n→ Redis « alerts:live:* »\n→ SQL « anomaly_events ») as UC_PublishAlert
+    usecase (Persister l'analyse\nde session\n→ SQL « session_analysis ») as UC_PersistSession
+    usecase (Mettre à jour le profil\nde risque utilisateur\n→ SQL « user_risk_profile ») as UC_RiskProfile
+    usecase (Mettre à jour les\nsnapshots dashboard\n→ Redis « dashboard:* »\n→ SQL « dashboard_snapshots ») as UC_Snapshots
+    usecase (Prédire le prochain\névénement\n→ SQL « next_event_prediction ») as UC_NextEvent
+    usecase (Préparer les preuves\nLLM « evidence payload »\n→ Redis « alert:llm-evidence:* ») as UC_EvidencePrep
+  }
+
+  ' ===== 5. PLANIFICATION =====
+  rectangle "5. Jobs Planifiés" {
+    usecase (Rafraîchir les vues\ndashboard (toutes les 15s)) as UC_SchedDash
+    usecase (Rafraîchir les stats\nlive (toutes les 10s)) as UC_SchedStats
+    usecase (Rafraîchir les\nprévisions (toutes les 2min)) as UC_SchedForecast
+    usecase (Nettoyer les sessions\nexpirées (toutes les 30s)) as UC_SchedClean
+    usecase (Journaliser les\nperformances (périodique)) as UC_SchedPerf
+    usecase (Prédire les tendances\nsystème (périodique)) as UC_SchedTrend
+  }
+
+  ' ===== 6. API - AUTH & COMPTE =====
+  rectangle "6. API - Authentification" {
+    usecase (Créer un compte\nPOST /api/v1/auth/signup) as UC_Signup
+    usecase (Se connecter\nPOST /api/v1/auth/signin) as UC_Signin
+    usecase (Rafraîchir le token\nJWT POST /api/v1/auth/refresh) as UC_Refresh
+    usecase (Vérifier l'email\nPOST /api/v1/auth/verify-email) as UC_VerifyEmail
+    usecase (Renouveler le code\nde vérification) as UC_ResendCode
+    usecase (Réinitialiser le mot\nde passe - forgot / reset / confirm) as UC_PasswordReset
+    usecase (Changer le mot\nde passe (authentifié)) as UC_ChangePassword
+    usecase (Vérifier la santé\nRedis + DB\nGET /api/v1/health) as UC_Health
+  }
+
+  ' ===== 7. API - CONSULTATION ANALYSTE =====
+  rectangle "7. API - Tableaux de Bord & Alertes" {
+    usecase (Consulter la vue\nde sécurité\nGET /api/v1/security/overview) as UC_Security
+    usecase (Consulter les\ndiagnostics\nGET /api/v1/security/diagnostics) as UC_Diagnostics
+    usecase (Consulter les alertes\nlive (paginated, filterable)\nGET /api/v1/alerts/live) as UC_Alerts
+    usecase (Consulter les alertes\ncritiques\nGET /api/v1/alerts/critical) as UC_Critical
+    usecase (Investiguer une alerte\nGET /api/v1/alerts/{eventId}\n- 4 niveaux de lecture) as UC_Investigate
+    usecase (Consulter le profil\n360° d'un utilisateur\nGET /api/v1/users/{insuredId}/360) as UC_User360
+    usecase (Consulter l'historique\nd'alertes utilisateur\nGET /api/v1/users/{insuredId}/alerts) as UC_UserAlerts
+    usecase (Consulter le dashboard\nchurn\nGET /api/v1/churn/dashboard) as UC_ChurnDash
+    usecase (Consulter la liste\ndes utilisateurs à risque\nGET /api/v1/churn/users) as UC_ChurnUsers
+    usecase (Consulter le dashboard\nprévisions\nGET /api/v1/forecast/dashboard) as UC_ForecastDash
+    usecase (Consulter les\nprédictions next-event\nGET /api/v1/.../next-event-prediction) as UC_NextEventAPI
+  }
+
+  ' ===== 8. API - EXPLICATIONS LLM =====
+  rectangle "8. API - LLM & Assistant" {
+    usecase (Lire les preuves LLM\nGET /api/v1/explanations/\nalerts/{eventId}/evidence) as UC_Evidence
+    usecase (Lire l'explication\nLLM en cache\nGET /api/v1/explanations/\nalerts/{eventId}) as UC_ReadExplanation
+    usecase (Générer / régénérer\nune explication LLM\nPOST /api/v1/explanations/\nalerts/{eventId}) as UC_GenExplanation
+    usecase (Interagir avec\nl'assistant Dashboard\nPOST /api/v1/dashboard-\nassistant/message) as UC_Assistant
+    usecase (Lister les capacités\nde l'assistant\nGET /api/v1/dashboard-\nassistant/capabilities) as UC_Capabilities
+    usecase (Transcrire un fichier\naudio en texte\nPOST /api/v1/asr/transcribe) as UC_Transcribe
+    usecase (Vérifier la santé\ndu service ASR\nGET /api/v1/asr/status) as UC_AsrHealth
+  }
+
+  ' ===== 9. API - ADMIN =====
+  rectangle "9. API - Administration" {
+    usecase (Consulter la santé\nruntime du moteur\nGET /api/v1/ai/runtime-health) as UC_HealthRuntime
+    usecase (Consulter les\nrapports IA\nGET /api/v1/ai/reports) as UC_Reports
+    usecase (Consulter les\nwinners IA\nGET /api/v1/ai/final-winners) as UC_Winners
+  }
+
+  ' ===== 10. TEMPS RÉEL (SSE) =====
+  rectangle "10. Temps Réel (SSE)" {
+    usecase (Diffuser les alertes\nen temps réel) as UC_StreamAlerts
+    usecase (Diffuser les mises\nà jour dashboard) as UC_StreamDash
+    usecase (Diffuser les stats\nlive) as UC_StreamStats
+    usecase (Recevoir les\névénements SSE\nGET /api/v1/stream/live) as UC_SSE
+    usecase (Recharger la vue\ndepuis l'API REST) as UC_RefreshView
+    usecase (Basculer en mode\npolling (30s) si SSE échoue) as UC_Polling
+  }
+
+  ' ===== 11. FRONTEND - FONCTIONS UTILISATEUR =====
+  rectangle "11. Frontend - UI" {
+    usecase (Changer de thème\nDark / Light) as UC_Theme
+    usecase (Changer de langue\ni18n : en / fr / es / ar) as UC_Lang
+    usecase (Basculer en mode\nPWA offline) as UC_PWA
+    usecase (Gérer le timeout\nd'inactivité (15 min)) as UC_Idle
+  }
+}
+
+' ============================================
+' ASSOCIATIONS ACTEURS → CAS D'UTILISATION
+' ============================================
+
+' Source
+Source --> UC_Collect
+
+' Analyste
+Analyste --> UC_Signup
+Analyste --> UC_Signin
+Analyste --> UC_Security
+Analyste --> UC_Diagnostics
+Analyste --> UC_Alerts
+Analyste --> UC_Critical
+Analyste --> UC_Investigate
+Analyste --> UC_User360
+Analyste --> UC_UserAlerts
+Analyste --> UC_ChurnDash
+Analyste --> UC_ChurnUsers
+Analyste --> UC_ForecastDash
+Analyste --> UC_NextEventAPI
+Analyste --> UC_ReadExplanation
+Analyste --> UC_Evidence
+Analyste --> UC_GenExplanation
+Analyste --> UC_Assistant
+Analyste --> UC_Capabilities
+Analyste --> UC_Transcribe
+Analyste --> UC_AsrHealth
+Analyste --> UC_Theme
+Analyste --> UC_Lang
+Analyste --> UC_PWA
+
+' Administrateur
+Admin --> UC_HealthRuntime
+Admin --> UC_Diagnostics
+Admin --> UC_Reports
+Admin --> UC_Winners
+Admin --> UC_Health
+
+' Acteurs secondaires
+LLM <-- UC_GenExplanation
+ASR <-- UC_Transcribe
+
+' ============================================
+' RELATIONS INCLUDE (flèche pleine --->)
+' ============================================
+
+' Pipeline ingestion
+UC_Collect --> UC_Parse : <<include>>
+UC_Collect --> UC_Idempotence : <<include>>
+UC_Collect --> UC_Buffer : <<include>>
+UC_Collect --> UC_History : <<include>>
+UC_Collect --> UC_Stats : <<include>>
+
+' Feature engineering (toujours exécuté)
+UC_Collect --> UC_Features : <<include>>
+UC_Features --> UC_Deltas : <<include>>
+UC_Features --> UC_Changes : <<include>>
+UC_Features --> UC_KOStreak : <<include>>
+UC_Features --> UC_Bursts : <<include>>
+UC_Features --> UC_PingPong : <<include>>
+UC_Features --> UC_Summary : <<include>>
+
+' Session
+UC_Collect --> UC_SessionState : <<include>>
+UC_Collect --> UC_Finalize : <<include>>
+
+' Règles & Modèles (toujours évalués, éventuellement dégradés)
+UC_Collect --> UC_Rules : <<include>>
+UC_Collect --> UC_Tabular : <<include>>
+UC_Collect --> UC_Sequence : <<include>>
+UC_Collect --> UC_ChurnPred : <<include>>
+UC_Collect --> UC_ForecastEval : <<include>>
+
+' Fusion (toujours)
+UC_Rules --> UC_Fusion : <<include>>
+UC_Tabular --> UC_Fusion : <<include>>
+UC_Sequence --> UC_Fusion : <<include>>
+UC_Fusion --> UC_Attribution : <<include>>
+
+' Persistance post-traitement (toujours)
+UC_Collect --> UC_PersistSession : <<include>>
+UC_Collect --> UC_RiskProfile : <<include>>
+UC_Collect --> UC_NextEvent : <<include>>
+UC_Collect --> UC_EvidencePrep : <<include>>
+
+' Assistant
+UC_Assistant --> UC_Capabilities : <<include>>
+
+' SSE
+UC_SSE --> UC_RefreshView : <<include>>
+UC_SSE --> UC_StreamAlerts : <<include>>
+UC_SSE --> UC_StreamDash : <<include>>
+UC_SSE --> UC_StreamStats : <<include>
+
+' ============================================
+' RELATIONS EXTEND (flèche pointillée ..>)
+' ============================================
+
+' Load shedding (extension conditionnelle)
+UC_Tabular ..> UC_LoadShed : <<extend>>
+UC_Sequence ..> UC_LoadShed : <<extend>>
+UC_LoadShed ..> UC_FastMode : <<extend>>
+
+' Publication d'alerte (conditionnelle : si score ≥ 35 ou ≥ 60)
+UC_Fusion ..> UC_PublishAlert : <<extend>>
+UC_PublishAlert ..> UC_Snapshots : <<extend>>
+
+' Investigation → LLM
+UC_Investigate ..> UC_Evidence : <<extend>>
+UC_Investigate ..> UC_ReadExplanation : <<extend>>
+UC_ReadExplanation ..> UC_GenExplanation : <<extend>>
+
+' Assistant → ASR
+UC_Assistant ..> UC_Transcribe : <<extend>>
+
+' SSE refresh → vues
+UC_StreamAlerts ..> UC_Alerts : <<extend>>
+UC_StreamDash ..> UC_Security : <<extend>>
+UC_StreamDash ..> UC_ChurnDash : <<extend>>
+UC_StreamDash ..> UC_ForecastDash : <<extend>>
+UC_StreamDash ..> UC_HealthRuntime : <<extend>>
+UC_StreamDash ..> UC_User360 : <<extend>>
+
+' Auth
+UC_Signup ..> UC_VerifyEmail : <<extend>>
+UC_Signin ..> UC_Refresh : <<extend>>
+UC_Alerts ..> UC_Critical : <<extend>>
+
+' Fallback SSE → polling
+UC_SSE ..> UC_Polling : <<extend>>
+
+' Jobs planifiés → actions
+UC_SchedDash --> UC_Snapshots : <<include>>
+UC_SchedStats --> UC_Stats : <<include>>
+UC_SchedForecast --> UC_ForecastEval : <<include>>
+UC_SchedClean --> UC_Finalize : <<include>>
+
+' ============================================
+' NOTES
+' ============================================
+note top of UC_LoadShed
+  Lag ≥ 5k → TCN seul
+  Lag ≥ 10k → heuristiques seules
+  Lag ≥ 20k → règles seules
+end note
+
+note top of UC_Rules
+  OFF_HOURS_ACCESS (25)
+  SENSITIVE_API_OFF_HOURS (25)
+  STATUS_CODE_BURST (35)
+  UNUSUAL_DEVICE (35)
+  DEVICE_SWITCH (35)
+  API_SCRAPING_PATTERN (35)
+  COUNTRY_SWITCH (40)
+  UNUSUAL_COUNTRY (40)
+  LARGE_DOWNLOAD (40)
+  DATA_EXTRACTION_PATTERN (40)
+  RAPID_FIRE_EVENTS (30)
+  SKIP_LOGIN (30)
+  IMPOSSIBLE_ENDPOINT_TRANSITION (30)
+  SENSITIVE_API_OUTSIDE_BUSINESS_CONTEXT (30)
+  SESSION_TIMEOUT (20)
+end note
+
+note top of UC_Fusion
+  finalRisk = clamp(
+    XGBoost × 0.30 +
+    LightGBM × 0.25 +
+    Transformer × 0.20 +
+    TCN × 0.10 +
+    Rules × 0.15 +
+    AggrBoost,
+    0.0, 100.0)
+  Tiers: LOW [0-35) | MEDIUM [35-60)
+         HIGH [60-80) | CRITICAL [80-100]
+end note
+
+note top of UC_Investigate
+  Lecture 4 niveaux :
+  Tier 1 → Redis investigation
+  Tier 2 → Redis live payload
+  Tier 3 → SQL investigation JSON
+  Tier 4 → Safe SQL-only mode
+end note
+
+note top of UC_GenExplanation
+  Provider: NVIDIA NIM (Nemotron)
+  Fallback: Gemini
+  Cache: Redis + SQL
+  Verrou: 409 si déjà en cours
+  forceRefresh contourne le cache
+end note
+
+note top of UC_Assistant
+  Pipeline 3 étages :
+  1. Pattern matching déterministe
+  2. Appel modèle LLM
+  3. Fallback déterministe
+  Actions autorisées seulement :
+  lire, naviguer, chercher,
+  highlight, filtrer, refresh
+end note
+
+note top of UC_SSE
+  Événements SSE :
+  « stats », « refresh »
+  « alerts », « security-overview »
+  « runtime-health », « churn »
+  « forecast »
+end note
+
+@enduml

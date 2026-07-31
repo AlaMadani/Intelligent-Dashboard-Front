@@ -1,8 +1,9 @@
-// Logger boot file: capture uncaught Vue errors and forward them to the logging pipeline.
+// ---- Imports ----
 import { boot } from 'quasar/wrappers';
 import axios from 'axios';
 import { environment } from 'src/config/environment';
 
+// ---- Boot Export ----
 // Hook into Vue's global error pipeline and send a fire-and-forget Logstash payload.
 export default boot(({ app }) => {
   // Global Vue error handler with Logstash forwarding.

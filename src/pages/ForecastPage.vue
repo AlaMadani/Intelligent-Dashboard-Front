@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page neo-loading-scope">
     <loading-overlay :show="loading" context="fetch" />
@@ -17,7 +18,6 @@
             />
           </span>
           <div v-if="source" id="forecast-source-chip" class="neo-analytics-chip" data-assistant-id="forecast-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the forecast data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
-          <ai-explain-button context-key="forecast-dashboard" variant="prominent" />
           <q-btn
             id="forecast-refresh-button"
             data-assistant-id="forecast-refresh-button"
@@ -71,7 +71,6 @@
             <h3>{{ t('v36.forecast.totalEventsHistory') }} <InfoTooltip :text="t('v36.help.forecast.totalEventsHistory')" /></h3>
             <p>{{ totalEventsModel }}</p>
           </div>
-          <ai-explain-button context-key="forecast-total-events" variant="prominent" />
         </div>
         <spark-area-chart
           :values="totalEventValues"
@@ -100,12 +99,13 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import InfoTooltip from 'src/components/common/InfoTooltip.vue';
 import SparkAreaChart from 'src/components/dashboard/SparkAreaChart.vue';
-import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
+
 import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
 import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import { ASSISTANT_REFRESH_FORECAST_EVENT } from 'src/constants/events';
@@ -196,6 +196,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-v36-kpis,
 .neo-v36-grid {

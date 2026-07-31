@@ -17,6 +17,7 @@ import { throttle } from 'src/utils/throttle';
 import { useV36SseRefresh } from './useV36SseRefresh';
 
 export const useSecurityOverview = () => {
+  // ---- State ----
   const data = shallowRef<V36SecurityOverviewResponse | null>(null);
   const diagnostics = shallowRef<V36DiagnosticsResponse | null>(null);
   const runtimeHealth = shallowRef<V36RuntimeHealthResponse | null>(null);
@@ -25,6 +26,7 @@ export const useSecurityOverview = () => {
   const error = ref('');
   const lastUpdated = ref<Date | null>(null);
 
+  // ---- Computed ----
   const source = computed(() => data.value?.source ?? '');
   const warnings = computed(() => [
     ...new Set([
@@ -35,6 +37,7 @@ export const useSecurityOverview = () => {
     ]),
   ]);
 
+  // ---- Methods ----
   const refreshCriticalAlerts = async () => {
     const response = await getV36CriticalAlerts({ limit: 5, offset: 0 });
     criticalAlerts.value = response.data.items ?? [];
@@ -65,15 +68,18 @@ export const useSecurityOverview = () => {
     }
   };
 
+  // ---- Lifecycle ----
   onMounted(() => {
     void refresh();
   });
 
+  // ---- SSE Refresh ----
   const throttledRefresh = throttle(() => { void refresh(true); }, 5000);
   useV36SseRefresh(['security-overview', 'runtime-health'], () => {
     throttledRefresh();
   });
 
+  // ---- Return ----
   return {
     data,
     diagnostics,

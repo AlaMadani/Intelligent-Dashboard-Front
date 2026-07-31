@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page neo-loading-scope">
     <loading-overlay :show="loading" context="fetch" />
@@ -17,7 +18,6 @@
             />
           </span>
           <div v-if="source" id="runtime-source-chip" class="neo-analytics-chip" data-assistant-id="runtime-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the runtime health data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
-          <ai-explain-button context-key="runtime-health" variant="prominent" />
           <q-btn
             id="runtime-refresh-button"
             data-assistant-id="runtime-refresh-button"
@@ -94,7 +94,6 @@
             <h3>{{ t('v36.runtime.modelHealth') }}</h3>
             <p>{{ t('v36.runtime.modelHealthSubtitle') }}</p>
           </div>
-          <ai-explain-button context-key="runtime-model-health" variant="prominent" />
         </div>
         <div class="neo-v36-model-grid">
           <div v-for="model in modelRows" :key="model.name" class="neo-v36-model-card">
@@ -620,12 +619,13 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import InfoTooltip from 'src/components/common/InfoTooltip.vue';
 import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
-import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
+
 import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
 import { ASSISTANT_REFRESH_RUNTIME_EVENT } from 'src/constants/events';
 import { useRuntimeHealth } from 'src/composables/v36/useRuntimeHealth';
@@ -1033,6 +1033,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-v36-kpis,
 .neo-v36-grid {

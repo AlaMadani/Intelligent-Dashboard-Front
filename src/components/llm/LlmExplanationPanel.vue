@@ -339,17 +339,20 @@
 </template>
 
 <script setup lang="ts">
+// ---- Imports ----
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatDate, formatSource, sourceTone } from 'src/utils/format';
 import type { NormalizedLlmExplanation } from 'src/types/analytics';
 
+// ---- Props ----
 const props = defineProps<{
   explanation: NormalizedLlmExplanation;
 }>();
 
 const { t } = useI18n();
 
+// ---- Computed ----
 const norm = computed(() => props.explanation);
 
 const rawJson = computed(() => JSON.stringify(norm.value.raw, null, 2));
@@ -375,6 +378,7 @@ const modelScoreItems = computed(() => {
 const evidenceBullets = computed(() => norm.value.keyEvidenceBullets ?? norm.value.evidenceBullets ?? []);
 </script>
 
+// ---- Styles ----
 <style scoped>
 .llm-explanation-panel {
   padding: 8px 0;

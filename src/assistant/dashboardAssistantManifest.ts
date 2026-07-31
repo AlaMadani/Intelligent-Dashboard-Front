@@ -1,5 +1,7 @@
+// ---- Imports ----
 import { ROUTE_NAMES } from 'src/router/route-names';
 
+// ---- Interfaces ----
 export interface ManifestRoute {
   id: string;
   routeName: string;
@@ -90,10 +92,12 @@ export interface DashboardAssistantManifest {
   searchTargets: ManifestSearchTarget[];
 }
 
+// ---- Manifest Data ----
 const manifest: DashboardAssistantManifest = {
   version: '1.0.0',
   updatedAt: '2026-07-03',
 
+  // ---- Routes ----
   routes: [
     {
       id: 'security-overview',
@@ -187,6 +191,7 @@ const manifest: DashboardAssistantManifest = {
     },
   ],
 
+  // ---- Elements ----
   elements: [
     // ── Navigation sidebar ──
     {
@@ -1198,6 +1203,7 @@ const manifest: DashboardAssistantManifest = {
     },
   ],
 
+  // ---- Tasks ----
   tasks: [
     {
       id: 'explain-ai-with-context',
@@ -1284,6 +1290,7 @@ const manifest: DashboardAssistantManifest = {
     },
   ],
 
+  // ---- Panels ----
   panels: [
     {
       id: 'explain-ai',
@@ -1308,6 +1315,7 @@ const manifest: DashboardAssistantManifest = {
     },
   ],
 
+  // ---- Filters ----
   filters: [
     {
       id: 'alerts-risk',
@@ -1331,6 +1339,7 @@ const manifest: DashboardAssistantManifest = {
     },
   ],
 
+  // ---- Refresh Targets ----
   refreshTargets: [
     {
       id: 'forecast',
@@ -1370,6 +1379,7 @@ const manifest: DashboardAssistantManifest = {
     },
   ],
 
+  // ---- Search Targets ----
   searchTargets: [
     {
       id: 'alert-search',
@@ -1394,4 +1404,5 @@ const manifest: DashboardAssistantManifest = {
   ],
 };
 
+// ---- Export ----
 export default manifest;

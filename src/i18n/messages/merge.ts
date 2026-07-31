@@ -1,8 +1,10 @@
+// ---- Types & Helpers ----
 type MessageTree = Record<string, unknown>;
 
 const isMessageTree = (value: unknown): value is MessageTree =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
+// ---- Merge Utility ----
 export const mergeMessages = <TDefault extends MessageTree, TOverride extends MessageTree>(
   defaults: TDefault,
   overrides: TOverride,

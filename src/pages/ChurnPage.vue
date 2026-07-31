@@ -1,3 +1,4 @@
+// ---- Template ----
 <template>
   <q-page class="neo-page neo-loading-scope">
     <loading-overlay :show="loading" context="fetch" />
@@ -17,7 +18,6 @@
             />
           </span>
           <div v-if="source" id="churn-source-chip" class="neo-analytics-chip" data-assistant-id="churn-source-chip" data-assistant-type="badge" data-assistant-label="Data Source Chip" data-assistant-description="Chip showing the data source for the churn data." data-assistant-actions="HIGHLIGHT_ELEMENT">{{ t('v36.common.source') }}: {{ source }}</div>
-          <ai-explain-button context-key="churn-dashboard" variant="prominent" />
           <q-btn
             id="churn-refresh-button"
             data-assistant-id="churn-refresh-button"
@@ -132,18 +132,6 @@
                 <td>{{ formatNumber(user.alertCountLast30d ?? user.alertCount ?? null) }}</td>
                 <td>
                   <div class="neo-v36-row-actions">
-                    <ai-explain-button
-                      v-if="user.insuredId"
-                      context-key="churn-user-row"
-                      variant="compact"
-                      :params="{
-                        insuredId: user.insuredId,
-                        riskLevel: user.churnRiskLevel,
-                        probability: formatPercent(user.churnProbability, 1),
-                        averageRisk: formatNullableScore(user.averageRiskScoreLast30d ?? user.averageRiskScore ?? null),
-                        alertCount: formatNumber(user.alertCountLast30d ?? user.alertCount ?? null),
-                      }"
-                    />
                     <q-btn
                       flat
                       icon="person_search"
@@ -170,13 +158,14 @@
   </q-page>
 </template>
 
+// ---- Script Setup ----
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import InfoTooltip from 'src/components/common/InfoTooltip.vue';
 import DonutBreakdownChart from 'src/components/dashboard/DonutBreakdownChart.vue';
-import AiExplainButton from 'src/components/ai/AiExplainButton.vue';
+
 import LiveConnectionBadge from 'src/components/common/LiveConnectionBadge.vue';
 import LoadingOverlay from 'src/components/loading/LoadingOverlay.vue';
 import { ASSISTANT_REFRESH_CHURN_EVENT } from 'src/constants/events';
@@ -293,6 +282,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
+// ---- Styles ----
 <style scoped>
 .neo-v36-kpis {
   display: grid;

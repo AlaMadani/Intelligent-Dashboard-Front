@@ -14,6 +14,7 @@
   </q-card>
 </template>
 
+// ---- Styles ----
 <style scoped>
 /* Skeleton dimensions and shimmer effect used by the KPI strip. */
 .neo-skeleton-card {

@@ -1,9 +1,11 @@
+// ---- Type Aliases ----
 export type V36SchemaVersion = string;
 export type V36RiskLevel = string;
 export type V36Source = string;
 export type V36UnknownMap = Record<string, unknown>;
 export type V36NumberMap = Record<string, number>;
 
+// ---- Paged Response ----
 export interface V36PagedResponse<T> {
   schemaVersion?: V36SchemaVersion;
   items?: T[];
@@ -15,6 +17,7 @@ export interface V36PagedResponse<T> {
   warnings?: string[];
 }
 
+// ---- Request Parameters ----
 export interface V36AlertListParams {
   riskLevel?: string;
   anomalyType?: string;
@@ -40,6 +43,7 @@ export interface V36ChurnUsersParams {
   offset?: number;
 }
 
+// ---- Diagnostics ----
 export interface V36ModelRuntimeState {
   artifactExists?: boolean;
   artifactParsed?: boolean;
@@ -245,6 +249,7 @@ export interface V36RuntimeHealthResponse {
   raw?: V36UnknownMap;
 }
 
+// ---- Security Overview ----
 export interface V36SecurityOverviewResponse {
   schemaVersion?: V36SchemaVersion;
   snapshotTimestamp?: string;
@@ -282,6 +287,7 @@ export interface V36DiagnosticsResponse {
   raw?: V36UnknownMap;
 }
 
+// ---- Alert Details ----
 export interface V36ModelContributions {
   xgboost?: number;
   lightgbm?: number;
@@ -348,6 +354,7 @@ export interface V36LiveAlertItem {
 export type V36LiveAlertsResponse = V36PagedResponse<V36LiveAlertItem>;
 export type V36CriticalAlertsResponse = V36LiveAlertsResponse;
 
+// ---- Evidence / Explanations ----
 export interface V36EventMetadata {
   eventAction?: string;
   apiTemplate?: string;
@@ -544,6 +551,7 @@ export interface V36LlmEvidencePayload {
   [key: string]: unknown;
 }
 
+// ---- LLM Explanations ----
 export interface V36LlmExplanationRequest {
   forceRefresh?: boolean;
   style?: string;
@@ -613,6 +621,7 @@ export interface NormalizedLlmExplanation {
   raw?: unknown;
 }
 
+// ---- User 360 / Risk ----
 export interface V36UserRiskSummary {
   averageRiskScoreLast30d?: number;
   alertCountLast30d?: number;
@@ -656,6 +665,7 @@ export interface V36User360Response {
 
 export type V36UserAlertsResponse = V36PagedResponse<V36LiveAlertItem>;
 
+// ---- Churn ----
 export interface V36ChurnRiskUser {
   insuredId?: string;
   churnProbability?: number;
@@ -691,6 +701,7 @@ export interface V36ChurnDashboardResponse {
 
 export type V36ChurnUsersResponse = V36PagedResponse<V36ChurnRiskUser>;
 
+// ---- Forecast ----
 export interface V36ForecastPoint {
   date?: string;
   timestamp?: string;
@@ -717,6 +728,7 @@ export interface V36ForecastDashboardResponse {
   rawPayload?: V36UnknownMap;
 }
 
+// ---- Final Winners ----
 export interface V36FinalWinnerItem {
   use_case?: string;
   recommended_approach?: string;
@@ -743,6 +755,7 @@ export interface V36FinalWinnersResponse {
   rawPayload?: V36UnknownMap;
 }
 
+// ---- Report Metadata ----
 export interface V36ReportMetadata {
   name?: string;
   title?: string;

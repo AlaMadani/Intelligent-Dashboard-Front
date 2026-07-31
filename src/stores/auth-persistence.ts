@@ -1,3 +1,4 @@
+// ---- Imports ----
 import type { Pinia } from 'pinia';
 import { LocalStorage } from 'quasar';
 import { watch } from 'vue';
@@ -10,6 +11,7 @@ import {
 import { useAuthStore, type AuthPersistedState } from 'src/stores/auth';
 import type { User } from 'src/types/auth';
 
+// ---- Constants ----
 const AUTH_STORAGE_KEY = 'noveocare.auth.state';
 
 const LEGACY_STORAGE_KEYS = [
@@ -24,6 +26,7 @@ const LEGACY_STORAGE_KEYS = [
   SESSION_LAST_ACTIVITY_KEY,
 ] as const;
 
+// ---- Helpers ----
 const isClientStorageAvailable = () => typeof window !== 'undefined';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -39,6 +42,7 @@ const isUser = (value: unknown): value is User =>
 const isSessionExpiredReason = (value: unknown): value is SessionExpiredReason =>
   value === 'idle' || value === 'refresh_failed' || value === 'token_expired';
 
+// ---- Legacy Storage Readers ----
 const readString = (key: string) => {
   const value = LocalStorage.getItem<string>(key);
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
@@ -62,6 +66,7 @@ const readLegacyUser = () => {
   }
 };
 
+// ---- Persisted State IO ----
 const readPersistedState = (): Partial<AuthPersistedState> | null => {
   if (!isClientStorageAvailable()) {
     return null;
@@ -127,6 +132,7 @@ const persistState = (state: AuthPersistedState) => {
   clearLegacyState();
 };
 
+// ---- Plugin Setup ----
 export const setupAuthPersistence = (pinia: Pinia) => {
   const authStore = useAuthStore(pinia);
 
